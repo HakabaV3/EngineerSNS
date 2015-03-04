@@ -1,0 +1,15 @@
+{
+    "success": {
+        "id": "0981905821109581", 
+        "uri": "/user/Kikurage",
+        "name": "Kikurage",
+        "description": "木倉悠一郎",
+        "postCount": 30,
+        "followingCount": 50,
+        "followedCount": 45,
+        "reviewCount": 20,
+        "reviewingCount": 15,
+        "reviewedCount": 10,
+        "icon": "./img/kikurage-icon.png"
+    }
+}
