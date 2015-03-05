@@ -41,21 +41,23 @@ var ToolBarView = React.createClass({displayName: "ToolBarView",
 
 		return (
 			React.createElement("div", {className: "ToolBarView"}, 
-				React.createElement("h2", {class: "ToolBarView-title"}, "EngineerSNS"), 
-				React.createElement("span", {class: "ToolBarView-auth"}, stateMsg)			
+				React.createElement("div", {className: "grid-container"}, 
+					React.createElement("div", {className: "grid-12"}, 
+						React.createElement("div", {className: "ToolBarView-left"}, 
+							React.createElement("span", {className: "ToolBarView-title"}, "EngineerSNS")
+						), 
+
+						React.createElement("div", {className: "ToolBarView-right"}, 
+							React.createElement("span", {className: "ToolBarView-auth"}, stateMsg)			
+						)
+					)
+				)
 			)
 		);
 	}
 });
-var BaseView = React.createClass({displayName: "BaseView",
-	render: function(){
-		return (
-			React.createElement("div", {className: "BaseView"}, 
-				React.createElement(ToolBarView, null)
-			)
-		);
-	}
-});
+
+
 
 
 
@@ -788,19 +790,172 @@ User.prototype.update = function(callback) {
     User.delete(this.name, callback);
 };
 
+var UserView = React.createClass({displayName: "UserView",
+	render: function(){
+		var user = this.props.user;
+
+		if (!user) {
+			return (
+				React.createElement("div", {className: "UserView"}, 
+					React.createElement("h2", null, "Error: User is not found.")
+				)
+			);
+		}
+
+		return (
+			React.createElement("div", {className: "UserView"}, 
+				React.createElement("p", null, 
+					React.createElement("img", {src: user.icon, width: "64px", height: "64px"}), 
+					React.createElement("b", null, user.name), "さんのページ"
+				), 
+				React.createElement("table", null, 
+					React.createElement("tr", null, 
+						React.createElement("td", null, "id"), 
+						React.createElement("td", null, user.id)
+					), 
+					React.createElement("tr", null, 
+						React.createElement("td", null, "uri"), 
+						React.createElement("td", null, user.uri)
+					), 
+					React.createElement("tr", null, 
+						React.createElement("td", null, "name"), 
+						React.createElement("td", null, user.name)
+					), 
+					React.createElement("tr", null, 
+						React.createElement("td", null, "description"), 
+						React.createElement("td", null, user.description)
+					), 
+					React.createElement("tr", null, 
+						React.createElement("td", null, "postCount"), 
+						React.createElement("td", null, user.postCount)
+					), 
+					React.createElement("tr", null, 
+						React.createElement("td", null, "followingCount"), 
+						React.createElement("td", null, user.followingCount)
+					), 
+					React.createElement("tr", null, 
+						React.createElement("td", null, "followedCount"), 
+						React.createElement("td", null, user.followedCount)
+					), 
+					React.createElement("tr", null, 
+						React.createElement("td", null, "reviewCount"), 
+						React.createElement("td", null, user.reviewCount)
+					), 
+					React.createElement("tr", null, 
+						React.createElement("td", null, "reviewingCount"), 
+						React.createElement("td", null, user.reviewingCount)
+					), 
+					React.createElement("tr", null, 
+						React.createElement("td", null, "reviewedCount"), 
+						React.createElement("td", null, user.reviewedCount)
+					), 
+					React.createElement("tr", null, 
+						React.createElement("td", null, "icon"), 
+						React.createElement("td", null, user.icon)
+					)
+				)
+			)
+		);
+	}
+});
+var UserPageView = React.createClass({displayName: "UserPageView",
+	getInitialState: function(){
+		return {
+			user: null
+		};
+	},
+	componentDidMount: function(){
+		app.on(Application.Event.CHANGE_ROUT, this.onChangeRout);
+
+		this.onChangeRout = this.onChangeRout.bind(this);
+		this.onModelUpdate = this.onModelUpdate.bind(this);
+
+		this.loadUserWithRout(app.rout);
+	},
+	componentWillUnmount: function(){
+		app.off(Application.Event.CHANGE_ROUT, this.onChangeRout);
+
+		this.onChangeRout = null;
+		this.onModelUpdate = null;
+	},
+
+	onChangeRout: function(rout) {
+		this.loadUserWithRout(rout);
+	},
+	onChangeUser: function(user) {
+		this.setUser(user);
+	},
+	onModelUpdate: function(){
+		this.forceUpdate();
+	},
+
+	loadUserWithRout: function(rout) {
+		if (rout.mode !== 'user') return;
+
+		var self = this;
+		
+		User.getByName(rout.userName, function(err, user){
+			self.setUser(user);
+		});
+	},
+	setUser: function(user) {
+		if (this.state.user === user) return;
+
+		if (this.state.user) {
+			user.off('update', this.onModelUpdate);
+		}
+
+		if (user) {
+			user.on('update', this.onModelUpdate);
+		}
+		this.setState({
+			user: user
+		});
+
+		this.forceUpdate();
+	},
+
+	render: function(){
+		return (
+			React.createElement("div", {className: "UserPageView grid-container"}, 
+				React.createElement("div", {className: "grid-12"}, 
+					React.createElement(UserView, {user: this.state.user})
+				)
+			)
+		);
+	}
+});
+var BaseView = React.createClass({displayName: "BaseView",
+	render: function(){
+		return (
+			React.createElement("div", {className: "BaseView"}, 
+				React.createElement(ToolBarView, null), 
+				React.createElement(UserPageView, null)
+			)
+		);
+	}
+});
+
+
 
 
 /**
- *	@constructor
+ *  @constructor
  */
 var Application = function() {
     /**
-     *	@NOTE singleton
+     *  @NOTE singleton
      */
     if (Application.instance) return Application.instance;
     Application.instance = this;
 
     EventDispatcher.call(this);
+
+    /**
+     *  The result of url routing.
+     *  @type {Object}
+     */
+    this.rout = this.routing();
 
     /**
      *  Authentication state.
@@ -809,40 +964,43 @@ var Application = function() {
     this.isAuthed = false;
 
     /**
-     *	Authenticated user.
-     *	@type {User}
+     *  Authenticated user.
+     *  @type {User}
      */
     this.authedUser = null;
 
     this.updateAuthState();
 
     /**
-     *	@NOTE
-     *	appが存在しないと、イベントリスニングができないので、
-     *	viewは非同期で生成する
+     *  @NOTE
+     *  appが存在しないと、イベントリスニングができないので、
+     *  viewは非同期で生成する
      */
     setTimeout(function() {
         React.render(React.createElement(BaseView, null), document.body);
     }, 0);
+
+    window.addEventListener('hashchange', this.onHashChange.bind(this));
 };
 extendClass(Application, EventDispatcher);
 
 /**
- *	Event names
- *	@enum {string}
+ *  Event names
+ *  @enum {string}
  */
 Application.Event = {
     CHANGE_AUTH_STATE: 'CHANGE_AUTH_STATE',
+    CHANGE_ROUT: 'CHANGE_ROUT'
 };
 
 /**
- *	check authentication state
+ *  check authentication state
  */
 Application.prototype.updateAuthState = function() {
     var self = this;
 
     /**
-     *	@TODO LocalStorageからtoken取り出す
+     *  @TODO LocalStorageからtoken取り出す
      */
 
     API.User.me(function(err, me) {
@@ -860,6 +1018,68 @@ Application.prototype.updateAuthState = function() {
             self.authedUser
         );
     });
+};
+
+/**
+ *  Change url asyncrounously.
+ *  @param {string} url url.
+ */
+Application.prototype.setURLAsync = function(url) {
+    setTimeout(function() {
+        document.location.href = url;
+    }, 0);
+};
+
+/**
+ *  Change url hash asyncrounously.
+ *  @param {string} hash hash.
+ */
+Application.prototype.setHashAsync = function(hash) {
+    setTimeout(function() {
+        document.location.hash = '#!' + hash;
+    }, 0);
+};
+
+/** 
+ *  check rout
+ *  @param {string} [url] URL if elipsis, it is 'document.localtion.href'.
+ *  @return {Object} parameters of rout
+ */
+Application.prototype.routing = function(url) {
+    var controller,
+        params = {},
+        ma;
+
+    url = url || window.location.hash.substr(2);
+
+    if (url === '/signup') {
+        params = {
+            mode: 'signup'
+        };
+
+    } else if (url === '/signin') {
+        // /signin
+        params = {
+            mode: 'signin'
+        };
+
+    } else if (ma = url.match(/\/user\/([^\/]+)/)) {
+        // /user/:userName
+        params = {
+            mode: 'user',
+            userName: ma[1]
+        };
+
+    } else {
+
+    }
+
+    return params;
+};
+
+Application.prototype.onHashChange = function() {
+    this.rout = this.routing()
+    this.fire(Application.Event.CHANGE_ROUT, this.rout);
 };
 
 /**

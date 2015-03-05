@@ -1,3 +1,241 @@
+* {
+  box-sizing: border-box; }
 
+html, body,
+div, p,
+h1, h2, h3, h4, h5, h6 {
+  position: relative;
+  display: block;
+  padding: 0;
+  margin: 0;
+  font-size: 100%;
+  line-height: 100%;
+  font-family: inherit;
+  font-weight: normal; }
+
+html, body {
+  min-width: 100%;
+  min-height: 100%;
+  font-size: 14px;
+  font-family: Helvetica, arial, freesans, clean, sans-serif, 'Segoe UI Emoji', 'Segoe UI Symbol'; }
+
+.grid-container {
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 15px;
+  padding-right: 15px; }
+  .grid-container:after {
+    display: block;
+    content: ' ';
+    clear: both; }
+
+.grid-1 {
+  position: relative;
+  padding-left: 15px;
+  padding-right: 15px;
+  width: 8.33333%;
+  min-height: 1px;
+  float: left;
+  box-sizing: border-box; }
+
+.grid-2 {
+  position: relative;
+  padding-left: 15px;
+  padding-right: 15px;
+  width: 16.66667%;
+  min-height: 1px;
+  float: left;
+  box-sizing: border-box; }
+
+.grid-3 {
+  position: relative;
+  padding-left: 15px;
+  padding-right: 15px;
+  width: 25%;
+  min-height: 1px;
+  float: left;
+  box-sizing: border-box; }
+
+.grid-4 {
+  position: relative;
+  padding-left: 15px;
+  padding-right: 15px;
+  width: 33.33333%;
+  min-height: 1px;
+  float: left;
+  box-sizing: border-box; }
+
+.grid-5 {
+  position: relative;
+  padding-left: 15px;
+  padding-right: 15px;
+  width: 41.66667%;
+  min-height: 1px;
+  float: left;
+  box-sizing: border-box; }
+
+.grid-6 {
+  position: relative;
+  padding-left: 15px;
+  padding-right: 15px;
+  width: 50%;
+  min-height: 1px;
+  float: left;
+  box-sizing: border-box; }
+
+.grid-7 {
+  position: relative;
+  padding-left: 15px;
+  padding-right: 15px;
+  width: 58.33333%;
+  min-height: 1px;
+  float: left;
+  box-sizing: border-box; }
+
+.grid-8 {
+  position: relative;
+  padding-left: 15px;
+  padding-right: 15px;
+  width: 66.66667%;
+  min-height: 1px;
+  float: left;
+  box-sizing: border-box; }
+
+.grid-9 {
+  position: relative;
+  padding-left: 15px;
+  padding-right: 15px;
+  width: 75%;
+  min-height: 1px;
+  float: left;
+  box-sizing: border-box; }
+
+.grid-10 {
+  position: relative;
+  padding-left: 15px;
+  padding-right: 15px;
+  width: 83.33333%;
+  min-height: 1px;
+  float: left;
+  box-sizing: border-box; }
+
+.grid-11 {
+  position: relative;
+  padding-left: 15px;
+  padding-right: 15px;
+  width: 91.66667%;
+  min-height: 1px;
+  float: left;
+  box-sizing: border-box; }
+
+.grid-12 {
+  position: relative;
+  padding-left: 15px;
+  padding-right: 15px;
+  width: 100%;
+  min-height: 1px;
+  float: left;
+  box-sizing: border-box; }
+
+@media (min-width: 1024px) {
+  .grid-container {
+    width: 994px; } }
+@media (min-width: 750px) and (max-width: 1024px) {
+  .grid-container {
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0; } }
+@media (max-width: 750px) {
+  .grid-container {
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0; }
+
+  .grid-1 {
+    display: block;
+    float: none;
+    width: 100%; }
+
+  .grid-2 {
+    display: block;
+    float: none;
+    width: 100%; }
+
+  .grid-3 {
+    display: block;
+    float: none;
+    width: 100%; }
+
+  .grid-4 {
+    display: block;
+    float: none;
+    width: 100%; }
+
+  .grid-5 {
+    display: block;
+    float: none;
+    width: 100%; }
+
+  .grid-6 {
+    display: block;
+    float: none;
+    width: 100%; }
+
+  .grid-7 {
+    display: block;
+    float: none;
+    width: 100%; }
+
+  .grid-8 {
+    display: block;
+    float: none;
+    width: 100%; }
+
+  .grid-9 {
+    display: block;
+    float: none;
+    width: 100%; }
+
+  .grid-10 {
+    display: block;
+    float: none;
+    width: 100%; }
+
+  .grid-11 {
+    display: block;
+    float: none;
+    width: 100%; }
+
+  .grid-12 {
+    display: block;
+    float: none;
+    width: 100%; } }
+.ToolBarView {
+  position: relative;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  margin-bottom: 10px;
+  background: #f8f8f8;
+  border-bottom: 1px solid #eee;
+  padding: 10px 0; }
+  .ToolBarView:after {
+    display: block;
+    content: ' ';
+    clear: both; }
+
+.ToolBarView-itemContainer, .ToolBarView-left, .ToolBarView-right {
+  position: relative;
+  height: 20px;
+  line-height: 20px; }
+  .ToolBarView-itemContainer > *, .ToolBarView-left > *, .ToolBarView-right > * {
+    vertical-align: middle; }
+
+.ToolBarView-left {
+  float: left; }
+
+.ToolBarView-right {
+  float: right; }
 
 /*# sourceMappingURL=style.css.map */
