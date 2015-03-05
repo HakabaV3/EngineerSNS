@@ -13,7 +13,7 @@
 
 cloneした後
 
-```ruby:EngineerSNS/server
+```
 $ bundle install
 ```
 
@@ -21,20 +21,20 @@ $ bundle install
 
 MySQLのデータベースを作成
 
-```ruby:EngineerSNS/server
+```
 $ rake db:create
 $ rake db:migrate
 ```
 
 データベースにテストデータを追加
 
-```ruby:EngineerSNS/server
+```
 $ rake db:seed
 ```
 
 データベースのリセット
 
-```ruby:EngineerSNS/server
+```
 $ rake db:reset
 ```
 
@@ -42,7 +42,7 @@ $ rake db:reset
 
 rails serverの起動
 
-```ruby:EngineerSNS/server
+```
 $ rails s
 ```
 
@@ -52,11 +52,13 @@ $ rails s
 
 APIのURIの確認
 
-```ruby:EngineerSNS/server
+```
 $ rake api:routes
 ```
 
-```javascript:http://localhost:3000/api/v1/user
+http://localhost:3000/api/v1/user
+
+```
 {
     "users":[
         {
