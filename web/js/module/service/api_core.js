@@ -13,12 +13,6 @@ var API = {};
 API.EntryPoint = './testdata';
 
 /**
- *  Authentication state
- *  @type {boolean}
- */
-API.isAuthed = false;
-
-/**
  *  Authentication token
  *  @type {string}
  */
