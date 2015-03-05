@@ -100,6 +100,13 @@ Model.prototype.updateWithData = function(data) {
         }
     });
 
-    self.fire('update');
+    this.dispatchUpdate();
     return this;
+};
+
+/**
+ *  dispatch update event.
+ */
+Model.prototype.dispatchUpdate = function() {
+    this.fire('update', this);
 };

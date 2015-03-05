@@ -1,5 +1,6 @@
 //@include model.js
 //@include ../service/util.js
+//@include ../service/api.js
 
 /**
  *  User Model.
