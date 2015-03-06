@@ -13,7 +13,7 @@ var API = {};
 API.EntryPoint = 'http://localhost:3000/api/v1';
 
 //@TODO: DEBUG ONLY
-// API.EntryPoint = './testdata';
+API.EntryPoint = './testdata';
 
 /**
  *  Authentication token

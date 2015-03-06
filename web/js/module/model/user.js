@@ -9,6 +9,8 @@
  *  @extends {Model}
  */
 var User = function(data) {
+    if (!(this instanceof User)) return new User(data);
+
     if (isObject(data)) {
         if (Model.hasInstance(data.id)) {
             return Model.getInstance(data.id).updateWithData(data);
@@ -119,58 +121,21 @@ User.create = function(userName, password, callback) {
 
 /**
  *  Update user data.
- *  @param {string} userName the user name.
  *  @param {Object} params update datas.
  *  @param {Function} callback callback function.
- */
-User.update = function(userName, params, callback) {
-    API.User.patch(userName, params, function(err, res) {
-        if (err) {
-            return callback(err, null);
-        }
-
-        return callback(null, new User(res));
-    });
-};
-
-/**
- *  Update user icon image.
- *  @param {string} userName the user name.
- *  @param {Blob} blob icon image file blob.
- *  @param {Function} callback callback function.
- */
-User.updateIcon = function(userName, blob, callback) {
-    API.User.patchIcon(userName, blob, function(err, res) {
-        if (err) {
-            return callback(err, null);
-        }
-
-        return callback(null, new User(res));
-    });
-};
-
-/**
- *  Delete user data.
- *  @param {string} name the user name.
- *  @param {Function} callback callback function.
- */
-User.update = function(name, callback) {
-    API.User.delete(name, function(err, res) {
-        if (err) {
-            return callback(err, null);
-        }
-
-        return callback(null, res);
-    });
-};
-
-/**
- *  Update user data.
- *  @param {Object} params update datas.
- *  @params {Function} callback callback function.
  */
 User.prototype.update = function(params, callback) {
-    User.update(this.name, params, callback);
+    if (!app.isAuthed || this !== app.authedUser) {
+        return callback(APIError.PERMISSION_DENIED, null);
+    };
+
+    API.User.patch(this.name, params, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, new User(res));
+    });
 };
 
 /**
@@ -179,13 +144,33 @@ User.prototype.update = function(params, callback) {
  *  @param {Function} callback callback function.
  */
 User.prototype.updateIcon = function(blob, callback) {
-    User.updateIcon(this.name, blob, callback);
+    if (!app.isAuthed || this !== app.authedUser) {
+        return callback(APIError.PERMISSION_DENIED, null);
+    };
+
+    API.User.patchIcon(this.name, blob, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, new User(res));
+    });
 };
 
 /**
  *  Delete user data.
  *  @param {Function} callback callback function.
  */
-User.prototype.update = function(callback) {
-    User.delete(this.name, callback);
+User.prototype.delete = function(callback) {
+    if (!app.isAuthed || this !== app.authedUser) {
+        return callback(APIError.PERMISSION_DENIED, null);
+    };
+
+    API.User.delete(this.name, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, res);
+    });
 };
