@@ -1,4 +1,5 @@
 //@include ./userview.js
+//@include ../../model/user.js
 
 var UserPageView = React.createClass({
 	getInitialState: function(){
@@ -7,15 +8,18 @@ var UserPageView = React.createClass({
 		};
 	},
 	componentDidMount: function(){
-		app.on(Application.Event.CHANGE_ROUT, this.onChangeRout);
-
 		this.onChangeRout = this.onChangeRout.bind(this);
 		this.onModelUpdate = this.onModelUpdate.bind(this);
+
+		app.on(Application.Event.CHANGE_ROUT, this.onChangeRout);
 
 		this.loadUserWithRout(app.rout);
 	},
 	componentWillUnmount: function(){
 		app.off(Application.Event.CHANGE_ROUT, this.onChangeRout);
+		if (this.state.user) {
+			this.state.user.off('update', this.onModelUpdate);
+		}
 
 		this.onChangeRout = null;
 		this.onModelUpdate = null;
@@ -44,7 +48,7 @@ var UserPageView = React.createClass({
 		if (this.state.user === user) return;
 
 		if (this.state.user) {
-			user.off('update', this.onModelUpdate);
+			this.state.user.off('update', this.onModelUpdate);
 		}
 
 		if (user) {

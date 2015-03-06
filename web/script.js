@@ -214,6 +214,8 @@ EventDispatcher.prototype.fire = function(type, optArgs) {
 
     if (!listeners) return this;
 
+    listeners = listeners.slice(0);
+
     for (i = 0, max = listeners.length; i < max; i++) {
         listeners[i].apply(this, args);
     }
@@ -341,12 +343,16 @@ Model.prototype.dispatchUpdate = function() {
  *  @namespace
  */
 var APIError = {
-    PARSE_FAILED: {
+    PERMISSION_DENIED: {
         code: 0,
+        msg: 'Permission denied.',
+    },
+    PARSE_FAILED: {
+        code: 1,
         msg: 'Failed to parse response.',
     },
     CONNECTION_FAILED: {
-        code: 1,
+        code: 2,
         msg: 'Failed to connect server.',
     }
 };
@@ -387,7 +393,7 @@ var API = {};
 API.EntryPoint = 'http://localhost:3000/api/v1';
 
 //@TODO: DEBUG ONLY
-// API.EntryPoint = './testdata';
+API.EntryPoint = './testdata';
 
 /**
  *  Authentication token
@@ -607,6 +613,24 @@ API.User = {
     }
 };
 
+API.Project = {
+    get: function(userName, projectName, callback) {
+        return API.get('/user/' + userName + '/project/' + projectName, callback);
+    },
+    getAll: function(userName, callback) {
+        return API.get('/user/' + userName + '/project', callback);
+    },
+    post: function(userName, projectName, callback) {
+        return API.post('/user/' + userName + '/project/' + projectName, callback);
+    },
+    patch: function(userName, projectName, callback) {
+        return API.patch('/user/' + userName + '/project/' + projectName, callback);
+    },
+    delete: function(userName, projectName, callback) {
+        return API.delete('/user/' + userName + '/project/' + projectName, callback);
+    }
+};
+
 /**
  *  User Model.
  *  @constructor
@@ -614,6 +638,8 @@ API.User = {
  *  @extends {Model}
  */
 var User = function(data) {
+    if (!(this instanceof User)) return new User(data);
+
     if (isObject(data)) {
         if (Model.hasInstance(data.id)) {
             return Model.getInstance(data.id).updateWithData(data);
@@ -724,58 +750,21 @@ User.create = function(userName, password, callback) {
 
 /**
  *  Update user data.
- *  @param {string} userName the user name.
  *  @param {Object} params update datas.
  *  @param {Function} callback callback function.
- */
-User.update = function(userName, params, callback) {
-    API.User.patch(userName, params, function(err, res) {
-        if (err) {
-            return callback(err, null);
-        }
-
-        return callback(null, new User(res));
-    });
-};
-
-/**
- *  Update user icon image.
- *  @param {string} userName the user name.
- *  @param {Blob} blob icon image file blob.
- *  @param {Function} callback callback function.
- */
-User.updateIcon = function(userName, blob, callback) {
-    API.User.patchIcon(userName, blob, function(err, res) {
-        if (err) {
-            return callback(err, null);
-        }
-
-        return callback(null, new User(res));
-    });
-};
-
-/**
- *  Delete user data.
- *  @param {string} name the user name.
- *  @param {Function} callback callback function.
- */
-User.update = function(name, callback) {
-    API.User.delete(name, function(err, res) {
-        if (err) {
-            return callback(err, null);
-        }
-
-        return callback(null, res);
-    });
-};
-
-/**
- *  Update user data.
- *  @param {Object} params update datas.
- *  @params {Function} callback callback function.
  */
 User.prototype.update = function(params, callback) {
-    User.update(this.name, params, callback);
+    if (!app.isAuthed || this !== app.authedUser) {
+        return callback(APIError.PERMISSION_DENIED, null);
+    };
+
+    API.User.patch(this.name, params, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, new User(res));
+    });
 };
 
 /**
@@ -784,15 +773,35 @@ User.prototype.update = function(params, callback) {
  *  @param {Function} callback callback function.
  */
 User.prototype.updateIcon = function(blob, callback) {
-    User.updateIcon(this.name, blob, callback);
+    if (!app.isAuthed || this !== app.authedUser) {
+        return callback(APIError.PERMISSION_DENIED, null);
+    };
+
+    API.User.patchIcon(this.name, blob, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, new User(res));
+    });
 };
 
 /**
  *  Delete user data.
  *  @param {Function} callback callback function.
  */
-User.prototype.update = function(callback) {
-    User.delete(this.name, callback);
+User.prototype.delete = function(callback) {
+    if (!app.isAuthed || this !== app.authedUser) {
+        return callback(APIError.PERMISSION_DENIED, null);
+    };
+
+    API.User.delete(this.name, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, res);
+    });
 };
 
 var UserView = React.createClass({displayName: "UserView",
@@ -801,8 +810,7 @@ var UserView = React.createClass({displayName: "UserView",
 
 		if (!user) {
 			return (
-				React.createElement("div", {className: "UserView"}, 
-					React.createElement("h2", null, "Error: User is not found.")
+				React.createElement("div", {className: "UserView"}
 				)
 			);
 		}
@@ -863,6 +871,8 @@ var UserView = React.createClass({displayName: "UserView",
 		);
 	}
 });
+
+
 var UserPageView = React.createClass({displayName: "UserPageView",
 	getInitialState: function(){
 		return {
@@ -870,15 +880,18 @@ var UserPageView = React.createClass({displayName: "UserPageView",
 		};
 	},
 	componentDidMount: function(){
-		app.on(Application.Event.CHANGE_ROUT, this.onChangeRout);
-
 		this.onChangeRout = this.onChangeRout.bind(this);
 		this.onModelUpdate = this.onModelUpdate.bind(this);
+
+		app.on(Application.Event.CHANGE_ROUT, this.onChangeRout);
 
 		this.loadUserWithRout(app.rout);
 	},
 	componentWillUnmount: function(){
 		app.off(Application.Event.CHANGE_ROUT, this.onChangeRout);
+		if (this.state.user) {
+			this.state.user.off('update', this.onModelUpdate);
+		}
 
 		this.onChangeRout = null;
 		this.onModelUpdate = null;
@@ -907,7 +920,7 @@ var UserPageView = React.createClass({displayName: "UserPageView",
 		if (this.state.user === user) return;
 
 		if (this.state.user) {
-			user.off('update', this.onModelUpdate);
+			this.state.user.off('update', this.onModelUpdate);
 		}
 
 		if (user) {
@@ -930,14 +943,322 @@ var UserPageView = React.createClass({displayName: "UserPageView",
 		);
 	}
 });
-var BaseView = React.createClass({displayName: "BaseView",
+
+
+
+
+
+
+
+
+
+/**
+ *  Project Model.
+ *  @constructor
+ *  @param {Object} data initial data.
+ *  @extends {Model}
+ */
+var Project = function(data) {
+    if (!(this instanceof Project)) return new Project(data);
+
+    if (isObject(data)) {
+        if (Model.hasInstance(data.id)) {
+            return Model.getInstance(data.id).updateWithData(data);
+        }
+    }
+
+    Model.call(this, data);
+};
+extendClass(Project, Model);
+
+/** 
+ *  Schema
+ *
+ *  @type {Object}
+ *  @override
+ */
+Project.prototype.schema = {
+    "id": {
+        type: String,
+        value: ''
+    },
+    "uri": {
+        type: String,
+        value: ''
+    },
+    "name": {
+        type: String,
+        value: 'undefined'
+    },
+    "owner": {
+        type: String,
+        value: ''
+    },
+    "root": {
+        type: null,
+        value: null
+    }
+};
+
+/**
+ *  Get Project data by project name.
+ *  @param {string} userName the owner name.
+ *  @param {string} projectName the project name.
+ *  @param {Function} callback callback function.
+ */
+Project.getByName = function(userName, projectName, callback) {
+    API.Project.get(
+        userName,
+        projectName,
+        function(err, res) {
+            if (err) {
+                return callback(err, null);
+            }
+
+            return callback(null, new Project(res));
+        });
+};
+
+/**
+ *  Get all Project data by owner name.
+ *  @param {string} userName the owner name.
+ *  @param {Function} callback callback function.
+ */
+Project.getAll = function(userName, callback) {
+    API.Project.getAll(
+        userName,
+        function(err, res) {
+            if (err) {
+                return callback(err, null);
+            }
+
+            return callback(null, res.map(Project));
+        });
+};
+
+/**
+ *  Create new project.
+ *  @param {string} projectName the proejct name.
+ *  @param {Function} callback callback function.
+ */
+Project.create = function(projectName, callback) {
+    if (!app.isAuthed) {
+        return callback(APIError.PERMISSION_DENIED, null);
+    }
+
+    API.Project.post(
+        app.authedUser.name,
+        projectName,
+        function(err, res) {
+            if (err) {
+                return callback(err, null);
+            }
+
+            return callback(null, new Project(res));
+        });
+};
+
+/**
+ *  Update user data.
+ *  @param {Object} params update datas.
+ *  @params {Function} callback callback function.
+ */
+Project.prototype.update = function(params, callback) {
+    if (!app.isAuthed || app.authedUser.name !== this.owner) {
+        return callback(APIError.PERMISSION_DENIED, null);
+    }
+
+    Project.update(this.owner, this.name, params, callback);
+};
+
+/**
+ *  Delete user data.
+ *  @param {Function} callback callback function.
+ */
+Project.prototype.delete = function(callback) {
+    if (!app.isAuthed || app.authedUser.name !== this.owner) {
+        return callback(APIError.PERMISSION_DENIED, null);
+    }
+
+    Project.delete(this.owner, this.name, callback);
+};
+
+var ProjectView = React.createClass({displayName: "ProjectView",
 	render: function(){
+		var project = this.props.project;
+
+		if (!project) {
+			return (
+				React.createElement("div", {className: "ProjectView"}
+				)
+			);
+		}
+
 		return (
-			React.createElement("div", {className: "BaseView"}, 
-				React.createElement(ToolBarView, null), 
-				React.createElement(UserPageView, null)
+			React.createElement("div", {className: "ProjectView"}, 
+				React.createElement("p", null, 
+					"プロジェクト:", React.createElement("b", null, project.name)
+				), 
+				React.createElement("table", null, 
+					React.createElement("tr", null, 
+						React.createElement("td", null, "id"), 
+						React.createElement("td", null, project.id)
+					)
+				)
 			)
 		);
+	}
+});
+
+
+var ProjectPageView = React.createClass({displayName: "ProjectPageView",
+	getInitialState: function(){
+		return {
+			project: null
+		};
+	},
+	componentDidMount: function(){
+		this.onChangeRout = this.onChangeRout.bind(this);
+		this.onModelUpdate = this.onModelUpdate.bind(this);
+
+		app.on(Application.Event.CHANGE_ROUT, this.onChangeRout);
+
+		this.loadProjectWithRout(app.rout);
+	},
+	componentWillUnmount: function(){
+		app.off(Application.Event.CHANGE_ROUT, this.onChangeRout);
+		if (this.state.project) {
+			this.state.project.off('update', this.onModelUpdate);
+		}
+
+		this.onChangeRout = null;
+		this.onModelUpdate = null;
+	},
+
+	onChangeRout: function(rout) {
+		this.loadProjectWithRout(rout);
+	},
+	onChangeProject: function(project) {
+		this.setProject(project);
+	},
+	onModelUpdate: function(){
+		this.forceUpdate();
+	},
+
+	loadProjectWithRout: function(rout) {
+		if (rout.mode !== 'project') return;
+
+		var self = this;
+		
+		Project.getByName(
+			rout.userName,
+			rout.projectName,
+			function(err, project){
+				self.setProject(project);
+			}
+		);
+	},
+	setProject: function(project) {
+		if (this.state.project === project) return;
+
+		if (this.state.project) {
+			this.state.project.off('update', this.onModelUpdate);
+		}
+
+		if (project) {
+			project.on('update', this.onModelUpdate);
+		}
+		this.setState({
+			project: project
+		});
+
+		this.forceUpdate();
+	},
+
+	render: function(){
+		return (
+			React.createElement("div", {className: "ProjectPageView grid-container"}, 
+				React.createElement("div", {className: "grid-12"}, 
+					React.createElement(ProjectView, {project: this.state.project})
+				)
+			)
+		);
+	}
+});
+
+
+
+var Error404View = React.createClass({displayName: "Error404View",
+	render: function(){
+		return (
+			React.createElement("div", {className: "Error404View"}, 
+				React.createElement("h1", null, "404 Page Not Found.")
+			)
+		);
+	}
+});
+var BaseView = React.createClass({displayName: "BaseView",
+	getInitialState: function(){
+		return {
+			mode: ''
+		};
+	},
+	componentDidMount: function(){
+		this.onChangeRout = this.onChangeRout.bind(this);
+
+		app.on(Application.Event.CHANGE_ROUT, this.onChangeRout);
+
+		this.onChangeRout(app.rout);
+	},
+	componentWillUnmount: function(){
+		app.off(Application.Event.CHANGE_ROUT, this.onChangeRout);
+
+		this.onChangeRout = null;
+	},
+
+	onChangeRout: function(rout) {
+		this.setState({
+			mode: rout.mode
+		});
+	},
+
+	render: function(){
+		switch (this.state.mode) {
+			case 'user':
+				return (
+					React.createElement("div", {className: "BaseView"}, 
+						React.createElement(ToolBarView, null), 
+						React.createElement(UserPageView, null)
+					)
+				);
+				break;
+
+			case 'project':
+				return (
+					React.createElement("div", {className: "BaseView"}, 
+						React.createElement(ToolBarView, null), 
+						React.createElement(ProjectPageView, null)
+					)
+				);
+				break;
+
+			case 'error':
+				return (
+					React.createElement("div", {className: "BaseView"}, 
+						React.createElement(ToolBarView, null), 
+						React.createElement(Error404View, null)
+					)
+				);
+				break;
+
+			default:
+				return (
+					React.createElement("div", {className: "BaseView"}, 
+						React.createElement(ToolBarView, null)
+					)
+				);
+				break;
+		}
 	}
 });
 
@@ -1052,7 +1373,7 @@ Application.prototype.setHashAsync = function(hash) {
  */
 Application.prototype.routing = function(url) {
     var controller,
-        params = {},
+        params = null,
         ma;
 
     url = url || window.location.hash.substr(2);
@@ -1068,15 +1389,33 @@ Application.prototype.routing = function(url) {
             mode: 'signin'
         };
 
-    } else if (ma = url.match(/\/user\/([^\/]+)/)) {
+    } else if (ma = url.match(/^\/user\/([^\/]+)$/)) {
         // /user/:userName
         params = {
             mode: 'user',
             userName: ma[1]
         };
 
-    } else {
+    } else if (ma = url.match(/\/user\/([^\/]+)\/project$/)) {
+        // /user/:userName/project
+        params = {
+            mode: 'allProjects',
+            userName: ma[1]
+        };
 
+    } else if (ma = url.match(/^\/user\/([^\/]+)\/project\/([^\/]+)$/)) {
+        // /user/:userName/project/:projectName
+        params = {
+            mode: 'project',
+            userName: ma[1],
+            projectName: ma[2]
+        };
+
+    } else {
+        //  no match.
+        params = {
+            mode: 'error'
+        }
     }
 
     return params;

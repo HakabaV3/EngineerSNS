@@ -110,7 +110,7 @@ Application.prototype.setHashAsync = function(hash) {
  */
 Application.prototype.routing = function(url) {
     var controller,
-        params = {},
+        params = null,
         ma;
 
     url = url || window.location.hash.substr(2);
@@ -126,15 +126,33 @@ Application.prototype.routing = function(url) {
             mode: 'signin'
         };
 
-    } else if (ma = url.match(/\/user\/([^\/]+)/)) {
+    } else if (ma = url.match(/^\/user\/([^\/]+)$/)) {
         // /user/:userName
         params = {
             mode: 'user',
             userName: ma[1]
         };
 
-    } else {
+    } else if (ma = url.match(/\/user\/([^\/]+)\/project$/)) {
+        // /user/:userName/project
+        params = {
+            mode: 'allProjects',
+            userName: ma[1]
+        };
 
+    } else if (ma = url.match(/^\/user\/([^\/]+)\/project\/([^\/]+)$/)) {
+        // /user/:userName/project/:projectName
+        params = {
+            mode: 'project',
+            userName: ma[1],
+            projectName: ma[2]
+        };
+
+    } else {
+        //  no match.
+        params = {
+            mode: 'error'
+        }
     }
 
     return params;

@@ -79,6 +79,8 @@ EventDispatcher.prototype.fire = function(type, optArgs) {
 
     if (!listeners) return this;
 
+    listeners = listeners.slice(0);
+
     for (i = 0, max = listeners.length; i < max; i++) {
         listeners[i].apply(this, args);
     }

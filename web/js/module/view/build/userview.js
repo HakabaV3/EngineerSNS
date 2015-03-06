@@ -6,8 +6,7 @@ var UserView = React.createClass({displayName: "UserView",
 
 		if (!user) {
 			return (
-				React.createElement("div", {className: "UserView"}, 
-					React.createElement("h2", null, "Error: User is not found.")
+				React.createElement("div", {className: "UserView"}
 				)
 			);
 		}

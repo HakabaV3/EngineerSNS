@@ -7,7 +7,6 @@ var UserView = React.createClass({
 		if (!user) {
 			return (
 				<div className="UserView">
-					<h2>Error: User is not found.</h2>
 				</div>
 			);
 		}

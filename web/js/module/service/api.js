@@ -22,3 +22,21 @@ API.User = {
         return API.delete('/user/' + userName, callback);
     }
 };
+
+API.Project = {
+    get: function(userName, projectName, callback) {
+        return API.get('/user/' + userName + '/project/' + projectName, callback);
+    },
+    getAll: function(userName, callback) {
+        return API.get('/user/' + userName + '/project', callback);
+    },
+    post: function(userName, projectName, callback) {
+        return API.post('/user/' + userName + '/project/' + projectName, callback);
+    },
+    patch: function(userName, projectName, callback) {
+        return API.patch('/user/' + userName + '/project/' + projectName, callback);
+    },
+    delete: function(userName, projectName, callback) {
+        return API.delete('/user/' + userName + '/project/' + projectName, callback);
+    }
+};
