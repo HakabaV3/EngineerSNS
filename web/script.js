@@ -337,39 +337,41 @@ Model.prototype.dispatchUpdate = function() {
 
 
 /**
- *	namespace for definition of API Errors
- *	@namespace
+ *  namespace for definition of API Errors
+ *  @namespace
  */
-var APIError = {};
+var APIError = {
+    PARSE_FAILED: {
+        code: 0,
+        msg: 'Failed to parse response.',
+    },
+    CONNECTION_FAILED: {
+        code: 1,
+        msg: 'Failed to connect server.',
+    }
+};
+
 
 /**
- *	Error for failed to parse server response.
- *	@param {XMLHttpRequest} xhr failed xhr object.
- *	@return {Object} error object.
+ *  Error for failed to parse server response.
+ *  @param {XMLHttpRequest} xhr failed xhr object.
+ *  @return {Object} error object.
  */
 APIError.parseFailed = function(xhr) {
-    return {
-        error: {
-            name: 'PARSE_FAILED',
-            msg: 'Failed to parse response.',
-            xhr: xhr
-        }
-    };
+    return extend(APIError.PARSE_FAILED, {
+        xhr: xhr
+    });
 };
 
 /**
- *	Error for failed to connection.
- *	@param {XMLHttpRequest} xhr failed xhr object.
- *	@return {Object} error object.
+ *  Error for failed to connection.
+ *  @param {XMLHttpRequest} xhr failed xhr object.
+ *  @return {Object} error object.
  */
 APIError.connectionFailed = function(xhr) {
-    return {
-        error: {
-            name: 'CONNECTION_FAILED',
-            msg: 'Failed to connect server.',
-            xhr: xhr
-        }
-    };
+    return extend(APIError.CONNECTION_FAILED, {
+        xhr: xhr
+    });
 };
 
 /**
@@ -382,7 +384,10 @@ var API = {};
  *  API Entry Point
  *  @const {string}
  */
-API.EntryPoint = './testdata';
+API.EntryPoint = 'http://localhost:3000/api/v1';
+
+//@TODO: DEBUG ONLY
+// API.EntryPoint = './testdata';
 
 /**
  *  Authentication token

@@ -1,69 +1,76 @@
 //@include ./userview.js
 
-var UserPageView = React.createClass({displayName: "UserPageView",
-	getInitialState: function(){
-		return {
-			user: null
-		};
-	},
-	componentDidMount: function(){
-		app.on(Application.Event.CHANGE_ROUT, this.onChangeRout);
+var UserPageView = React.createClass({
+    displayName: "UserPageView",
+    getInitialState: function() {
+        return {
+            user: null
+        };
+    },
+    componentDidMount: function() {
+        app.on(Application.Event.CHANGE_ROUT, this.onChangeRout);
 
-		this.onChangeRout = this.onChangeRout.bind(this);
-		this.onModelUpdate = this.onModelUpdate.bind(this);
+        this.onChangeRout = this.onChangeRout.bind(this);
+        this.onModelUpdate = this.onModelUpdate.bind(this);
 
-		this.loadUserWithRout(app.rout);
-	},
-	componentWillUnmount: function(){
-		app.off(Application.Event.CHANGE_ROUT, this.onChangeRout);
+        this.loadUserWithRout(app.rout);
+    },
+    componentWillUnmount: function() {
+        app.off(Application.Event.CHANGE_ROUT, this.onChangeRout);
 
-		this.onChangeRout = null;
-		this.onModelUpdate = null;
-	},
+        this.onChangeRout = null;
+        this.onModelUpdate = null;
+    },
 
-	onChangeRout: function(rout) {
-		this.loadUserWithRout(rout);
-	},
-	onChangeUser: function(user) {
-		this.setUser(user);
-	},
-	onModelUpdate: function(){
-		this.forceUpdate();
-	},
+    onChangeRout: function(rout) {
+        this.loadUserWithRout(rout);
+    },
+    onChangeUser: function(user) {
+        this.setUser(user);
+    },
+    onModelUpdate: function() {
+        this.forceUpdate();
+    },
 
-	loadUserWithRout: function(rout) {
-		if (rout.mode !== 'user') return;
+    loadUserWithRout: function(rout) {
+        if (rout.mode !== 'user') return;
 
-		var self = this;
-		
-		User.getByName(rout.userName, function(err, user){
-			self.setUser(user);
-		});
-	},
-	setUser: function(user) {
-		if (this.state.user === user) return;
+        var self = this;
 
-		if (this.state.user) {
-			user.off('update', this.onModelUpdate);
-		}
+        User.getByName(rout.userName, function(err, user) {
+            self.setUser(user);
+        });
+    },
+    setUser: function(user) {
+        if (this.state.user === user) return;
 
-		if (user) {
-			user.on('update', this.onModelUpdate);
-		}
-		this.setState({
-			user: user
-		});
+        if (this.state.user) {
+            this.state.user.off('update', this.onModelUpdate);
+        }
 
-		this.forceUpdate();
-	},
+        if (user) {
+            user.on('update', this.onModelUpdate);
+        }
+        this.setState({
+            user: user
+        });
 
-	render: function(){
-		return (
-			React.createElement("div", {className: "UserPageView grid-container"}, 
-				React.createElement("div", {className: "grid-12"}, 
-					React.createElement(UserView, {user: this.state.user})
-				)
-			)
-		);
-	}
+        this.forceUpdate();
+    },
+
+    render: function() {
+        return (
+            React.createElement("div", {
+                    className: "UserPageView grid-container"
+                },
+                React.createElement("div", {
+                        className: "grid-12"
+                    },
+                    React.createElement(UserView, {
+                        user: this.state.user
+                    })
+                )
+            )
+        );
+    }
 });
