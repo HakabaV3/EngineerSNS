@@ -1,15 +1,9 @@
 {
     "success": {
-        "id": "0981905821109581", 
-        "uri": "/user/Kikurage",
-        "name": "Kikurage",
-        "description": "木倉悠一郎",
-        "postCount": 30,
-        "followingCount": 50,
-        "followedCount": 45,
-        "reviewCount": 20,
-        "reviewingCount": 15,
-        "reviewedCount": 10,
-        "icon": "./img/kikurage-icon.png"
-    }
+         "id": 1,
+         "uri": "/user/kikurage",
+         "name": "kikurage",
+         "description": "I am Kikurage",
+         "icon": "https://1tess.files.wordpress.com/2008/08/kikurage_0096.jpg"
+     }
 }
