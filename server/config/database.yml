@@ -17,6 +17,15 @@ default: &default
   password:
   socket: /tmp/mysql.sock
 
+mamp:
+  <<: *default
+  username: <%= ENV['MYSQL_USERNAME'] %>
+  password: <%= ENV['MYSQL_PASSWORD'] %>
+  socket: /Applications/MAMP/tmp/mysql/mysql.sock
+  host: localhost
+  port: 8889
+  database: server_mamp
+
 development:
   <<: *default
   database: server_development
