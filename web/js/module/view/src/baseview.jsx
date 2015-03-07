@@ -10,7 +10,7 @@ var BaseView = React.createClass({
 		};
 	},
 	componentDidMount: function(){
-		this.onChangeRout = this.onChangeRout.bind(this);
+		this.onChangeRout = this.onChangeRout;
 
 		app.on(Application.Event.CHANGE_ROUT, this.onChangeRout);
 
@@ -18,8 +18,6 @@ var BaseView = React.createClass({
 	},
 	componentWillUnmount: function(){
 		app.off(Application.Event.CHANGE_ROUT, this.onChangeRout);
-
-		this.onChangeRout = null;
 	},
 
 	onChangeRout: function(rout) {

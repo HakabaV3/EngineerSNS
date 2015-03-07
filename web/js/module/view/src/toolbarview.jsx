@@ -1,13 +1,11 @@
 var ToolBarView = React.createClass({
 	componentDidMount: function(){
-		this.onAppChangeAuthState = this.onAppChangeAuthState.bind(this);
+		this.onAppChangeAuthState = this.onAppChangeAuthState;
 
 		app.on(Application.Event.CHANGE_AUTH_STATE, this.onAppChangeAuthState);
 	},
 	componentDidUnmount: function(){
 		app.off(Application.Event.CHANGE_AUTH_STATE, this.onAppChangeAuthState);
-
-		this.onAppChangeAuthState = null;
 	},
 	onAppChangeAuthState: function(){
 		this.forceUpdate();

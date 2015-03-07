@@ -8,8 +8,8 @@ var ProjectPageView = React.createClass({displayName: "ProjectPageView",
 		};
 	},
 	componentDidMount: function(){
-		this.onChangeRout = this.onChangeRout.bind(this);
-		this.onModelUpdate = this.onModelUpdate.bind(this);
+		this.onChangeRout = this.onChangeRout;
+		this.onModelUpdate = this.onModelUpdate;
 
 		app.on(Application.Event.CHANGE_ROUT, this.onChangeRout);
 
@@ -20,9 +20,6 @@ var ProjectPageView = React.createClass({displayName: "ProjectPageView",
 		if (this.state.project) {
 			this.state.project.off('update', this.onModelUpdate);
 		}
-
-		this.onChangeRout = null;
-		this.onModelUpdate = null;
 	},
 
 	onChangeRout: function(rout) {

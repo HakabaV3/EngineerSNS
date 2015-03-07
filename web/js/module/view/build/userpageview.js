@@ -9,8 +9,8 @@ var UserPageView = React.createClass({displayName: "UserPageView",
 		};
 	},
 	componentDidMount: function(){
-		this.onChangeRout = this.onChangeRout.bind(this);
-		this.onModelUpdate = this.onModelUpdate.bind(this);
+		this.onChangeRout = this.onChangeRout;
+		this.onModelUpdate = this.onModelUpdate;
 
 		app.on(Application.Event.CHANGE_ROUT, this.onChangeRout);
 
@@ -21,9 +21,6 @@ var UserPageView = React.createClass({displayName: "UserPageView",
 		if (this.state.user) {
 			this.state.user.off('update', this.onModelUpdate);
 		}
-
-		this.onChangeRout = null;
-		this.onModelUpdate = null;
 	},
 
 	onChangeRout: function(rout) {
@@ -88,23 +85,18 @@ var UserPageView = React.createClass({displayName: "UserPageView",
 		}
 
 		return (
-			React.createElement("div", {className: "UserPageView"}, 
-				React.createElement("section", {className: "grid-container"}, 
-					React.createElement("header", {className: "grid-12"}, 
-						"ユーザー情報"
-					), 
-					React.createElement("div", {className: "grid-12"}, 
-						React.createElement(UserView, {user: user})
-					)
+			React.createElement("div", {className: "UserPageView grid-container"}, 
+				React.createElement("div", {className: "UserPageView-nameSection grid-12"}, 
+					React.createElement("img", {className: "UserPageView-icon", src: user ? user.icon : ''}), 
+					React.createElement("h3", {className: "UserPageView-userName"}, user ? user.name : '(NO USER)')
 				), 
 
-				React.createElement("section", {className: "grid-container"}, 
-					React.createElement("header", {className: "grid-12"}, 
-						"プロジェクト一覧"
-					), 
-					React.createElement("div", {className: "grid-12"}, 
-						React.createElement(ProjectListView, {projects: projects})
-					)
+				React.createElement("div", {className: "grid-6"}, 
+					React.createElement(UserView, {user: user})
+				), 
+
+				React.createElement("div", {className: "grid-6"}, 
+					React.createElement(ProjectListView, {projects: projects})
 				)
 			)
 		);

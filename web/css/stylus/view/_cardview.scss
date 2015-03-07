@@ -1,0 +1,29 @@
+.CardView {
+	border: 1px solid #ccc;
+	border-radius: 3px;
+	margin-bottom: 15px;
+	overflow: hidden;
+}
+.CardView-section {
+	position: relative;
+	display: block;
+	padding: 8px 15px;
+	border-bottom: 1px solid #ccc;
+
+	&:last-child {
+		border-bottom: none;
+	}
+}
+.CardView-header {
+	@extend .CardView-section;
+	background: #f0f0f0;
+	font-weight: bold;
+}
+.CardView-sectionHeader {
+	margin: -8px -15px 8px;
+	padding: 8px 15px;
+	border-bottom: 1px solid #eee;
+	color: #aaa;
+	font-size: 0.8em;
+	font-weight: bold;
+}

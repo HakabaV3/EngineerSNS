@@ -1,0 +1,41 @@
+table {
+	width: 100%;
+	margin-bottom: 15px;
+}
+tr {
+	&:last-child {
+		td {
+			border-bottom: 1px solid #ccc;
+		}
+	}
+}
+tbody {
+}
+td {
+	padding: 8px 15px;
+	border-top: 1px solid #ccc;
+}
+
+@media (min-width: $W_S) and (max-width: $W_L) {
+	.grid-container {
+		width: 100%;
+		padding-left: 0;
+		padding-right: 0;
+	}
+}
+
+@media (max-width: $W_S) {
+	.grid-container {
+		width: 100%;
+		padding-left: 0;
+		padding-right: 0;
+	}
+
+	@for $i from 1 through 12 {
+		.grid-#{$i} {
+			display: block;
+			float: none;
+			width: 100%;
+		}
+	}
+}

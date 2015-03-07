@@ -1,29 +1,147 @@
-* {
-  box-sizing: border-box; }
-
-html, body,
-div, p,
-h1, h2, h3, h4, h5, h6 {
-  position: relative;
-  display: block;
-  padding: 0;
+/* http://meyerweb.com/eric/tools/css/reset/ 
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
   margin: 0;
+  padding: 0;
+  border: 0;
   font-size: 100%;
-  line-height: 100%;
-  font-family: inherit;
-  font-weight: normal; }
+  font: inherit;
+  vertical-align: baseline; }
 
-html, body {
-  min-width: 100%;
-  min-height: 100%;
+a {
+  text-decoration: none;
+  color: inherit; }
+  a:hover, a:active, a:visited, a:focus {
+    color: inherit; }
+
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+  display: block; }
+
+body {
+  line-height: 1; }
+
+ol, ul {
+  list-style: none; }
+
+blockquote, q {
+  quotes: none; }
+
+blockquote:before, blockquote:after,
+q:before, q:after {
+  content: '';
+  content: none; }
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0; }
+
+body {
   font-size: 14px;
   font-family: Helvetica, arial, freesans, clean, sans-serif, 'Segoe UI Emoji', 'Segoe UI Symbol'; }
 
+table {
+  width: 100%;
+  margin-bottom: 15px; }
+
+tr:last-child td {
+  border-bottom: 1px solid #ccc; }
+
+td {
+  padding: 8px 15px;
+  border-top: 1px solid #ccc; }
+
+@media (min-width: 750px) and (max-width: 1024px) {
+  .grid-container {
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0; } }
+@media (max-width: 750px) {
+  .grid-container {
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0; }
+
+  .grid-1 {
+    display: block;
+    float: none;
+    width: 100%; }
+
+  .grid-2 {
+    display: block;
+    float: none;
+    width: 100%; }
+
+  .grid-3 {
+    display: block;
+    float: none;
+    width: 100%; }
+
+  .grid-4 {
+    display: block;
+    float: none;
+    width: 100%; }
+
+  .grid-5 {
+    display: block;
+    float: none;
+    width: 100%; }
+
+  .grid-6 {
+    display: block;
+    float: none;
+    width: 100%; }
+
+  .grid-7 {
+    display: block;
+    float: none;
+    width: 100%; }
+
+  .grid-8 {
+    display: block;
+    float: none;
+    width: 100%; }
+
+  .grid-9 {
+    display: block;
+    float: none;
+    width: 100%; }
+
+  .grid-10 {
+    display: block;
+    float: none;
+    width: 100%; }
+
+  .grid-11 {
+    display: block;
+    float: none;
+    width: 100%; }
+
+  .grid-12 {
+    display: block;
+    float: none;
+    width: 100%; } }
 .grid-container {
   margin-left: auto;
   margin-right: auto;
   padding-left: 15px;
-  padding-right: 15px; }
+  padding-right: 15px;
+  width: 994px; }
   .grid-container:after {
     display: block;
     content: ' ';
@@ -137,9 +255,6 @@ html, body {
   float: left;
   box-sizing: border-box; }
 
-@media (min-width: 1024px) {
-  .grid-container {
-    width: 994px; } }
 @media (min-width: 750px) and (max-width: 1024px) {
   .grid-container {
     width: 100%;
@@ -238,4 +353,50 @@ html, body {
 .ToolBarView-right {
   float: right; }
 
-/*# sourceMappingURL=style.css.map */
+.UserPageView-nameSection {
+  margin-bottom: 15px; }
+  .UserPageView-nameSection:after {
+    display: block;
+    content: ' ';
+    clear: both; }
+
+.UserPageView-icon {
+  float: left;
+  width: 128px;
+  height: 128px;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  overflow: hidden; }
+
+.UserPageView-userName {
+  margin-left: 30px;
+  line-height: 128px;
+  font-size: 48px;
+  float: left;
+  vertical-align: middle; }
+
+.CardView {
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  margin-bottom: 15px;
+  overflow: hidden; }
+
+.CardView-section, .CardView-header {
+  position: relative;
+  display: block;
+  padding: 8px 15px;
+  border-bottom: 1px solid #ccc; }
+  .CardView-section:last-child, .CardView-header:last-child {
+    border-bottom: none; }
+
+.CardView-header {
+  background: #f0f0f0;
+  font-weight: bold; }
+
+.CardView-sectionHeader {
+  margin: -8px -15px 8px;
+  padding: 8px 15px;
+  border-bottom: 1px solid #eee;
+  color: #aaa;
+  font-size: 0.8em;
+  font-weight: bold; }

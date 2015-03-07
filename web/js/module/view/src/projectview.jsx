@@ -12,16 +12,26 @@ var ProjectView = React.createClass({
 		}
 
 		return (
-			<div className="ProjectView">
-				<p>
+			<div className="ProjectView CardView">
+				<header className="CardView-header">
 					プロジェクト:<b>{project.name}</b>
-				</p>
-				<table>
-					<tr>
-						<td>id</td>
-						<td>{project.id}</td>
-					</tr>
-				</table>
+				</header>
+				<section className="CardView-section">
+					<header className="CardView-sectionHeader">id</header>
+					<span>{project.id}</span>
+				</section>
+				<section className="CardView-section">
+					<header className="CardView-sectionHeader">owner</header>
+					<a href={'#!/user/' + project.owner}>
+						<span>{project.owner}</span>
+					</a>
+				</section>
+				<section className="CardView-section">
+					<header className="CardView-sectionHeader">uri</header>
+					<a href={'#!'+project.uri}>
+						<span>{project.uri}</span>
+					</a>
+				</section>
 			</div>
 		);
 	}

@@ -12,57 +12,28 @@ var UserView = React.createClass({
 		}
 
 		return (
-			<div className="UserView">
-				<p>
-					<img src={user.icon} width="64px" height="64px" />
-					<b>{user.name}</b>さんのページ
-				</p>
-				<table>
-					<tr>
-						<td>id</td>
-						<td>{user.id}</td>
-					</tr>
-					<tr>
-						<td>uri</td>
-						<td>{user.uri}</td>
-					</tr>
-					<tr>
-						<td>name</td>
-						<td>{user.name}</td>
-					</tr>
-					<tr>
-						<td>description</td>
-						<td>{user.description}</td>
-					</tr>
-					<tr>
-						<td>postCount</td>
-						<td>{user.postCount}</td>
-					</tr>
-					<tr>
-						<td>followingCount</td>
-						<td>{user.followingCount}</td>
-					</tr>
-					<tr>
-						<td>followedCount</td>
-						<td>{user.followedCount}</td>
-					</tr>
-					<tr>
-						<td>reviewCount</td>
-						<td>{user.reviewCount}</td>
-					</tr>
-					<tr>
-						<td>reviewingCount</td>
-						<td>{user.reviewingCount}</td>
-					</tr>
-					<tr>
-						<td>reviewedCount</td>
-						<td>{user.reviewedCount}</td>
-					</tr>
-					<tr>
-						<td>icon</td>
-						<td>{user.icon}</td>
-					</tr>
-				</table>
+			<div className="UserView CardView">
+				<header className="CardView-header">
+					ユーザー情報
+				</header>
+				<section className="CardView-section">
+					<p className="CardView-sectionHeader">name</p>
+					<span>{user.name}</span>
+				</section>
+				<section className="CardView-section">
+					<p className="CardView-sectionHeader">id</p>
+					<span>{user.id}</span>
+				</section>
+				<section className="CardView-section">
+					<p className="CardView-sectionHeader">uri</p>
+					<a href={'#!'+user.uri}>
+						<span>{user.uri}</span>
+					</a>
+				</section>
+				<section className="CardView-section">
+					<p className="CardView-sectionHeader">description</p>
+					<span>{user.description}</span>
+				</section>
 			</div>
 		);
 	}

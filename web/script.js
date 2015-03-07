@@ -18124,14 +18124,12 @@ module.exports = warning;
 
 var ToolBarView = React.createClass({displayName: "ToolBarView",
 	componentDidMount: function(){
-		this.onAppChangeAuthState = this.onAppChangeAuthState.bind(this);
+		this.onAppChangeAuthState = this.onAppChangeAuthState;
 
 		app.on(Application.Event.CHANGE_AUTH_STATE, this.onAppChangeAuthState);
 	},
 	componentDidUnmount: function(){
 		app.off(Application.Event.CHANGE_AUTH_STATE, this.onAppChangeAuthState);
-
-		this.onAppChangeAuthState = null;
 	},
 	onAppChangeAuthState: function(){
 		this.forceUpdate();
@@ -18930,56 +18928,27 @@ var UserView = React.createClass({displayName: "UserView",
 		}
 
 		return (
-			React.createElement("div", {className: "UserView"}, 
-				React.createElement("p", null, 
-					React.createElement("img", {src: user.icon, width: "64px", height: "64px"}), 
-					React.createElement("b", null, user.name), "さんのページ"
+			React.createElement("div", {className: "UserView CardView"}, 
+				React.createElement("header", {className: "CardView-header"}, 
+					"ユーザー情報"
 				), 
-				React.createElement("table", null, 
-					React.createElement("tr", null, 
-						React.createElement("td", null, "id"), 
-						React.createElement("td", null, user.id)
-					), 
-					React.createElement("tr", null, 
-						React.createElement("td", null, "uri"), 
-						React.createElement("td", null, user.uri)
-					), 
-					React.createElement("tr", null, 
-						React.createElement("td", null, "name"), 
-						React.createElement("td", null, user.name)
-					), 
-					React.createElement("tr", null, 
-						React.createElement("td", null, "description"), 
-						React.createElement("td", null, user.description)
-					), 
-					React.createElement("tr", null, 
-						React.createElement("td", null, "postCount"), 
-						React.createElement("td", null, user.postCount)
-					), 
-					React.createElement("tr", null, 
-						React.createElement("td", null, "followingCount"), 
-						React.createElement("td", null, user.followingCount)
-					), 
-					React.createElement("tr", null, 
-						React.createElement("td", null, "followedCount"), 
-						React.createElement("td", null, user.followedCount)
-					), 
-					React.createElement("tr", null, 
-						React.createElement("td", null, "reviewCount"), 
-						React.createElement("td", null, user.reviewCount)
-					), 
-					React.createElement("tr", null, 
-						React.createElement("td", null, "reviewingCount"), 
-						React.createElement("td", null, user.reviewingCount)
-					), 
-					React.createElement("tr", null, 
-						React.createElement("td", null, "reviewedCount"), 
-						React.createElement("td", null, user.reviewedCount)
-					), 
-					React.createElement("tr", null, 
-						React.createElement("td", null, "icon"), 
-						React.createElement("td", null, user.icon)
+				React.createElement("section", {className: "CardView-section"}, 
+					React.createElement("p", {className: "CardView-sectionHeader"}, "name"), 
+					React.createElement("span", null, user.name)
+				), 
+				React.createElement("section", {className: "CardView-section"}, 
+					React.createElement("p", {className: "CardView-sectionHeader"}, "id"), 
+					React.createElement("span", null, user.id)
+				), 
+				React.createElement("section", {className: "CardView-section"}, 
+					React.createElement("p", {className: "CardView-sectionHeader"}, "uri"), 
+					React.createElement("a", {href: '#!'+user.uri}, 
+						React.createElement("span", null, user.uri)
 					)
+				), 
+				React.createElement("section", {className: "CardView-section"}, 
+					React.createElement("p", {className: "CardView-sectionHeader"}, "description"), 
+					React.createElement("span", null, user.description)
 				)
 			)
 		);
@@ -19132,7 +19101,8 @@ var ProjectListItemView = React.createClass({displayName: "ProjectListItemView",
 
 		if (!project) {
 			return (
-				React.createElement("li", {className: "ProjectListItemView"}
+				React.createElement("li", {className: "ProjectListItemView CardView-section"}, 
+					"(Internal Error)"
 				)
 			);
 		}
@@ -19140,9 +19110,9 @@ var ProjectListItemView = React.createClass({displayName: "ProjectListItemView",
 		uri = '#!' + project.uri;
 
 		return (
-			React.createElement("li", {className: "ProjectListItemView"}, 
-				React.createElement("p", null, 
-					React.createElement("a", {href: uri}, project.name)
+			React.createElement("a", {href: uri, className: "ProjectListItemView CardView-section"}, 
+				React.createElement("li", null, 
+					project.name
 				)
 			)
 		);
@@ -19152,16 +19122,16 @@ var ProjectListItemView = React.createClass({displayName: "ProjectListItemView",
 
 var ProjectListView = React.createClass({displayName: "ProjectListView",
 	render: function(){
-		var projects = this.props.projects || [],
-			items = projects.map(function(project){
-				return (
-					React.createElement(ProjectListItemView, {project: project})
-				)
-			});
+		var projects = this.props.projects || [];
 
 		return (
-			React.createElement("ul", {className: "ProjectListView"}, 
-				items
+			React.createElement("ul", {className: "ProjectListView CardView"}, 
+				React.createElement("header", {className: "CardView-header"}, 
+					"プロジェクト一覧"
+				), 
+			projects.map(function(project){
+				return React.createElement(ProjectListItemView, {key: project.uri, project: project})
+			})
 			)
 		);
 	}
@@ -19175,8 +19145,8 @@ var UserPageView = React.createClass({displayName: "UserPageView",
 		};
 	},
 	componentDidMount: function(){
-		this.onChangeRout = this.onChangeRout.bind(this);
-		this.onModelUpdate = this.onModelUpdate.bind(this);
+		this.onChangeRout = this.onChangeRout;
+		this.onModelUpdate = this.onModelUpdate;
 
 		app.on(Application.Event.CHANGE_ROUT, this.onChangeRout);
 
@@ -19187,9 +19157,6 @@ var UserPageView = React.createClass({displayName: "UserPageView",
 		if (this.state.user) {
 			this.state.user.off('update', this.onModelUpdate);
 		}
-
-		this.onChangeRout = null;
-		this.onModelUpdate = null;
 	},
 
 	onChangeRout: function(rout) {
@@ -19254,23 +19221,18 @@ var UserPageView = React.createClass({displayName: "UserPageView",
 		}
 
 		return (
-			React.createElement("div", {className: "UserPageView"}, 
-				React.createElement("section", {className: "grid-container"}, 
-					React.createElement("header", {className: "grid-12"}, 
-						"ユーザー情報"
-					), 
-					React.createElement("div", {className: "grid-12"}, 
-						React.createElement(UserView, {user: user})
-					)
+			React.createElement("div", {className: "UserPageView grid-container"}, 
+				React.createElement("div", {className: "UserPageView-nameSection grid-12"}, 
+					React.createElement("img", {className: "UserPageView-icon", src: user ? user.icon : ''}), 
+					React.createElement("h3", {className: "UserPageView-userName"}, user ? user.name : '(NO USER)')
 				), 
 
-				React.createElement("section", {className: "grid-container"}, 
-					React.createElement("header", {className: "grid-12"}, 
-						"プロジェクト一覧"
-					), 
-					React.createElement("div", {className: "grid-12"}, 
-						React.createElement(ProjectListView, {projects: projects})
-					)
+				React.createElement("div", {className: "grid-6"}, 
+					React.createElement(UserView, {user: user})
+				), 
+
+				React.createElement("div", {className: "grid-6"}, 
+					React.createElement(ProjectListView, {projects: projects})
 				)
 			)
 		);
@@ -19292,14 +19254,24 @@ var ProjectView = React.createClass({displayName: "ProjectView",
 		}
 
 		return (
-			React.createElement("div", {className: "ProjectView"}, 
-				React.createElement("p", null, 
+			React.createElement("div", {className: "ProjectView CardView"}, 
+				React.createElement("header", {className: "CardView-header"}, 
 					"プロジェクト:", React.createElement("b", null, project.name)
 				), 
-				React.createElement("table", null, 
-					React.createElement("tr", null, 
-						React.createElement("td", null, "id"), 
-						React.createElement("td", null, project.id)
+				React.createElement("section", {className: "CardView-section"}, 
+					React.createElement("header", {className: "CardView-sectionHeader"}, "id"), 
+					React.createElement("span", null, project.id)
+				), 
+				React.createElement("section", {className: "CardView-section"}, 
+					React.createElement("header", {className: "CardView-sectionHeader"}, "owner"), 
+					React.createElement("a", {href: '#!/user/' + project.owner}, 
+						React.createElement("span", null, project.owner)
+					)
+				), 
+				React.createElement("section", {className: "CardView-section"}, 
+					React.createElement("header", {className: "CardView-sectionHeader"}, "uri"), 
+					React.createElement("a", {href: '#!'+project.uri}, 
+						React.createElement("span", null, project.uri)
 					)
 				)
 			)
@@ -19315,8 +19287,8 @@ var ProjectPageView = React.createClass({displayName: "ProjectPageView",
 		};
 	},
 	componentDidMount: function(){
-		this.onChangeRout = this.onChangeRout.bind(this);
-		this.onModelUpdate = this.onModelUpdate.bind(this);
+		this.onChangeRout = this.onChangeRout;
+		this.onModelUpdate = this.onModelUpdate;
 
 		app.on(Application.Event.CHANGE_ROUT, this.onChangeRout);
 
@@ -19327,9 +19299,6 @@ var ProjectPageView = React.createClass({displayName: "ProjectPageView",
 		if (this.state.project) {
 			this.state.project.off('update', this.onModelUpdate);
 		}
-
-		this.onChangeRout = null;
-		this.onModelUpdate = null;
 	},
 
 	onChangeRout: function(rout) {
@@ -19394,8 +19363,10 @@ var ProjectPageView = React.createClass({displayName: "ProjectPageView",
 var Error404View = React.createClass({displayName: "Error404View",
 	render: function(){
 		return (
-			React.createElement("div", {className: "Error404View"}, 
-				React.createElement("h1", null, "404 Page Not Found.")
+			React.createElement("div", {className: "Error404View grid-container"}, 
+				React.createElement("div", {className: "grid-12"}, 
+					React.createElement("h1", null, "404 Page Not Found.")
+				)
 			)
 		);
 	}
@@ -19407,7 +19378,7 @@ var BaseView = React.createClass({displayName: "BaseView",
 		};
 	},
 	componentDidMount: function(){
-		this.onChangeRout = this.onChangeRout.bind(this);
+		this.onChangeRout = this.onChangeRout;
 
 		app.on(Application.Event.CHANGE_ROUT, this.onChangeRout);
 
@@ -19415,8 +19386,6 @@ var BaseView = React.createClass({displayName: "BaseView",
 	},
 	componentWillUnmount: function(){
 		app.off(Application.Event.CHANGE_ROUT, this.onChangeRout);
-
-		this.onChangeRout = null;
 	},
 
 	onChangeRout: function(rout) {
@@ -19596,13 +19565,6 @@ Application.prototype.routing = function(url) {
         // /user/:userName
         params = {
             mode: 'user',
-            userName: ma[1]
-        };
-
-    } else if (ma = url.match(/\/user\/([^\/]+)\/project$/)) {
-        // /user/:userName/project
-        params = {
-            mode: 'allProjects',
             userName: ma[1]
         };
 

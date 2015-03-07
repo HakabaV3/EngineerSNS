@@ -6,6 +6,7 @@
 
 	padding-left: 15px;
 	padding-right: 15px;
+	width: 994px;
 }
 
 @for $i from 1 through 12 {
@@ -20,17 +21,7 @@
 	}
 }
 
-//liquid design : width 
-
-// 1024px ~
-@media (min-width: 1024px) {
-	.grid-container {
-		width: 994px;
-	}
-}
-
-// 750px ~ 1024px
-@media (min-width: 750px) and (max-width: 1024px) {
+@media (min-width: $W_S) and (max-width: $W_L) {
 	.grid-container {
 		width: 100%;
 		padding-left: 0;
@@ -38,8 +29,7 @@
 	}
 }
 
-// ~ 750px
-@media (max-width: 750px) {
+@media (max-width: $W_S) {
 	.grid-container {
 		width: 100%;
 		padding-left: 0;

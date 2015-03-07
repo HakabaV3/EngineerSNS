@@ -133,13 +133,6 @@ Application.prototype.routing = function(url) {
             userName: ma[1]
         };
 
-    } else if (ma = url.match(/\/user\/([^\/]+)\/project$/)) {
-        // /user/:userName/project
-        params = {
-            mode: 'allProjects',
-            userName: ma[1]
-        };
-
     } else if (ma = url.match(/^\/user\/([^\/]+)\/project\/([^\/]+)$/)) {
         // /user/:userName/project/:projectName
         params = {

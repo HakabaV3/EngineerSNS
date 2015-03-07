@@ -7,7 +7,8 @@ var ProjectListItemView = React.createClass({
 
 		if (!project) {
 			return (
-				<li className="ProjectListItemView">
+				<li className="ProjectListItemView CardView-section">
+					(Internal Error)
 				</li>
 			);
 		}
@@ -15,11 +16,11 @@ var ProjectListItemView = React.createClass({
 		uri = '#!' + project.uri;
 
 		return (
-			<li className="ProjectListItemView">
-				<p>
-					<a href={uri}>{project.name}</a>
-				</p>
-			</li>
+			<a href={uri} className="ProjectListItemView CardView-section">
+				<li>
+					{project.name}
+				</li>
+			</a>
 		);
 	}
 });
