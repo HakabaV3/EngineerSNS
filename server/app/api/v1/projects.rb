@@ -3,6 +3,10 @@ module V1
 
     resource "user" do
 
+      before do
+        response_header
+      end
+
     	# GET /user/:userName/project
       params do
         requires :userName, type: String

@@ -7,5 +7,13 @@ class API < Grape::API
   format :json
   formatter :json, Grape::Formatter::Jbuilder
 
+  helpers do
+    def response_header
+      header "Access-Control-Allow-Origin", "*"
+      header "Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE"
+    end
+  end
+
   mount V1::Root
+
 end

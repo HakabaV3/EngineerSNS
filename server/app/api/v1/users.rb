@@ -3,9 +3,14 @@ module V1
     
     resource "user" do
       
+      before do
+        response_header
+      end
+
       # GET /user/:userName
       params do
       end
+
       get '/', jbuilder:'/user/index' do
         @users = User.all
       end
