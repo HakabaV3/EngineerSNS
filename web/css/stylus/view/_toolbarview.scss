@@ -1,0 +1,36 @@
+@import "../function/_function.scss";
+
+$itemHeight: 20px;
+
+.ToolBarView {
+	@include clearfix();
+	position: relative;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: $itemHeight + 20px;
+	margin-bottom: 10px;
+	background: #f8f8f8;
+	border-bottom: 1px solid #eee;
+	padding: 10px 0;
+}
+
+.ToolBarView-itemContainer {
+	position: relative;
+	height: $itemHeight;
+	line-height: $itemHeight;
+
+	> * {
+		vertical-align: middle;
+	}
+}
+.ToolBarView-left {
+	@extend .ToolBarView-itemContainer;
+	float: left;
+}
+.ToolBarView-right {
+	@extend .ToolBarView-itemContainer;
+	float: right;
+}
+.ToolBarView-title {
+}

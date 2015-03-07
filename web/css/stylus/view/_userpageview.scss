@@ -1,0 +1,21 @@
+@import "../function/_function.scss";
+
+.UserPageView-nameSection {
+	@include clearfix();
+	margin-bottom: 15px;
+}
+.UserPageView-icon {
+	float: left;
+	width: 128px;
+	height: 128px;
+	border: 1px solid #ccc;
+	border-radius: 2px;
+	overflow: hidden;
+}
+.UserPageView-userName {
+	margin-left: 30px;
+	line-height: 128px;
+	font-size: 48px;
+	float: left;
+	vertical-align: middle;
+}

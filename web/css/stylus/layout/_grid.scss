@@ -1,0 +1,46 @@
+@import "../function/_function.scss";
+
+.grid-container {
+	@include clearfix();
+	@include center-horizontal();
+
+	padding-left: 15px;
+	padding-right: 15px;
+	width: 994px;
+}
+
+@for $i from 1 through 12 {
+	.grid-#{$i} {
+		position: relative;
+		padding-left: 15px;
+		padding-right: 15px;
+		width: 100% / 12 * $i;
+		min-height: 1px;
+		float: left;
+		box-sizing: border-box;
+	}
+}
+
+@media (min-width: $W_S) and (max-width: $W_L) {
+	.grid-container {
+		width: 100%;
+		padding-left: 0;
+		padding-right: 0;
+	}
+}
+
+@media (max-width: $W_S) {
+	.grid-container {
+		width: 100%;
+		padding-left: 0;
+		padding-right: 0;
+	}
+
+	@for $i from 1 through 12 {
+		.grid-#{$i} {
+			display: block;
+			float: none;
+			width: 100%;
+		}
+	}
+}
