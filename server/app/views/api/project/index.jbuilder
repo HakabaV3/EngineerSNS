@@ -1,4 +1,4 @@
-json.set! :projects do
+json.set! :success do
   json.array! @projects do |project|
     json.id project.id
     json.uri project.uri

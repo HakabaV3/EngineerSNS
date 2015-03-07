@@ -1,4 +1,4 @@
-json.set! :users do
+json.set! :success do
   json.array! @users do |user|
     json.id user.id
     json.uri user.uri
