@@ -12,14 +12,22 @@ var Project = function(data) {
     if (!(this instanceof Project)) return new Project(data);
 
     if (isObject(data)) {
-        if (Model.hasInstance(data.id)) {
-            return Model.getInstance(data.id).updateWithData(data);
+        if (Project.hasInstance(data.id)) {
+            return Project.getInstance(data.id).updateWithData(data);
         }
     }
 
     Model.call(this, data);
 };
 extendClass(Project, Model);
+
+/**
+ *  model instances map
+ *  @type {Object}
+ *  @private
+ *  @overrides
+ */
+Project.instances_ = {};
 
 /** 
  *  Schema

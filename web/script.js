@@ -18334,7 +18334,7 @@ var Model = function(data) {
     this.initForSchema();
     if (isObject(data)) {
         this.updateWithData(data);
-        Model.addInstance(this);
+        this.constructor.addInstance(this);
     }
 };
 extendClass(Model, EventDispatcher);
@@ -18358,7 +18358,7 @@ Model.prototype.schema = {};
  *  @return {boolean} If true, the instance is exist.
  */
 Model.hasInstance = function(id) {
-    return !!Model.instances_[id];
+    return !!this.instances_[id];
 };
 
 /**
@@ -18366,7 +18366,7 @@ Model.hasInstance = function(id) {
  *  @param {Model} instance instance
  */
 Model.addInstance = function(instance) {
-    Model.instances_[instance.id] = instance;
+    this.instances_[instance.id] = instance;
 };
 
 /**
@@ -18375,7 +18375,7 @@ Model.addInstance = function(instance) {
  *  @return {Model} the instance.
  */
 Model.getInstance = function(id) {
-    return Model.instances_[id];
+    return this.instances_[id];
 };
 
 /**
@@ -18739,14 +18739,23 @@ var User = function(data) {
     if (!(this instanceof User)) return new User(data);
 
     if (isObject(data)) {
-        if (Model.hasInstance(data.id)) {
-            return Model.getInstance(data.id).updateWithData(data);
+        if (User.hasInstance(data.id)) {
+            return User.getInstance(data.id).updateWithData(data);
         }
     }
 
     Model.call(this, data);
 };
 extendClass(User, Model);
+
+
+/**
+ *  model instances map
+ *  @type {Object}
+ *  @private
+ *  @overrides
+ */
+User.instances_ = {};
 
 /** 
  *  Schema
@@ -18973,14 +18982,22 @@ var Project = function(data) {
     if (!(this instanceof Project)) return new Project(data);
 
     if (isObject(data)) {
-        if (Model.hasInstance(data.id)) {
-            return Model.getInstance(data.id).updateWithData(data);
+        if (Project.hasInstance(data.id)) {
+            return Project.getInstance(data.id).updateWithData(data);
         }
     }
 
     Model.call(this, data);
 };
 extendClass(Project, Model);
+
+/**
+ *  model instances map
+ *  @type {Object}
+ *  @private
+ *  @overrides
+ */
+Project.instances_ = {};
 
 /** 
  *  Schema

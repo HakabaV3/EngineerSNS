@@ -12,14 +12,23 @@ var User = function(data) {
     if (!(this instanceof User)) return new User(data);
 
     if (isObject(data)) {
-        if (Model.hasInstance(data.id)) {
-            return Model.getInstance(data.id).updateWithData(data);
+        if (User.hasInstance(data.id)) {
+            return User.getInstance(data.id).updateWithData(data);
         }
     }
 
     Model.call(this, data);
 };
 extendClass(User, Model);
+
+
+/**
+ *  model instances map
+ *  @type {Object}
+ *  @private
+ *  @overrides
+ */
+User.instances_ = {};
 
 /** 
  *  Schema

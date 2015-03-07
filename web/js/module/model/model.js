@@ -14,7 +14,7 @@ var Model = function(data) {
     this.initForSchema();
     if (isObject(data)) {
         this.updateWithData(data);
-        Model.addInstance(this);
+        this.constructor.addInstance(this);
     }
 };
 extendClass(Model, EventDispatcher);
@@ -38,7 +38,7 @@ Model.prototype.schema = {};
  *  @return {boolean} If true, the instance is exist.
  */
 Model.hasInstance = function(id) {
-    return !!Model.instances_[id];
+    return !!this.instances_[id];
 };
 
 /**
@@ -46,7 +46,7 @@ Model.hasInstance = function(id) {
  *  @param {Model} instance instance
  */
 Model.addInstance = function(instance) {
-    Model.instances_[instance.id] = instance;
+    this.instances_[instance.id] = instance;
 };
 
 /**
@@ -55,7 +55,7 @@ Model.addInstance = function(instance) {
  *  @return {Model} the instance.
  */
 Model.getInstance = function(id) {
-    return Model.instances_[id];
+    return this.instances_[id];
 };
 
 /**
