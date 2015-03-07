@@ -5,9 +5,9 @@ default:
 
 #全部まとめてコンパイルする
 compile:
-	$(MAKE) jsx
-	$(MAKE) js
-	$(MAKE) html
+	$(MAKE) jsx&
+	$(MAKE) js&
+	$(MAKE) html&
 
 #React jsxファイルのコンパイル
 jsx:
