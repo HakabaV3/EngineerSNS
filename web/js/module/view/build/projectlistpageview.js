@@ -1,7 +1,7 @@
-//@include ./projectview.js
+//@include ./projectlistview.js
 //@include ../../model/project.js
 
-var ProjectPageView = React.createClass({displayName: "ProjectPageView",
+var ProjectsPageView = React.createClass({displayName: "ProjectsPageView",
 	getInitialState: function(){
 		return {
 			project: null
@@ -66,16 +66,17 @@ var ProjectPageView = React.createClass({displayName: "ProjectPageView",
 	},
 
 	render: function(){
-		var project = this.state.project;
+		var user = this.state.user,
+			projects = this.state.projects;
 
-		if (project) {
-			document.title = project.name + ' - ' + project.owner
+		if (user) {
+			document.title = user.name + 'さんのプロジェクト一覧'
 		}
 
 		return (
 			React.createElement("div", {className: "ProjectPageView grid-container"}, 
 				React.createElement("div", {className: "grid-12"}, 
-					React.createElement(ProjectView, {project: project})
+					React.createElement(ProjectListView, {projects: projects})
 				)
 			)
 		);

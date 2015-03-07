@@ -2,6 +2,7 @@
 	"success": {
 		"id": 4,
 		"owner": "stogu",
-		"name": "ChanmikaProject"
+		"name": "ChanmikaProject",
+		"uri": "/user/stogu/project/ChanmikaProject"
 	}
 }

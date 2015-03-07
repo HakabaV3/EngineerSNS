@@ -1,7 +1,7 @@
 //@include ./projectview.js
 //@include ../../model/project.js
 
-var ProjectPageView = React.createClass({displayName: "ProjectPageView",
+var ProjectsPageView = React.createClass({displayName: "ProjectsPageView",
 	getInitialState: function(){
 		return {
 			project: null

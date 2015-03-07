@@ -10,7 +10,7 @@ var API = {};
  *  API Entry Point
  *  @const {string}
  */
-API.EntryPoint = 'http://localhost:3000/api/v1';
+// API.EntryPoint = 'http://localhost:3000/api/v1';
 
 //@TODO: DEBUG ONLY
 API.EntryPoint = './testdata';

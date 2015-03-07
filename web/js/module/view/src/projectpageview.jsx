@@ -66,10 +66,16 @@ var ProjectPageView = React.createClass({
 	},
 
 	render: function(){
+		var project = this.state.project;
+
+		if (project) {
+			document.title = project.name + ' - ' + project.owner
+		}
+
 		return (
 			<div className="ProjectPageView grid-container">
 				<div className="grid-12">
-					<ProjectView project={this.state.project}/>
+					<ProjectView project={project}/>
 				</div>
 			</div>
 		);

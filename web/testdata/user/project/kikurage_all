@@ -1,11 +1,13 @@
 {
 	"success": [{
-		"id": 1,
+		"id": 6,
 		"owner": "kikurage",
-		"name": "KikurageProject"
+		"name": "KikurageProject",
+		"uri": "/user/kikurage/project/KikurageProject"
 	}, {
-		"id": 2,
+		"id": 7,
 		"owner": "kikurage",
-		"name": "OkinawaProject"
+		"name": "OkinawaProject",
+		"uri": "/user/kikurage/project/OkinawaProject"
 	}]
 }

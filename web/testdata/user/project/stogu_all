@@ -1,11 +1,13 @@
 {
 	"success": [{
-		"id": 3,
-		"owner": "stogu",
-		"name": "StoguProject"
-	}, {
 		"id": 4,
 		"owner": "stogu",
-		"name": "ChanmikaProject"
+		"name": "ChanmikaProject",
+		"uri": "/user/stogu/project/ChanmikaProject"
+	}, {
+		"id": 8,
+		"owner": "stogu",
+		"name": "StoguProject",
+		"uri": "/user/stogu/project/StoguProject"
 	}]
 }

@@ -1,7 +1,7 @@
 /**
  *	Libs
  */
-//@include ../bower_components/react/react.min.js
+//@include ../bower_components/react/react.js
 
 /**
  *	Main source

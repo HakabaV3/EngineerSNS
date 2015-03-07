@@ -104,6 +104,20 @@ User.getMe = function(callback) {
 };
 
 /**
+ *  Get all projects.
+ *  @param {Function} callback callback function.
+ */
+User.prototype.getAllProjects = function(callback) {
+    API.get(this.uri + '/project', function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, res.map(Project));
+    });
+};
+
+/**
  *  Create new user.
  *  @param {string} userName the user name.
  *  @param {string} password the password.

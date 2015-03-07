@@ -1,7 +1,8 @@
 {
 	"success": {
-		"id": 1,
+		"id": 6,
 		"owner": "kikurage",
-		"name": "KikurageProject"
+		"name": "KikurageProject",
+		"uri": "/user/kikurage/project/KikurageProject"
 	}
 }

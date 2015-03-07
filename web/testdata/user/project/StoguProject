@@ -1,7 +1,8 @@
 {
 	"success": {
-		"id": 3,
+		"id": 8,
 		"owner": "stogu",
-		"name": "StoguProject"
+		"name": "StoguProject",
+		"uri": "/user/stogu/project/StoguProject"
 	}
 }
