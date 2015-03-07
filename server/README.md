@@ -11,7 +11,13 @@
 
 ### `初期設定`
 
-cloneした後
+1. MySQLのドライバを入れる
+
+```
+brew install mysql
+```
+
+2. cloneした後、必要なgemをまとめてインストール
 
 ```
 $ bundle install
@@ -19,20 +25,26 @@ $ bundle install
 
 ### `データベース設定`
 
-MySQLのデータベースを作成
+1. MySQLのドライバを走らせる
+
+```
+$ mysqld
+```
+
+2. MySQLのデータベースを作成
 
 ```
 $ rake db:create
 $ rake db:migrate
 ```
 
-データベースにテストデータを追加
+3. データベースにテストデータを追加
 
 ```
 $ rake db:seed
 ```
 
-データベースのリセット
+4. データベースのリセット
 
 ```
 $ rake db:reset
