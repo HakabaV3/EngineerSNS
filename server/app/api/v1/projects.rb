@@ -11,13 +11,13 @@ module V1
             response_header
           end
 
-        	# GET /user/:userName/project
+          # GET /user/:userName/project
           params do
             requires :userName, type: String
           end
           get '', jbuilder: 'project/index' do
+            error!("ユーザーが見つかりません。", 404) if User.where(name: params[:userName]).first.blank?
             @projects = User.where(name: params[:userName]).first.projects.all
-            error!("プロジェクトが見つかりません。", 404) if @projects.blank?
           end
 
           # GET /user/:userName/project/:projectName
@@ -26,8 +26,9 @@ module V1
         	  requires :projectName, type: String
           end
           get ':projectName', jbuilder: 'project/show' do
-          	@user = User.find_by(name: params[:userName])
-            @project = @user.projects.find_by(name: params[:projectName])
+            error!("ユーザーが見つかりません。", 404) if User.where(name: params[:userName]).first.blank?
+
+            @project = User.find_by(name: params[:userName]).projects.find_by(name: params[:projectName])
             error!("プロジェクトが見つかりません。", 404) if @project.blank?
           end
 

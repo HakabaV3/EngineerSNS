@@ -30,7 +30,7 @@ module V1
       end
       post ':name', jbuilder: '/user/new' do
         if User.where(name: params[:name]).count > 0
-          error!("ユーザー登録に失敗しました。", 404)
+          error!("ユーザー名は既に使用されています。", 404)
         end
         @user = User.create(name: params[:name], password: params[:password])
       end

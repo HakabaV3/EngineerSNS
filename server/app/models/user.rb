@@ -4,7 +4,7 @@ class User < ActiveRecord::Base
   accepts_nested_attributes_for :projects
 
   def uri
-    return " /user/#{self.name}"
+    return "/user/#{self.name}"
   end
 
 end
