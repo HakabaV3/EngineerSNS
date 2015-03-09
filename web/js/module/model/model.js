@@ -33,6 +33,13 @@ Model.instances_ = {};
 Model.prototype.schema = {};
 
 /**
+ *  Finalizer.
+ */
+Model.prototype.finalize = function() {
+    EventDispatcher.finalize.call(this);
+};
+
+/**
  *  Check if the instance is exist.
  *  @param {string} id instance id.
  *  @return {boolean} If true, the instance is exist.

@@ -5,13 +5,13 @@ default:
 
 #全部まとめてコンパイルする
 compile:
-	$(MAKE) jsx&
+	$(MAKE) compile-stop
 	$(MAKE) js&
 	$(MAKE) html&
 
-#React jsxファイルのコンパイル
-jsx:
-	jsx -x jsx -w js/module/view/src js/module/view/build
+#全部まとめてコンパイルの停止。
+compile-stop:
+	which packjs | xargs -I$$ pgrep -f $$ | xargs -I$$ kill $$
 
 #jsモジュールの結合
 js:

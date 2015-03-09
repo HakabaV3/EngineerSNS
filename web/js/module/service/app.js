@@ -1,11 +1,23 @@
-//@include ../view/build/baseview.js
+//@include ../view/baseview.js
 //@include ../model/user.js
 //@include util.js
 
 /**
  *  @constructor
  */
-var Application = function() {
+var Application = function() {};
+extendClass(Application, EventDispatcher);
+
+/**
+ *  Event names
+ *  @enum {string}
+ */
+Application.Event = {
+    CHANGE_AUTH_STATE: 'CHANGE_AUTH_STATE',
+    CHANGE_ROUT: 'CHANGE_ROUT'
+};
+
+Application.prototype.init = function() {
     /**
      *  @NOTE singleton
      */
@@ -34,26 +46,11 @@ var Application = function() {
 
     this.updateAuthState();
 
-    /**
-     *  @NOTE
-     *  appが存在しないと、イベントリスニングができないので、
-     *  viewは非同期で生成する
-     */
-    setTimeout(function() {
-        React.render(React.createElement(BaseView, null), document.body);
-    }, 0);
+    this.baseView = new BaseView();
+    this.baseView.appendTo(document.body);
 
     window.addEventListener('hashchange', this.onHashChange.bind(this));
-};
-extendClass(Application, EventDispatcher);
-
-/**
- *  Event names
- *  @enum {string}
- */
-Application.Event = {
-    CHANGE_AUTH_STATE: 'CHANGE_AUTH_STATE',
-    CHANGE_ROUT: 'CHANGE_ROUT'
+    this.onHashChange();
 };
 
 /**
