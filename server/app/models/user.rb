@@ -16,8 +16,8 @@ class User < ActiveRecord::Base
   end
 
   def self.projects(name)
-  	user = User.find_by(name: name)
-  	return user.projects.all
+    user = User.find_by(name: name)
+    return user.projects.all
   end
 
 end
