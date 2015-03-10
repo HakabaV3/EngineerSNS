@@ -9,6 +9,7 @@ var ProjectListView = function() {
     this.loadTemplate('ProjectListView');
 
     this.projects = [];
+    this.listItems = [];
 };
 extendClass(ProjectListView, View);
 
@@ -24,10 +25,16 @@ ProjectListView.prototype.setProjects = function(projects) {
 ProjectListView.prototype.update = function() {
     var self = this;
 
-    this.projects.forEach(function(project) {
-        var projectListItemView = new ProjectListItemView();
-        projectListItemView.project = project;
+    this.listItems.forEach(function(listItem) {
+        listItem.finalize();
+    });
 
-        self.appendChild(projectListItemView);
-    })
+    this.listItems = this.projects.map(function(project) {
+        var listItem = new ProjectListItemView();
+        listItem.project = project;
+
+        self.appendChild(listItem);
+
+        return listItem;
+    });
 }
