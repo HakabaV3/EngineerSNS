@@ -1,31 +1,31 @@
 /**
- *	Event dispatchable object.
+ *  Event dispatchable object.
  *
- *	@constructor
+ *  @constructor
  */
 var EventDispatcher = function EventDispatcher() {
     /**
-     *	The list of all event listeners attached on this.
+     *  The list of all event listeners attached on this.
      *
-     * 	@type {Object<string, Array<Function>>}
-     *	@private
+     *  @type {Object<string, Array<Function>>}
+     *  @private
      */
     this.eventListeners_ = {};
 };
 
 /**
- *  finalize
+ *  Finalizer.
  */
 EventDispatcher.prototype.finalize = function() {
     this.eventListeners_ = null;
 };
 
 /**
- *	attach an event listener.
+ *  attach an event listener.
  *
- *	@param {string} type event type.
- *	@param {Function} listener the event listener to attach.
- *	@return {EventDispatcher} this.
+ *  @param {string} type event type.
+ *  @param {Function} listener the event listener to attach.
+ *  @return {EventDispatcher} this.
  */
 EventDispatcher.prototype.on = function(type, listener) {
     var listeners = this.eventListeners_[type];
@@ -40,13 +40,13 @@ EventDispatcher.prototype.on = function(type, listener) {
 };
 
 /**
- *	detach the event listener.
- *	if the event listener is detached for more than twice,
- *	this method detach all of them.
+ *  detach the event listener.
+ *  if the event listener is detached for more than twice,
+ *  this method detach all of them.
  *
- *	@param {string} type event type.
- *	@param {Function} listener the event listener to detach.
- *	@return {EventDispatcher} this.
+ *  @param {string} type event type.
+ *  @param {Function} listener the event listener to detach.
+ *  @return {EventDispatcher} this.
  */
 EventDispatcher.prototype.off = function(type, listener) {
     var listeners = this.eventListeners_[type],
@@ -66,11 +66,11 @@ EventDispatcher.prototype.off = function(type, listener) {
 };
 
 /**
- *	fire the event.
+ *  fire the event.
  *
- *	@param {string} type event type.
- *	@param {...*} optArgs arguments.
- *	@return {EventDispatcher} this.
+ *  @param {string} type event type.
+ *  @param {...*} optArgs arguments.
+ *  @return {EventDispatcher} this.
  */
 EventDispatcher.prototype.fire = function(type, optArgs) {
     var listeners = this.eventListeners_[type],

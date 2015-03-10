@@ -3,12 +3,113 @@
 
 <head>
 	<link rel="stylesheet" href="./style.css">
+	<meta charset="utf8">
     <title></title>
 </head>
 
 <body>
 
-    <script src="./script.js"></script>
+<template name="ToolBarView">
+	<div class="ToolBarView">
+		<div class="grid-container">
+			<div class="grid-12">
+				<div class="ToolBarView-left">
+					<span class="ToolBarView-title">EngineerSNS</span>
+				</div>
+
+				<div class="ToolBarView-right">
+					<span class="ToolBarView-auth">{{state.loginState}}</span>			
+				</div>
+			</div>
+		</div>
+	</div>
+</template>
+
+
+<template name="UserView">
+	<div class="UserView CardView">
+		<header class="CardView-header">
+			ユーザー情報
+		</header>
+		<section class="CardView-section">
+			<p class="CardView-sectionHeader">name</p>
+			<span>{{user.name}}</span>
+		</section>
+		<section class="CardView-section">
+			<p class="CardView-sectionHeader">id</p>
+			<span>{{user.id}}</span>
+		</section>
+		<section class="CardView-section">
+			<p class="CardView-sectionHeader">uri</p>
+			<a href="#!{{user.uri}}">
+				<span>{{user.uri}}</span>
+			</a>
+		</section>
+		<section class="CardView-section">
+			<p class="CardView-sectionHeader">description</p>
+			<span>{{user.description}}</span>
+		</section>
+	</div>
+</template>
+
+
+<template name="ProjectListItemView">
+	<a href="#!{{project.uri}}" class="ProjectListItemView CardView-section">
+		<li>
+			{{project.name}}
+		</li>
+	</a>
+</template>
+
+<template name="ProjectListView">
+	<div class="ProjectListView CardView">
+		<header class="CardView-header">
+			プロジェクト一覧
+		</header>
+		<ul class="ProjectListView-container" container>
+		</ul>
+	</div>
+</template>
+
+<template name="UserPageView">
+	<div class="UserPageView grid-container">
+		<div class="UserPageView-nameSection grid-12">
+			<img class="UserPageView-icon" src="{{ user.icon }}" />
+			<h3 class="UserPageView-userName">{{ user.name }}</h3>
+		</div>
+
+		<div class="grid-6">
+			{{view view=UserView name=userView }}
+		</div>
+
+		<div class="grid-6">
+			{{view view=ProjectListView name=projectListView }}
+		</div>
+	</div>
+</template>
+
+<template name="ProjectPageView">
+	<div class="ProjectPageView"></div>
+</template>
+
+
+<template name="Error404PageView">
+	<div class="Error404PageView">
+		<h1>404 Page Not Found.</h1>
+	</div>
+</template>
+
+<template name="BaseView">
+	<div class="BaseView">
+		{{view view=ToolBarView name=toolBarView}}
+		<div class="BaseView-body">
+			{{view view=UserPageView name=userPageView}}
+			{{view view=ProjectPageView name=projectPageView}}
+			{{view view=Error404PageView name=error404pageView}}
+		</div>
+	</div>
+</template>
+<script src="./script.js"></script>
 </body>
 
 </html>

@@ -1,0 +1,15 @@
+//@include toolbarview.html
+//@include userpageview.html
+//@include projectpageview.html
+//@include error404pageview.html
+
+<template name="BaseView">
+	<div class="BaseView">
+		{{view view=ToolBarView name=toolBarView}}
+		<div class="BaseView-body">
+			{{view view=UserPageView name=userPageView}}
+			{{view view=ProjectPageView name=projectPageView}}
+			{{view view=Error404PageView name=error404pageView}}
+		</div>
+	</div>
+</template>
