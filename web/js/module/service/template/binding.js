@@ -1,4 +1,5 @@
-//@include eventdispatcher.js
+//@include ../eventdispatcher.js
+//@include ../observer.js
 
 /**
  *  オブジェクトの特定のプロパティへのバインドを表すクラス
@@ -7,8 +8,9 @@
  *  @param {[string]} propNames
  *
  *  @extends {EventDispatcher}
+ *  @namespace Template
  */
-function Binding(target, propNames) {
+Template.Binding = function(target, propNames) {
     EventDispatcher.call(this);
 
     /**
@@ -27,16 +29,9 @@ function Binding(target, propNames) {
 
     this.resetObserve(0);
 };
-extendClass(Binding, EventDispatcher);
+extendClass(Template.Binding, EventDispatcher);
 
-/**
- *  バインディングをコピーする
- */
-Binding.prototype.copy = function(target) {
-    return new Binding(target, this.propNames.slice(0));
-};
-
-Binding.prototype.finalize = function() {
+Template.Binding.prototype.finalize = function() {
     this.resetObserve(0);
     this.onChangeHandler = null;
 
@@ -44,9 +39,23 @@ Binding.prototype.finalize = function() {
 };
 
 /**
+ *  バインディングをコピーする
+ */
+Template.Binding.prototype.copy = function(target) {
+    return new Template.Binding(target, this.propNames.slice(0));
+};
+
+Template.Binding.prototype.getValue = function() {
+    var length = this.propNames.length;
+    return isObject(this.targets[length - 1]) ?
+        this.targets[length - 1][this.propNames[length - 1]] :
+        '';
+};
+
+/**
  *  指定階層以下の監視を更新する
  */
-Binding.prototype.resetObserve = function(index) {
+Template.Binding.prototype.resetObserve = function(index) {
     if (index >= this.propNames.length) return;
 
     var propName = this.propNames[index],
@@ -81,14 +90,14 @@ Binding.prototype.resetObserve = function(index) {
     this.resetObserve(index + 1);
 };
 
-Binding.prototype.setTarget = function(newTarget) {
+Template.Binding.prototype.setTarget = function(newTarget) {
     this.resetObserve(0, newTarget);
 };
 
 /**
  *  変更に対するイベントハンドラ
  */
-Binding.prototype.onChangeHandler = function(change) {
+Template.Binding.prototype.onChangeHandler = function(change) {
     var index = this.targets.indexOf(change.object),
         length = this.propNames.length;
 
@@ -100,7 +109,5 @@ Binding.prototype.onChangeHandler = function(change) {
         this.resetObserve(index + 1);
     }
 
-    if (isObject(this.targets[length - 1])) {
-        this.fire('change', this.targets[length - 1][this.propNames[length - 1]]);
-    }
+    this.fire('change', this.getValue());
 };

@@ -1,0 +1,25 @@
+<template name="UserView">
+	<div class="UserView CardView">
+		<header class="CardView-header">
+			ユーザー情報
+		</header>
+		<section class="CardView-section">
+			<p class="CardView-sectionHeader">name</p>
+			<span>{{user.name}}</span>
+		</section>
+		<section class="CardView-section">
+			<p class="CardView-sectionHeader">id</p>
+			<span>{{user.id}}</span>
+		</section>
+		<section class="CardView-section">
+			<p class="CardView-sectionHeader">uri</p>
+			<a href="#!{{user.uri}}">
+				<span>{{user.uri}}</span>
+			</a>
+		</section>
+		<section class="CardView-section">
+			<p class="CardView-sectionHeader">description</p>
+			<span>{{user.description}}</span>
+		</section>
+	</div>
+</template>

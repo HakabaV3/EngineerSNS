@@ -1,3 +1,9 @@
+/**
+ *  @TODO
+ *  API.Userへの依存をなくす
+ *  Model#uriを用いて、API_coreだけで対応する。
+ */
+
 //@include ../service/util.js
 //@include ../service/eventdispatcher.js
 

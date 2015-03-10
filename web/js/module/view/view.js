@@ -25,18 +25,12 @@ View.prototype.finalize = function() {
     var self = this,
         key;
 
-    this.bindings.forEach(function(binding) {
-        binding.finalize();
+    this.queries.forEach(function(query) {
+        query.finalize();
     });
     Object.keys(this.childViews).forEach(function(childViewName) {
         self.childViews[childViewName].finalize();
     });
-
-    for (key in this) {
-        if (isFunction(self[key])) {
-            self[key] = null;
-        }
-    }
 
     Observer.unobserveAll(this);
     this.remove();
@@ -53,7 +47,7 @@ View.prototype.loadTemplate = function(templateId) {
     this.$.root = created.node;
     this.$.container = this.$.root.querySelector('[container]') || this.$.root;
     this.childViews = created.childViews;
-    this.bindings = created.bindings;
+    this.queries = created.queries;
 };
 
 /**

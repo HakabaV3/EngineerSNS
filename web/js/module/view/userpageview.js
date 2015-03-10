@@ -26,7 +26,8 @@ UserPageView.prototype.finalize = function() {
 };
 
 UserPageView.prototype.loadUserWithRout = function(rout) {
-    if (rout.mode !== 'user') return;
+    if (rout.mode !== 'user' &&
+        rout.mode !== 'project') return;
 
     var self = this;
 

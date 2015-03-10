@@ -96,6 +96,15 @@ function isFunction(expression) {
 }
 
 /**
+ *  check if expression is string.
+ *  @param {*} expression expression to check.
+ *  @return {boolean} if true, the expression is string.
+ */
+function isString(expression) {
+    return typeof expression === 'string';
+}
+
+/**
  *  short-hand
  */
 var forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
@@ -211,6 +220,76 @@ EventDispatcher.prototype.fire = function(type, optArgs) {
 
     return this;
 };
+
+
+
+
+
+/**
+ *  Template engine.
+ *  @namespace
+ */
+var Template = {};
+
+
+
+
+
+
+
+
+/**
+ *	@namespace Template
+ */
+Template.QueryPart = function() {
+    EventDispatcher.call(this);
+};
+extendClass(Template.QueryPart, EventDispatcher);
+
+Template.QueryPart.prototype.getValue = function() {
+    console.warn('Template.QueryPart#getValue must be overrided.');
+    return '';
+};
+
+/**
+ *	@enum {string}
+ */
+Template.QueryPart.Type = {
+    TEXT: 'TEXT',
+    BINDING: 'BINDING',
+    VIEW: 'VIEW'
+};
+
+Template.QueryTextPart = function(text) {
+    if (!(this instanceof Template.QueryTextPart)) return new Template.QueryTextPart(text);
+    Template.QueryPart.call(this);
+
+    /**
+     *  @type {string}
+     */
+    this.text = null;
+    this.setText(text);
+};
+extendClass(Template.QueryTextPart, Template.QueryPart);
+
+Template.QueryTextPart.prototype.setText = function(newText) {
+    var oldText = this.text;
+
+    if (oldText === newText) return;
+
+    this.text = newText;
+
+    this.fire('change');
+};
+
+Template.QueryTextPart.prototype.getValue = function() {
+    return this.text || '';
+};
+
+
+
+
+
 
 
 
@@ -402,9 +481,6 @@ Observer.observeCallback = function(changes) {
     });
 };
 
-
-
-
 /**
  *  オブジェクトの特定のプロパティへのバインドを表すクラス
  *  @constructor
@@ -412,8 +488,9 @@ Observer.observeCallback = function(changes) {
  *  @param {[string]} propNames
  *
  *  @extends {EventDispatcher}
+ *  @namespace Template
  */
-function Binding(target, propNames) {
+Template.Binding = function(target, propNames) {
     EventDispatcher.call(this);
 
     /**
@@ -432,16 +509,9 @@ function Binding(target, propNames) {
 
     this.resetObserve(0);
 };
-extendClass(Binding, EventDispatcher);
+extendClass(Template.Binding, EventDispatcher);
 
-/**
- *  バインディングをコピーする
- */
-Binding.prototype.copy = function(target) {
-    return new Binding(target, this.propNames.slice(0));
-};
-
-Binding.prototype.finalize = function() {
+Template.Binding.prototype.finalize = function() {
     this.resetObserve(0);
     this.onChangeHandler = null;
 
@@ -449,9 +519,23 @@ Binding.prototype.finalize = function() {
 };
 
 /**
+ *  バインディングをコピーする
+ */
+Template.Binding.prototype.copy = function(target) {
+    return new Template.Binding(target, this.propNames.slice(0));
+};
+
+Template.Binding.prototype.getValue = function() {
+    var length = this.propNames.length;
+    return isObject(this.targets[length - 1]) ?
+        this.targets[length - 1][this.propNames[length - 1]] :
+        '';
+};
+
+/**
  *  指定階層以下の監視を更新する
  */
-Binding.prototype.resetObserve = function(index) {
+Template.Binding.prototype.resetObserve = function(index) {
     if (index >= this.propNames.length) return;
 
     var propName = this.propNames[index],
@@ -486,14 +570,14 @@ Binding.prototype.resetObserve = function(index) {
     this.resetObserve(index + 1);
 };
 
-Binding.prototype.setTarget = function(newTarget) {
+Template.Binding.prototype.setTarget = function(newTarget) {
     this.resetObserve(0, newTarget);
 };
 
 /**
  *  変更に対するイベントハンドラ
  */
-Binding.prototype.onChangeHandler = function(change) {
+Template.Binding.prototype.onChangeHandler = function(change) {
     var index = this.targets.indexOf(change.object),
         length = this.propNames.length;
 
@@ -505,16 +589,190 @@ Binding.prototype.onChangeHandler = function(change) {
         this.resetObserve(index + 1);
     }
 
-    if (isObject(this.targets[length - 1])) {
-        this.fire('change', this.targets[length - 1][this.propNames[length - 1]]);
+    this.fire('change', this.getValue());
+};
+
+Template.QueryBindingPart = function(binding) {
+    if (!(this instanceof Template.QueryBindingPart)) return new Template.QueryBindingPart(binding);
+    Template.QueryPart.call(this);
+
+    this.onChange = this.onChange.bind(this);
+
+    /**
+     *	@type {Template.Binding}
+     */
+    this.binding = null;
+    this.setBinding(binding);
+};
+extendClass(Template.QueryBindingPart, Template.QueryPart);
+
+Template.QueryBindingPart.prototype.finalize = function() {
+    this.setBinding(null);
+    this.onChange = null;
+
+    Template.QueryPart.prototype.finalize.call(this);
+};
+
+Template.QueryBindingPart.prototype.setBinding = function(newBinding) {
+    var oldBinding = this.binding;
+
+    if (oldBinding) {
+        oldBinding.off('change', this.onChange);
     }
+
+    this.binding = newBinding;
+
+    if (newBinding) {
+        newBinding.on('change', this.onChange);
+    }
+
+    this.onChange();
+};
+
+Template.QueryBindingPart.prototype.onChange = function() {
+    this.fire('change');
+};
+
+Template.QueryBindingPart.prototype.getValue = function() {
+    return this.binding ? this.binding.getValue() : '';
+};
+
+
+
+
+
+
+
+
+Template.QueryViewPart = function(view) {
+    if (!(this instanceof Template.QueryViewPart)) return new Template.QueryViewPart(binding);
+    Template.QueryPart.call(this);
+
+    /**
+     *  @type {View}
+     */
+    this.view = null;
+    this.setView(view);
+};
+extendClass(Template.QueryViewPart, Template.QueryPart);
+
+Template.QueryViewPart.prototype.finalize = function() {
+    this.setView(null);
+
+    Template.QueryPart.prototype.finalize.call(this);
+};
+
+Template.QueryViewPart.prototype.setView = function(newView) {
+    var oldView = this.view;
+
+    if (oldView === newView) return;
+
+    this.view = newView;
+
+    this.fire('change');
+};
+
+Template.QueryViewPart.prototype.getValue = function() {
+    return this.view || '';
 };
 
 /**
- *  @NOTE
- *  対応しているテンプレート形式
- *  {{ path.to.property }} -> オブジェクトのプロパティ
+ *  @namespace Template
  */
+Template.Query = function(node, attrName, parts) {
+    if (!(this instanceof Template.Query)) return new Template.Query(node, attrName, parts);
+
+    this.update = this.update.bind(this);
+
+    /**
+     *  @type {Node}
+     */
+    this.node = node || null;
+
+    /**
+     *  @type {string|null}
+     */
+    this.attrName = attrName || null;
+
+    /**
+     *  @type {[QueryParts]}
+     */
+    this.parts = null;
+    this.setParts(parts);
+};
+
+Template.Query.prototype.finalize = function() {
+    this.parts.forEach(function(part) {
+        part.finalize();
+    });
+    this.node = null;
+    this.update = null;
+};
+
+Template.Query.prototype.setParts = function(newParts) {
+    var oldParts = this.parts,
+        self = this;
+
+    if (oldParts) {
+        oldParts.forEach(function(oldPart) {
+            oldPart.off('change', self.update);
+        });
+    }
+
+    this.parts = newParts;
+
+    if (newParts) {
+        newParts.forEach(function(newPart) {
+            newPart.on('change', self.update);
+        });
+    }
+
+    this.update();
+};
+
+Template.Query.prototype.update = function() {
+    var values,
+        parts = this.parts,
+        node = this.node,
+        attrName = this.attrName,
+        flagView = false;
+
+    if (!parts || !node || !attrName) return;
+
+    values = parts.map(function(part) {
+        return part.getValue();
+    });
+
+    switch (attrName) {
+        case 'textContent':
+            var fragment = document.createDocumentFragment();
+            values.forEach(function(value) {
+                if (value instanceof View) {
+                    value.appendTo(fragment);
+                    flagView = true;
+                } else if (isString(value)) {
+                    fragment.appendChild(new Text(value));
+                }
+            });
+
+            if (flagView) {
+                if (node.parentNode) {
+                    node.parentNode.insertBefore(fragment, node);
+                    node.parentNode.removeChild(node);
+                }
+            } else {
+                node[attrName] = values.join('');
+            }
+
+            break;
+
+        default:
+            node.setAttribute(attrName, values.join(''));
+            break;
+    }
+};
+
+
 
 /**
  *  style injection to hide <template> tag.
@@ -530,33 +788,33 @@ Binding.prototype.onChangeHandler = function(change) {
 })();
 
 /**
- *  Template engine.
- *  @namespace
- */
-var Template = {};
-
-/**
  *  template caches
  *  @type {Object}
  */
 Template.templates = {};
 
 /**
- *  data bind node
+ *  @typedef {
+ *      type: Template.QueryPart.Type,
+ *      data: *
+ *  }
+ */
+Template.QueryPartData;
+
+/**
  *  @typedef {{
- *      nodePath: [number],     //対象のノードへのパス、子要素のインデックス番号の配列
- *      attrName: string,       //属性の名前(またはtextContent)
- *      [data]: Object,
- *      [biding]: Binding
+ *      nodePath: [number],                     //ノードへのパス,
+ *      attrName: string,                       //属性の名前,
+ *      queryPartDatas: [Template.QueryPartData],   //パース結果の配列
  *  }}
  */
-Template.PraseResult;
+Template.QueryData;
 
 /**
  *  template object
  *  @typedef {{
- *      node: Node,                            //DOMのルートノード
- *      parseResults: [Template.PraseResult],  //パース結果の配列
+ *      node: Node,                 //DOMのルートノード
+ *      queryDatas: [Template.QueryData],  //テンプレートクエリの配列
  *  }}
  */
 Template.Template;
@@ -578,68 +836,61 @@ Template.templateEncoder = document.createElement('div');
 /**
  *  DOMを生成する
  */
-Template.create = function(templateId, bindObject) {
+Template.create = function(templateId, bindTarget) {
     var template = Template.getTemplate(templateId),
         rootNode = template.node.cloneNode(true),
         childViews = {},
-        childView,
-        bindings = [],
-        binding;
+        queries,
+        result;
 
-    template.parseResults.forEach(function(parseResult) {
-        var node = Template.getNodeFromPath(rootNode, parseResult.nodePath);
+    queries = template.queryDatas.map(function(queryData) {
+        return Template.createQuery(queryData, rootNode, bindTarget, childViews);
+    });
 
-        switch (parseResult.attrName) {
-            case Template.Directive.VIEW:
-                if (!isFunction(global[parseResult.data.view])) return;
-                view = new global[parseResult.data.view];
-                childViews[parseResult.data.name] = view;
-                view.insertBefore(node);
-                if (node instanceof Text) node.parentNode.removeChild(node);
+    result = {
+        queries: queries,
+        node: rootNode,
+        childViews: childViews
+    };
+
+    return result;
+};
+
+/**
+ *  クエリデータを元にクエリを作成する。
+ *  @param {Template.Query} query query
+ *  @param {Node} rootNode rootNode
+ *  @param {Object} bindTarget bindTarget
+ *  @param {Object} [childViews] 子ビューのマップ。
+ *      これを渡すと、生成された小ビューの一覧をここに保存する。
+ *  @return {Query} クエリ
+ */
+Template.createQuery = function(queryData, rootNode, bindTarget, childViews) {
+    var queryPartDatas = queryData.queryPartDatas,
+        QueryPartType = Template.QueryPart.Type,
+        node = Template.getNodeFromPath(rootNode, queryData.nodePath),
+        v,
+        queryParts;
+
+    queryParts = queryPartDatas.map(function(queryPartData) {
+        switch (queryPartData.type) {
+            case QueryPartType.TEXT:
+                return new Template.QueryTextPart(queryPartData.data);
                 break;
 
-            default:
-                if (!node) return;
-                binding = parseResult.binding.copy(bindObject);
-                binding.on('change', function(newVal) {
-                    Template.updateDataValue(node, parseResult.attrName, newVal);
-                });
-                bindings.push(binding);
+            case QueryPartType.BINDING:
+                return new Template.QueryBindingPart(queryPartData.data.copy(bindTarget));
+                break;
+
+            case QueryPartType.VIEW:
+                v = new queryPartData.data.viewConstructor();
+                if (isObject(childViews)) childViews[queryPartData.data.name] = v;
+                return new Template.QueryViewPart(v);
                 break;
         }
     });
 
-    return {
-        node: rootNode,
-        childViews: childViews,
-        bindings: bindings
-    };
-};
-
-/**
- *  データの変更があったことへのイベントハンドラ
- */
-Template.updateDataValue = function(node, attrName, newValue) {
-    if (attrName === 'textContent') {
-        node.textContent = newValue;
-    } else {
-        node.setAttribute(attrName, newValue);
-    }
-}
-
-/**
- *  プロパティパスからプロパティを取得する
- */
-Template.getPropFromPath = function(object, propPath) {
-    var obj = object,
-        propPath = propPath.slice(0);
-
-    while (propPath.length) {
-        if (!isObject(obj)) return '{{' + propPath + '}}';
-        obj = obj[propPath.shift()];
-    }
-
-    return obj;
+    return new Template.Query(node, queryData.attrName, queryParts);
 };
 
 /**
@@ -672,7 +923,7 @@ Template.getTemplate = function(templateId) {
 
         template = {
             node: null,
-            parseResults: null
+            queryDatas: null
         };
 
         srcNode = document.querySelector('template[name="' + templateId + '"]');
@@ -685,8 +936,7 @@ Template.getTemplate = function(templateId) {
         encoder.innerHTML = html;
         template.node = encoder.firstElementChild;
 
-        template.parseResults = Template.parseTemplateNodeRecursive(template.node);
-
+        template.queryDatas = Template.parseTemplateNodeRecursive(template.node);
         Template.templates[templateId] = template;
     }
 
@@ -696,10 +946,10 @@ Template.getTemplate = function(templateId) {
 /**
  *  ノード内のテンプレートを再帰的にパースする。
  *  @param {Node} rootNode target node.
- *  @param {[Template.PraseResult]} [result=[]] 結果を格納する配列。
+ *  @param {[Template.QueryData]} [result=[]] 結果を格納する配列。
  *      再帰呼び出しの場合、結果を一つの配列にまとめたい場合に指定する。
  *  @param {[number]} [nodePath=[]] ノードへのパス。
- *  @return {[Template.PraseResult]} パース結果
+ *  @return {[Template.QueryData]} パース結果
  */
 Template.parseTemplateNodeRecursive = function(rootNode, result, nodePath) {
     result = result || [];
@@ -718,95 +968,121 @@ Template.parseTemplateNodeRecursive = function(rootNode, result, nodePath) {
  *  ノード内のテンプレートをパースする。
  *  @param {Node} node target node.
  *  @param {[numer]} nodePath ノードへのパス。
- *  @return {[Template.PraseResult]} パース結果
+ *  @return {[Template.QueryData]} パース結果
  */
 Template.parseTemplateNode = function(node, nodePath) {
-    var result = [],
-        attrs = node.attributes;
+    var queryDatas = [],
+        attrs = node.attributes,
+        queryPartDatas;
 
     /**
      *  属性
      */
     if (node instanceof Element) {
         forEach(attrs, function(attr) {
-            result.push.apply(
-                result,
-                Template.parseTemplateTag(attr.value, nodePath, attr.name)
-            );
+            queryPartDatas = Template.parseTemplateQueryText(attr.value, nodePath, attr.name);
+            if (queryPartDatas.length) {
+                queryDatas.push({
+                    nodePath: nodePath,
+                    attrName: attr.name,
+                    queryPartDatas: queryPartDatas
+                });
+            }
         });
     }
-
 
     /**
      * textContent
      */
     if (node instanceof Text) {
-        result.push.apply(
-            result,
-            Template.parseTemplateTag(node.textContent, nodePath, 'textContent')
-        );
+        queryPartDatas = Template.parseTemplateQueryText(node.textContent, nodePath, 'textContent');
+        if (queryPartDatas.length) {
+            queryDatas.push({
+                nodePath: nodePath,
+                attrName: 'textContent',
+                queryPartDatas: queryPartDatas
+            });
+        }
+    }
+
+    return queryDatas;
+};
+
+/**
+ *  テンプレートクエリ文字列をパースする
+ *  @param {string} queryText テンプレートタグを含んだ文字列
+ *  @return {[Template.QueryPartData]} パース結果
+ */
+Template.parseTemplateQueryText = function(queryText) {
+    var regTag = /\{\{([^\}]*)\}\}/g,
+        datas = [],
+        pivot = 0,
+        regSplitter = /\s+/g,
+        queryTextPart, queryTextPartChunk,
+        directives, binding,
+        ma;
+
+    while (ma = regTag.exec(queryText)) {
+        if (pivot !== ma.index) {
+            queryTextPart = queryText.substring(pivot, ma.index).trim();
+            if (queryTextPart.length) {
+                //string
+                datas.push({
+                    type: Template.QueryPart.Type.TEXT,
+                    data: queryTextPart
+                });
+            }
+        }
+        pivot = ma.index + ma[0].length;
+
+        tagText = ma[1].trim();
+        tagTextParts = tagText.split(regSplitter);
+
+        switch (tagTextParts[0].toUpperCase()) {
+            case Template.Directive.VIEW:
+                //view metadata
+                datas.push({
+                    type: Template.QueryPart.Type.VIEW,
+                    data: Template.parseQueryPartsForView(tagTextParts)
+                });
+                break;
+
+            default:
+                //binding
+                datas.push({
+                    type: Template.QueryPart.Type.BINDING,
+                    data: new Template.Binding(null, tagText.split('.'))
+                });
+                break;
+        }
+    };
+
+    return datas;
+};
+
+/**
+ *  Viewディレクティブのタグをパースする
+ *  @param {[string]} tagTextParts タグの文字列をスペースで区切って配列にしたもの
+ *  @return Object<string, string> パース結果
+ */
+Template.parseQueryPartsForView = function(tagTextParts) {
+    tagTextParts = tagTextParts.slice(0);
+    tagTextParts.shift(); //最初の１個は'view'ディレクティブなので捨てる。
+
+    var result = {};
+
+    tagTextParts.forEach(function(queryPart) {
+        var keyAndVal = queryPart.split('=');
+        result[keyAndVal[0]] = keyAndVal[1];
+    });
+
+    if (result.view && isFunction(global[result.view])) {
+        result.viewConstructor = global[result.view];
     }
 
     return result;
 };
 
-/**
- *  テンプレートタグをパースする
- *  @param {string} text テンプレートタグを含んだ文字列
- *  @param {Node} node このテンプレートタグを持つノードのパス
- *  @param {string} attrName このテンプレートタグの属性
- *  @return {[(string|Template.PraseResult)]} パース結果
- */
-Template.parseTemplateTag = function(text, nodePath, attrName) {
-    var regTag = /\{\{([^\}]*)\}\}/g,
-        result = [],
-        query,
-        directives,
-        binding,
-        ma;
-
-    while (ma = regTag.exec(text)) {
-        query = ma[1].trim();
-        queryParts = query.split(/\s+/g);
-
-        switch (queryParts[0].toUpperCase()) {
-            case Template.Directive.VIEW:
-                result.push({
-                    nodePath: nodePath,
-                    attrName: Template.Directive.VIEW,
-                    data: Template.parseQueryParts(queryParts)
-                });
-                break;
-
-            default:
-                result.push({
-                    nodePath: nodePath,
-                    attrName: attrName,
-                    binding: new Binding(null, query.split('.'))
-                });
-        }
-    };
-
-    return result;
-};
-
-/**
- *  クエリパーツをパースする
- *  @param {[string]} queryParts クエリパーツ
- *  @return Object<string, string> パース結果
- */
-Template.parseQueryParts = function(queryParts) {
-    queryParts.shift(); //最初の１個はディレクティブなので捨てる。
-
-    var result = {};
-
-    queryParts.forEach(function(query) {
-        var keyAndVal = query.split('=');
-        result[keyAndVal[0]] = keyAndVal[1];
-    });
-
-    return result;
-};
 
 var View = function() {
     var self = this;
@@ -831,18 +1107,12 @@ View.prototype.finalize = function() {
     var self = this,
         key;
 
-    this.bindings.forEach(function(binding) {
-        binding.finalize();
+    this.queries.forEach(function(query) {
+        query.finalize();
     });
     Object.keys(this.childViews).forEach(function(childViewName) {
         self.childViews[childViewName].finalize();
     });
-
-    for (key in this) {
-        if (isFunction(self[key])) {
-            self[key] = null;
-        }
-    }
 
     Observer.unobserveAll(this);
     this.remove();
@@ -859,7 +1129,7 @@ View.prototype.loadTemplate = function(templateId) {
     this.$.root = created.node;
     this.$.container = this.$.root.querySelector('[container]') || this.$.root;
     this.childViews = created.childViews;
-    this.bindings = created.bindings;
+    this.queries = created.queries;
 };
 
 /**
@@ -942,7 +1212,11 @@ extendClass(BaseView, View);
 
 
 
-
+/**
+ *  @TODO
+ *  API.Userへの依存をなくす
+ *  Model#uriを用いて、API_coreだけで対応する。
+ */
 
 
 
@@ -1362,6 +1636,12 @@ API.Project = {
 };
 
 /**
+ *  @TODO
+ *  API.Userへの依存をなくす
+ *  Model#uriを用いて、API_coreだけで対応する。
+ */
+
+/**
  *  User Model.
  *  @constructor
  *  @param {Object} data initial data.
@@ -1725,6 +2005,12 @@ Application.prototype.onHashChange = function() {
 
 
 /**
+ *  @TODO
+ *  API.Userへの依存をなくす
+ *  Model#uriを用いて、API_coreだけで対応する。
+ */
+
+/**
  *  Project Model.
  *  @constructor
  *  @param {Object} data initial data.
@@ -1888,7 +2174,8 @@ UserPageView.prototype.finalize = function() {
 };
 
 UserPageView.prototype.loadUserWithRout = function(rout) {
-    if (rout.mode !== 'user') return;
+    if (rout.mode !== 'user' &&
+        rout.mode !== 'project') return;
 
     var self = this;
 

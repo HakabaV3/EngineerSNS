@@ -85,6 +85,15 @@ function isFunction(expression) {
 }
 
 /**
+ *  check if expression is string.
+ *  @param {*} expression expression to check.
+ *  @return {boolean} if true, the expression is string.
+ */
+function isString(expression) {
+    return typeof expression === 'string';
+}
+
+/**
  *  short-hand
  */
 var forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
