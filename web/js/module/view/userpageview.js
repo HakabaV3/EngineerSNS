@@ -18,10 +18,6 @@ UserPageView.prototype.finalize = function() {
     app.off('rout.change', this.onChangeRout);
     this.onChangeRout = null;
 
-    if (this.user) {
-        this.user.off('update', this.onModelUpdate);
-    }
-
     View.prototype.finalize.call(this);
 };
 
@@ -53,21 +49,11 @@ UserPageView.prototype.loadUserProjects = function() {
 UserPageView.prototype.setUser = function(user) {
     if (this.user === user) return;
 
-    if (this.user) {
-        this.user.off('update', this.onModelUpdate);
-    }
-
     this.user = user;
     this.childViews.userView.setUser(user);
-
-    if (user) {
-        user.on('update', this.onModelUpdate);
-        this.loadUserProjects();
-    }
+    this.loadUserProjects();
 };
 
 UserPageView.prototype.onChangeRout = function(rout) {
     this.loadUserWithRout(rout);
 };
-
-UserPageView.prototype.onModelUpdate = function() {};

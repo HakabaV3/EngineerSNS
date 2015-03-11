@@ -7,6 +7,10 @@
 
 @import "./stylus/layout/_grid.scss";
 
+
+@import "./stylus/view/_cardview.scss";
+
+
 @import "./stylus/view/_baseview.scss";
 
 @import "./stylus/view/_toolbarview.scss";
@@ -20,4 +24,4 @@
 
 @import "./stylus/view/_projectpageview.scss";
 
-@import "./stylus/view/_cardview.scss";
+@import "./stylus/view/_commentlistitemview.scss";

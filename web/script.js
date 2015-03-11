@@ -1587,7 +1587,7 @@ API.ajax = function(method, url, headers, body, callback) {
 
     if (headers) {
         Object.keys(headers).forEach(function(key) {
-            xhr.setHeader(key, headers[key]);
+            xhr.setRequestHeader(key, headers[key]);
         });
     }
 
@@ -2339,6 +2339,18 @@ Project.prototype.getComments = function(callback) {
     });
 };
 
+Project.prototype.postComment = function(text, callback) {
+    API.post(this.uri + '/comment', null, {
+        text: text
+    }, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, Comment(res));
+    });
+};
+
 
 
 var UserPageView = function() {
@@ -2355,10 +2367,6 @@ extendClass(UserPageView, View);
 UserPageView.prototype.finalize = function() {
     app.off('rout.change', this.onChangeRout);
     this.onChangeRout = null;
-
-    if (this.user) {
-        this.user.off('update', this.onModelUpdate);
-    }
 
     View.prototype.finalize.call(this);
 };
@@ -2391,24 +2399,14 @@ UserPageView.prototype.loadUserProjects = function() {
 UserPageView.prototype.setUser = function(user) {
     if (this.user === user) return;
 
-    if (this.user) {
-        this.user.off('update', this.onModelUpdate);
-    }
-
     this.user = user;
     this.childViews.userView.setUser(user);
-
-    if (user) {
-        user.on('update', this.onModelUpdate);
-        this.loadUserProjects();
-    }
+    this.loadUserProjects();
 };
 
 UserPageView.prototype.onChangeRout = function(rout) {
     this.loadUserWithRout(rout);
 };
-
-UserPageView.prototype.onModelUpdate = function() {};
 
 
 
@@ -2505,7 +2503,10 @@ ProjectPageView.prototype.onChangeRout = function(rout) {
 };
 
 ProjectPageView.prototype.setProject = function(project) {
+    if (this.project === project) return;
+
     this.project = project;
+    this.childViews.commentListView.setTarget(project);
 };
 
 
@@ -2638,6 +2639,133 @@ var ProjectListView = function() {
     this.listItems = [];
 };
 extendClass(ProjectListView, ListView);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var CommentListItemView = function() {
+    ListItemView.call(this);
+
+    this.loadTemplate('CommentListItemView');
+
+    this.comment = null;
+};
+extendClass(CommentListItemView, ListItemView);
+
+CommentListItemView.prototype.setModel = function(comment) {
+    var self = this;
+
+    this.comment = comment;
+
+    if (comment) {
+        User.getByName(comment.owner, function(err, user) {
+            self.childViews.userInlineView.setUser(user);
+        });
+    }
+};
+
+var CommentListView = function() {
+    ListView.call(this);
+
+    this.loadTemplate('CommentListView');
+
+    /**
+     * 表示対象のオブジェクト
+     * @type {(Project|Item)}
+     */
+    this.target = null;
+
+    this.itemViewConstructor = CommentListItemView;
+
+    this.$.form.addEventListener('submit', this.onSubmit = this.onSubmit.bind(this));
+};
+extendClass(CommentListView, ListView);
+
+CommentListView.prototype.finalize = function() {
+    this.$.form.removeEventListener('submit', this.onSubmit);
+    this.onSubmit = null;
+
+    ListView.prototype.finalize.call(this);
+};
+
+CommentListView.prototype.loadComments = function() {
+    var target = this.target,
+        self = this;
+
+    if (!target) return;
+
+    target.getComments(function(err, comments) {
+        if (err) {
+            self.setItems([]);
+        } else {
+            self.setItems(comments);
+        }
+    });
+};
+
+CommentListView.prototype.setTarget = function(target) {
+    if (this.target === target) return;
+
+    this.target = target;
+    this.loadComments();
+};
+
+CommentListView.prototype.submit = function() {
+    var self;
+
+    if (!this.validate()) return;
+
+    self = this;
+
+    this.target.postComment(this.$.text.value, function(err, res) {
+        if (err) {
+            console.log(err);
+            return
+        }
+
+        self.loadComments();
+    })
+};
+
+CommentListView.prototype.validate = function() {
+    var text = this.$.text.value,
+        isValidate = true;
+
+    //@TODO: debug only
+    // if (!app.isAuthed) {
+    //     isValidate = false;
+    // }
+
+    if (!text) {
+        isValidate = false;
+    }
+
+    return isValidate;
+};
+
+CommentListView.prototype.onSubmit = function(ev) {
+    ev.stopPropagation();
+    ev.preventDefault();
+
+    this.submit();
+};
 
 
 

@@ -57,7 +57,8 @@ table {
 
 body {
   font-size: 14px;
-  font-family: Helvetica, arial, freesans, clean, sans-serif, 'Segoe UI Emoji', 'Segoe UI Symbol'; }
+  font-family: Helvetica, arial, freesans, clean, sans-serif, 'Segoe UI Emoji', 'Segoe UI Symbol';
+  background: #f8f8f8; }
 
 table {
   width: 100%;
@@ -493,6 +494,40 @@ button {
 
   .grid-offset-12 {
     margin-left: 0; } }
+.CardView {
+  border: 1px solid #3383C7;
+  border-radius: 3px;
+  margin-bottom: 15px;
+  overflow: hidden; }
+
+.CardView-section, .CardView-header {
+  position: relative;
+  display: block;
+  padding: 8px 15px;
+  border-bottom: 1px solid #ccc;
+  background: #fff; }
+  .CardView-section:last-child, .CardView-header:last-child {
+    border-bottom: none; }
+  .CardView-section.CardView-noPadding, .CardView-noPadding.CardView-header {
+    padding: 0; }
+    .CardView-section.CardView-noPadding .CardView-sectionHeader, .CardView-noPadding.CardView-header .CardView-sectionHeader {
+      margin: 0 0 8px; }
+
+.CardView-header {
+  background: #3383C7;
+  color: #fff;
+  font-weight: bold; }
+
+.CardView-sectionHeader {
+  margin: -8px -15px 8px;
+  padding: 8px 15px;
+  border-bottom: 1px solid #eee;
+  color: #aaa;
+  font-size: 0.8em;
+  font-weight: bold; }
+  .CardView-sectionHeader.CardView-noPadding {
+    padding: 0; }
+
 .BaseView .SignInPageView,
 .BaseView .SignUpPageView,
 .BaseView .UserPageView,
@@ -517,7 +552,8 @@ button {
   right: 0;
   height: 40px;
   margin-bottom: 10px;
-  background: #f8f8f8;
+  background: #3383C7;
+  color: #fff;
   border-bottom: 1px solid #eee;
   padding: 10px 0; }
   .ToolBarView:after {
@@ -560,7 +596,7 @@ button {
   width: 128px;
   height: 128px;
   border: 1px solid #ccc;
-  border-radius: 2px;
+  border-radius: 50%;
   overflow: hidden; }
 
 .UserPageView-userName {
@@ -578,7 +614,7 @@ button {
   width: 32px;
   height: 32px;
   vertical-align: middle;
-  border-radius: 3px; }
+  border-radius: 50%; }
 
 .UserInlineView-name {
   font-size: 18px;
@@ -607,36 +643,7 @@ button {
   float: left;
   vertical-align: middle; }
 
-.CardView {
-  border: 1px solid #ccc;
-  border-radius: 3px;
-  margin-bottom: 15px;
-  overflow: hidden; }
-
-.CardView-section, .CardView-header {
-  position: relative;
-  display: block;
-  padding: 8px 15px;
-  border-bottom: 1px solid #ccc; }
-  .CardView-section:last-child, .CardView-header:last-child {
-    border-bottom: none; }
-  .CardView-section.CardView-noPadding, .CardView-noPadding.CardView-header {
-    padding: 0; }
-    .CardView-section.CardView-noPadding .CardView-sectionHeader, .CardView-noPadding.CardView-header .CardView-sectionHeader {
-      margin: 0 0 8px; }
-
-.CardView-header {
-  background: #f0f0f0;
-  font-weight: bold; }
-
-.CardView-sectionHeader {
-  margin: -8px -15px 8px;
-  padding: 8px 15px;
-  border-bottom: 1px solid #eee;
-  color: #aaa;
-  font-size: 0.8em;
-  font-weight: bold; }
-  .CardView-sectionHeader.CardView-noPadding {
-    padding: 0; }
+.CommentListItemView-header {
+  font-weight: normal; }
 
 /*# sourceMappingURL=style.css.map */

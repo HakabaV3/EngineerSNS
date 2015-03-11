@@ -42,5 +42,8 @@ ProjectPageView.prototype.onChangeRout = function(rout) {
 };
 
 ProjectPageView.prototype.setProject = function(project) {
+    if (this.project === project) return;
+
     this.project = project;
+    this.childViews.commentListView.setTarget(project);
 };

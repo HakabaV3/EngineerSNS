@@ -181,7 +181,7 @@ API.ajax = function(method, url, headers, body, callback) {
 
     if (headers) {
         Object.keys(headers).forEach(function(key) {
-            xhr.setHeader(key, headers[key]);
+            xhr.setRequestHeader(key, headers[key]);
         });
     }
 

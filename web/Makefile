@@ -27,6 +27,7 @@ html:
 run:
 	$(MAKE) install
 	$(MAKE) init
+	$(MAKE) copy
 	$(MAKE) start
 
 #パッケージ類のインストール

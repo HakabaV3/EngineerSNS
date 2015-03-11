@@ -166,11 +166,50 @@
 		</a>
 	</div>
 </template>
+
+
+
+
+<template name="CommentListItemView">
+	<li class="CommentListItemView CardView-section">
+		<header class="CommentListItemView-header CardView-sectionHeader">
+			<span>
+				{{view view=UserInlineView name=userInlineView}}
+			</span>
+			update: {{comment.created}}
+		</header>
+		<p>
+			{{comment.text}}
+		</p>
+	</li>
+</template>
+<template name="CommentListView">
+	<div class="CommentListView CardView">
+		<header class="CardView-header">
+			コメント
+		</header>
+		<form class="CommentListView-postContainer CardView-section grid-container" name="form">
+			<header class="CardView-sectionHeader">新規投稿</header>
+			<div class="grid-12">
+				<textarea rows="5" class="Input-block" name="text"></textarea>
+			</div>
+			<div class="grid-12">
+				<input type="submit" class="Input-block" value="送信" name="submit">
+			</div>
+		</form>
+		<ul class="CommentListView-container" container>
+		</ul>
+	</div>
+</template>
+
 <template name="ProjectPageView">
 	<div class="ProjectPageView grid-container">
 		<div class="ProjectPageView-header grid-12">
 			<h3 class="ProjectPageView-projectName">{{ project.name }}</h3>
 			{{view view=UserInlineView name=userInlineView }}
+		</div>
+		<div class="ProjectPageView-comments grid-6 grid-offset-6">
+			{{view view=CommentListView name=commentListView}}
 		</div>
 	</div>
 </template>

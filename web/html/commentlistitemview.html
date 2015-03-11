@@ -1,0 +1,15 @@
+//@include userinlineview.html
+
+<template name="CommentListItemView">
+	<li class="CommentListItemView CardView-section">
+		<header class="CommentListItemView-header CardView-sectionHeader">
+			<span>
+				{{view view=UserInlineView name=userInlineView}}
+			</span>
+			update: {{comment.created}}
+		</header>
+		<p>
+			{{comment.text}}
+		</p>
+	</li>
+</template>

@@ -1,0 +1,20 @@
+//@include commentlistitemview.html
+
+<template name="CommentListView">
+	<div class="CommentListView CardView">
+		<header class="CardView-header">
+			コメント
+		</header>
+		<form class="CommentListView-postContainer CardView-section grid-container" name="form">
+			<header class="CardView-sectionHeader">新規投稿</header>
+			<div class="grid-12">
+				<textarea rows="5" class="Input-block" name="text"></textarea>
+			</div>
+			<div class="grid-12">
+				<input type="submit" class="Input-block" value="送信" name="submit">
+			</div>
+		</form>
+		<ul class="CommentListView-container" container>
+		</ul>
+	</div>
+</template>

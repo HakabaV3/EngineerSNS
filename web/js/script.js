@@ -18,6 +18,9 @@
 //@include module/view/projectlistview.js
 //@include module/view/projectlistitemview.js
 
+//@include module/view/commentlistview.js
+//@include module/view/commentlistitemview.js
+
 //@include module/view/toolbarview.js
 
 //@include module/view/signinpageview.js

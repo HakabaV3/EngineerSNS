@@ -165,3 +165,15 @@ Project.prototype.getComments = function(callback) {
         return callback(null, res.map(Comment));
     });
 };
+
+Project.prototype.postComment = function(text, callback) {
+    API.post(this.uri + '/comment', null, {
+        text: text
+    }, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, Comment(res));
+    });
+};
