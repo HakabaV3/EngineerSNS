@@ -42,3 +42,7 @@ init:
 #サーバーの起動
 start:
 	(cd ../server && rails server -e mamp)
+
+#パブリックへコピー
+copy:
+	cp index.html script.js style.css style.css.map ../server/public/
