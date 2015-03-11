@@ -9,14 +9,14 @@ var UserPageView = function() {
     this.loadTemplate('UserPageView');
 
     this.user = null;
-    this.projects = [];
 
-    app.on(Application.Event.CHANGE_ROUT, this.onChangeRout = this.onChangeRout.bind(this));
+    app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
 };
 extendClass(UserPageView, View);
 
 UserPageView.prototype.finalize = function() {
-    app.off(Application.Event.CHANGE_ROUT, this.onChangeRout);
+    app.off('rout.change', this.onChangeRout);
+    this.onChangeRout = null;
 
     if (this.user) {
         this.user.off('update', this.onModelUpdate);
@@ -26,8 +26,7 @@ UserPageView.prototype.finalize = function() {
 };
 
 UserPageView.prototype.loadUserWithRout = function(rout) {
-    if (rout.mode !== 'user' &&
-        rout.mode !== 'project') return;
+    if (rout.mode !== 'user') return;
 
     var self = this;
 
@@ -44,11 +43,9 @@ UserPageView.prototype.loadUserProjects = function() {
 
     user.getAllProjects(function(err, projects) {
         if (err) {
-            self.projects = [];
-            self.childViews.projectListView.setProjects([]);
+            self.childViews.projectListView.setItems([]);
         } else {
-            self.projects = projects;
-            self.childViews.projectListView.setProjects(projects);
+            self.childViews.projectListView.setItems(projects);
         }
     });
 };
@@ -61,8 +58,7 @@ UserPageView.prototype.setUser = function(user) {
     }
 
     this.user = user;
-    this.childViews.userView.user = user;
-    this.projects = [];
+    this.childViews.userView.setUser(user);
 
     if (user) {
         user.on('update', this.onModelUpdate);

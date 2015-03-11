@@ -1,3 +1,10 @@
+//@include userinlineview.html
+
 <template name="ProjectPageView">
-	<div class="ProjectPageView"></div>
+	<div class="ProjectPageView grid-container">
+		<div class="ProjectPageView-header grid-12">
+			<h3 class="ProjectPageView-projectName">{{ project.name }}</h3>
+			{{view view=UserInlineView name=userInlineView }}
+		</div>
+	</div>
 </template>

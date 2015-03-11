@@ -8,15 +8,6 @@
 var Application = function() {};
 extendClass(Application, EventDispatcher);
 
-/**
- *  Event names
- *  @enum {string}
- */
-Application.Event = {
-    CHANGE_AUTH_STATE: 'CHANGE_AUTH_STATE',
-    CHANGE_ROUT: 'CHANGE_ROUT'
-};
-
 Application.prototype.init = function() {
     /**
      *  @NOTE singleton
@@ -72,8 +63,7 @@ Application.prototype.updateAuthState = function() {
             self.authedUser = me;
         }
 
-        self.fire(
-            Application.Event.CHANGE_AUTH_STATE,
+        self.fire('auth.change',
             self.isAuthed,
             self.authedUser
         );
@@ -141,7 +131,7 @@ Application.prototype.routing = function(url) {
     } else {
         //  no match.
         params = {
-            mode: 'error'
+            mode: 'error404'
         }
     }
 
@@ -150,5 +140,5 @@ Application.prototype.routing = function(url) {
 
 Application.prototype.onHashChange = function() {
     this.rout = this.routing()
-    this.fire(Application.Event.CHANGE_ROUT, this.rout);
+    this.fire('rout.change', this.rout);
 };

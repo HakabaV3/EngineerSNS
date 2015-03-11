@@ -95,7 +95,7 @@ User.prototype.schema = {
  *  @param {Function} callback callback function.
  */
 User.getByName = function(userName, callback) {
-    API.User.get(userName, function(err, res) {
+    API.get('/user/' + userName, function(err, res) {
         if (err) {
             return callback(err, null);
         }
@@ -109,7 +109,7 @@ User.getByName = function(userName, callback) {
  *  @param {Function} callback callback function.
  */
 User.getMe = function(callback) {
-    API.User.me(function(err, res) {
+    API.get('/user/me', function(err, res) {
         if (err) {
             return callback(err, null);
         }
@@ -139,7 +139,9 @@ User.prototype.getAllProjects = function(callback) {
  *  @param {Function} callback callback function.
  */
 User.create = function(userName, password, callback) {
-    API.User.post(userName, password, function(err, res) {
+    API.post('/user/' + userName, {
+        password: password
+    }, function(err, res) {
         if (err) {
             return callback(err, null);
         }
@@ -158,7 +160,10 @@ User.prototype.update = function(params, callback) {
         return callback(APIError.PERMISSION_DENIED, null);
     };
 
-    API.User.patch(this.name, params, function(err, res) {
+    API.patch(this.uri, {
+        name: this.name,
+        description: this.description
+    }, function(err, res) {
         if (err) {
             return callback(err, null);
         }
@@ -173,11 +178,13 @@ User.prototype.update = function(params, callback) {
  *  @param {Function} callback callback function.
  */
 User.prototype.updateIcon = function(blob, callback) {
+    console.warn('User#updateIcon: NIY.');
+
     if (!app.isAuthed || this !== app.authedUser) {
         return callback(APIError.PERMISSION_DENIED, null);
     };
 
-    API.User.patchIcon(this.name, blob, function(err, res) {
+    API.patchB(this.uri + '/icon', blob, function(err, res) {
         if (err) {
             return callback(err, null);
         }
@@ -195,11 +202,26 @@ User.prototype.delete = function(callback) {
         return callback(APIError.PERMISSION_DENIED, null);
     };
 
-    API.User.delete(this.name, function(err, res) {
+    API.delete(this.uri, function(err, res) {
         if (err) {
             return callback(err, null);
         }
 
+        //@TODO: インスタンスを消す
         return callback(null, res);
+    });
+};
+
+/**
+ *  Get user's comments.
+ *  @param {Function} callback callback function.
+ */
+User.prototype.getComments = function(callback) {
+    API.get(this.uri + '/comment', function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, res.map(Comment));
     });
 };

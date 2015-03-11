@@ -13,6 +13,14 @@
 	&:last-child {
 		border-bottom: none;
 	}
+
+	&.CardView-noPadding {
+		padding: 0;
+
+		.CardView-sectionHeader {
+			margin: 0 0 8px;
+		}
+	}
 }
 .CardView-header {
 	@extend .CardView-section;
@@ -26,4 +34,8 @@
 	color: #aaa;
 	font-size: 0.8em;
 	font-weight: bold;
+
+	&.CardView-noPadding {
+		padding: 0;
+	}
 }

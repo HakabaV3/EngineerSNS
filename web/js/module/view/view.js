@@ -43,9 +43,16 @@ View.prototype.finalize = function() {
  *  @param {string} templateId Template ID.
  */
 View.prototype.loadTemplate = function(templateId) {
-    var created = Template.create(templateId, this);
+    var created = Template.create(templateId, this),
+        self = this;
+
     this.$.root = created.node;
     this.$.container = this.$.root.querySelector('[container]') || this.$.root;
+
+    forEach(this.$.root.querySelectorAll('[name]'), function(node) {
+        self.$[node.getAttribute('name')] = node;
+    });
+
     this.childViews = created.childViews;
     this.queries = created.queries;
 };

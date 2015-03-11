@@ -1,10 +1,10 @@
 @import "../function/_function.scss";
 
-.UserPageView-header {
+.ProjectPageView-header {
 	@include clearfix();
 	margin-bottom: 15px;
 }
-.UserPageView-icon {
+.ProjectPageView-icon {
 	float: left;
 	width: 128px;
 	height: 128px;
@@ -12,7 +12,7 @@
 	border-radius: 2px;
 	overflow: hidden;
 }
-.UserPageView-userName {
+.ProjectPageView-userName {
 	margin-left: 30px;
 	line-height: 128px;
 	font-size: 48px;

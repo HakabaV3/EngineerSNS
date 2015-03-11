@@ -25,9 +25,12 @@ time, mark, audio, video {
 
 a {
   text-decoration: none;
-  color: inherit; }
-  a:hover, a:active, a:visited, a:focus {
-    color: inherit; }
+  color: #4183c4; }
+  a:hover {
+    color: #4183c4;
+    text-decoration: underline; }
+  a:active, a:visited, a:focus {
+    color: #4183c4; }
 
 /* HTML5 display-role reset for older browsers */
 article, aside, details, figcaption, figure,
@@ -137,12 +140,102 @@ td {
     display: block;
     float: none;
     width: 100%; } }
+.Input-base, .Input-label, input[type="text"],
+input[type="password"],
+textarea, input[type="button"],
+input[type="submit"],
+button {
+  display: inline-block;
+  position: relative;
+  padding: 8px 10px;
+  margin: 8px 5px;
+  box-sizing: border-box; }
+  .Input-base.Input-block, .Input-block.Input-label, input.Input-block[type="text"],
+  input.Input-block[type="password"],
+  textarea.Input-block, input.Input-block[type="button"],
+  input.Input-block[type="submit"],
+  button.Input-block {
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    width: 100%; }
+
+.Input-label {
+  padding: 0;
+  margin-left: 0;
+  margin-right: 0;
+  line-height: 31px; }
+
+input[type="text"],
+input[type="password"],
+textarea {
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  background: #fff;
+  box-shadow: inset 0 0 1px rgba(0, 0, 0, 0.2);
+  outline: none;
+  cursor: text;
+  -webkit-transition: 0.3s ease;
+  -moz-transition: 0.3s ease;
+  -ms-transition: 0.3s ease;
+  transition: 0.3s ease; }
+  input[type="text"]:hover,
+  input[type="password"]:hover,
+  textarea:hover {
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2); }
+  input[type="text"]:focus,
+  input[type="password"]:focus,
+  textarea:focus {
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+    border-color: #4d90fe; }
+  input[type="text"]:active,
+  input[type="password"]:active,
+  textarea:active {
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+    border-color: #4d90fe; }
+  input[type="text"].is-error,
+  input[type="password"].is-error,
+  textarea.is-error {
+    border-color: #f00;
+    background: #fff0f0; }
+
+input[type="button"],
+input[type="submit"],
+button {
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  background: #fff;
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.2);
+  outline: none;
+  cursor: pointer;
+  font: inherit;
+  -webkit-transition: 0.3s ease;
+  -moz-transition: 0.3s ease;
+  -ms-transition: 0.3s ease;
+  transition: 0.3s ease; }
+  input[type="button"]:hover,
+  input[type="submit"]:hover,
+  button:hover {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); }
+  input[type="button"]:focus,
+  input[type="submit"]:focus,
+  button:focus {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    border-color: #4d90fe; }
+  input[type="button"]:active,
+  input[type="submit"]:active,
+  button:active {
+    box-shadow: none;
+    background: #eee;
+    border-color: #4d90fe; }
+
 .grid-container {
   margin-left: auto;
   margin-right: auto;
   padding-left: 15px;
   padding-right: 15px;
-  width: 994px; }
+  width: 100%;
+  max-width: 994px; }
   .grid-container:after {
     display: block;
     content: ' ';
@@ -157,6 +250,9 @@ td {
   float: left;
   box-sizing: border-box; }
 
+.grid-offset-1 {
+  margin-left: 8.33333%; }
+
 .grid-2 {
   position: relative;
   padding-left: 15px;
@@ -165,6 +261,9 @@ td {
   min-height: 1px;
   float: left;
   box-sizing: border-box; }
+
+.grid-offset-2 {
+  margin-left: 16.66667%; }
 
 .grid-3 {
   position: relative;
@@ -175,6 +274,9 @@ td {
   float: left;
   box-sizing: border-box; }
 
+.grid-offset-3 {
+  margin-left: 25%; }
+
 .grid-4 {
   position: relative;
   padding-left: 15px;
@@ -183,6 +285,9 @@ td {
   min-height: 1px;
   float: left;
   box-sizing: border-box; }
+
+.grid-offset-4 {
+  margin-left: 33.33333%; }
 
 .grid-5 {
   position: relative;
@@ -193,6 +298,9 @@ td {
   float: left;
   box-sizing: border-box; }
 
+.grid-offset-5 {
+  margin-left: 41.66667%; }
+
 .grid-6 {
   position: relative;
   padding-left: 15px;
@@ -201,6 +309,9 @@ td {
   min-height: 1px;
   float: left;
   box-sizing: border-box; }
+
+.grid-offset-6 {
+  margin-left: 50%; }
 
 .grid-7 {
   position: relative;
@@ -211,6 +322,9 @@ td {
   float: left;
   box-sizing: border-box; }
 
+.grid-offset-7 {
+  margin-left: 58.33333%; }
+
 .grid-8 {
   position: relative;
   padding-left: 15px;
@@ -219,6 +333,9 @@ td {
   min-height: 1px;
   float: left;
   box-sizing: border-box; }
+
+.grid-offset-8 {
+  margin-left: 66.66667%; }
 
 .grid-9 {
   position: relative;
@@ -229,6 +346,9 @@ td {
   float: left;
   box-sizing: border-box; }
 
+.grid-offset-9 {
+  margin-left: 75%; }
+
 .grid-10 {
   position: relative;
   padding-left: 15px;
@@ -237,6 +357,9 @@ td {
   min-height: 1px;
   float: left;
   box-sizing: border-box; }
+
+.grid-offset-10 {
+  margin-left: 83.33333%; }
 
 .grid-11 {
   position: relative;
@@ -247,6 +370,9 @@ td {
   float: left;
   box-sizing: border-box; }
 
+.grid-offset-11 {
+  margin-left: 91.66667%; }
+
 .grid-12 {
   position: relative;
   padding-left: 15px;
@@ -256,14 +382,19 @@ td {
   float: left;
   box-sizing: border-box; }
 
+.grid-offset-12 {
+  margin-left: 100%; }
+
 @media (min-width: 750px) and (max-width: 1024px) {
   .grid-container {
     width: 100%;
+    max-width: 100%;
     padding-left: 0;
     padding-right: 0; } }
 @media (max-width: 750px) {
   .grid-container {
     width: 100%;
+    max-width: 100%;
     padding-left: 0;
     padding-right: 0; }
 
@@ -272,60 +403,113 @@ td {
     float: none;
     width: 100%; }
 
+  .grid-offset-1 {
+    margin-left: 0; }
+
   .grid-2 {
     display: block;
     float: none;
     width: 100%; }
+
+  .grid-offset-2 {
+    margin-left: 0; }
 
   .grid-3 {
     display: block;
     float: none;
     width: 100%; }
 
+  .grid-offset-3 {
+    margin-left: 0; }
+
   .grid-4 {
     display: block;
     float: none;
     width: 100%; }
+
+  .grid-offset-4 {
+    margin-left: 0; }
 
   .grid-5 {
     display: block;
     float: none;
     width: 100%; }
 
+  .grid-offset-5 {
+    margin-left: 0; }
+
   .grid-6 {
     display: block;
     float: none;
     width: 100%; }
+
+  .grid-offset-6 {
+    margin-left: 0; }
 
   .grid-7 {
     display: block;
     float: none;
     width: 100%; }
 
+  .grid-offset-7 {
+    margin-left: 0; }
+
   .grid-8 {
     display: block;
     float: none;
     width: 100%; }
+
+  .grid-offset-8 {
+    margin-left: 0; }
 
   .grid-9 {
     display: block;
     float: none;
     width: 100%; }
 
+  .grid-offset-9 {
+    margin-left: 0; }
+
   .grid-10 {
     display: block;
     float: none;
     width: 100%; }
+
+  .grid-offset-10 {
+    margin-left: 0; }
 
   .grid-11 {
     display: block;
     float: none;
     width: 100%; }
 
+  .grid-offset-11 {
+    margin-left: 0; }
+
   .grid-12 {
     display: block;
     float: none;
-    width: 100%; } }
+    width: 100%; }
+
+  .grid-offset-12 {
+    margin-left: 0; } }
+.BaseView .SignInPageView,
+.BaseView .SignUpPageView,
+.BaseView .UserPageView,
+.BaseView .ProjectPageView,
+.BaseView .Error404PageView {
+  display: none; }
+.BaseView.is-mode-signin .SignInPageView {
+  display: block; }
+.BaseView.is-mode-signup .SignUpPageView {
+  display: block; }
+.BaseView.is-mode-user .UserPageView {
+  display: block; }
+.BaseView.is-mode-project .ProjectPageView {
+  display: block; }
+.BaseView.is-mode-error404 .Error404PageView {
+  display: block; }
+
 .ToolBarView {
   position: relative;
   top: 0;
@@ -354,9 +538,19 @@ td {
 .ToolBarView-right {
   float: right; }
 
-.UserPageView-nameSection {
+.SignInPageView-row {
+  margin-top: 15px; }
+  .SignInPageView-row:last-child {
+    margin-bottom: 15px; }
+
+.SignUpPageView-row {
+  margin-top: 15px; }
+  .SignUpPageView-row:last-child {
+    margin-bottom: 15px; }
+
+.UserPageView-header {
   margin-bottom: 15px; }
-  .UserPageView-nameSection:after {
+  .UserPageView-header:after {
     display: block;
     content: ' ';
     clear: both; }
@@ -376,6 +570,43 @@ td {
   float: left;
   vertical-align: middle; }
 
+.UserInlineView {
+  display: inline-block;
+  margin: 3px 5px; }
+
+.UserInlineView-icon {
+  width: 32px;
+  height: 32px;
+  vertical-align: middle;
+  border-radius: 3px; }
+
+.UserInlineView-name {
+  font-size: 18px;
+  margin-left: 8px;
+  vertical-align: middle; }
+
+.ProjectPageView-header {
+  margin-bottom: 15px; }
+  .ProjectPageView-header:after {
+    display: block;
+    content: ' ';
+    clear: both; }
+
+.ProjectPageView-icon {
+  float: left;
+  width: 128px;
+  height: 128px;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+  overflow: hidden; }
+
+.ProjectPageView-userName {
+  margin-left: 30px;
+  line-height: 128px;
+  font-size: 48px;
+  float: left;
+  vertical-align: middle; }
+
 .CardView {
   border: 1px solid #ccc;
   border-radius: 3px;
@@ -389,6 +620,10 @@ td {
   border-bottom: 1px solid #ccc; }
   .CardView-section:last-child, .CardView-header:last-child {
     border-bottom: none; }
+  .CardView-section.CardView-noPadding, .CardView-noPadding.CardView-header {
+    padding: 0; }
+    .CardView-section.CardView-noPadding .CardView-sectionHeader, .CardView-noPadding.CardView-header .CardView-sectionHeader {
+      margin: 0 0 8px; }
 
 .CardView-header {
   background: #f0f0f0;
@@ -401,3 +636,7 @@ td {
   color: #aaa;
   font-size: 0.8em;
   font-weight: bold; }
+  .CardView-sectionHeader.CardView-noPadding {
+    padding: 0; }
+
+/*# sourceMappingURL=style.css.map */

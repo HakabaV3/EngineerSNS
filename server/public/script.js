@@ -1750,7 +1750,7 @@ User.prototype.schema = {
  *  @param {Function} callback callback function.
  */
 User.getByName = function(userName, callback) {
-    API.User.get(userName, function(err, res) {
+    API.get('/user/' + userName, function(err, res) {
         if (err) {
             return callback(err, null);
         }
@@ -1764,7 +1764,7 @@ User.getByName = function(userName, callback) {
  *  @param {Function} callback callback function.
  */
 User.getMe = function(callback) {
-    API.User.me(function(err, res) {
+    API.get('/user/me', function(err, res) {
         if (err) {
             return callback(err, null);
         }
@@ -1794,7 +1794,9 @@ User.prototype.getAllProjects = function(callback) {
  *  @param {Function} callback callback function.
  */
 User.create = function(userName, password, callback) {
-    API.User.post(userName, password, function(err, res) {
+    API.post('/user/' + userName, {
+        password: password
+    }, function(err, res) {
         if (err) {
             return callback(err, null);
         }
@@ -1813,7 +1815,10 @@ User.prototype.update = function(params, callback) {
         return callback(APIError.PERMISSION_DENIED, null);
     };
 
-    API.User.patch(this.name, params, function(err, res) {
+    API.patch(this.uri, {
+        name: this.name,
+        description: this.description
+    }, function(err, res) {
         if (err) {
             return callback(err, null);
         }
@@ -1828,11 +1833,13 @@ User.prototype.update = function(params, callback) {
  *  @param {Function} callback callback function.
  */
 User.prototype.updateIcon = function(blob, callback) {
+    console.warn('User#updateIcon: NIY.');
+
     if (!app.isAuthed || this !== app.authedUser) {
         return callback(APIError.PERMISSION_DENIED, null);
     };
 
-    API.User.patchIcon(this.name, blob, function(err, res) {
+    API.patchB(this.uri + '/icon', blob, function(err, res) {
         if (err) {
             return callback(err, null);
         }
@@ -1850,12 +1857,27 @@ User.prototype.delete = function(callback) {
         return callback(APIError.PERMISSION_DENIED, null);
     };
 
-    API.User.delete(this.name, function(err, res) {
+    API.delete(this.uri, function(err, res) {
         if (err) {
             return callback(err, null);
         }
 
+        //@TODO: インスタンスを消す
         return callback(null, res);
+    });
+};
+
+/**
+ *  Get user's comments.
+ *  @param {Function} callback callback function.
+ */
+User.prototype.getComments = function(callback) {
+    API.get(this.uri + '/comment', function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, res.map(Comment));
     });
 };
 
@@ -2016,11 +2038,143 @@ Application.prototype.onHashChange = function() {
 
 
 
+
+
+
 /**
  *  @TODO
  *  API.Userへの依存をなくす
  *  Model#uriを用いて、API_coreだけで対応する。
  */
+
+/**
+ *  Comment Model.
+ *  @constructor
+ *  @param {Object} data initial data.
+ *  @extends {Model}
+ */
+var Comment = function(data) {
+    if (!(this instanceof Comment)) return new Comment(data);
+
+    if (isObject(data)) {
+        if (Comment.hasInstance(data.id)) {
+            return Comment.getInstance(data.id).updateWithData(data);
+        }
+    }
+
+    Model.call(this, data);
+};
+extendClass(Comment, Model);
+
+Comment.prototype.hoge = function(name, key) {};
+
+/**
+ *  model instances map
+ *  @type {Object}
+ *  @private
+ *  @overrides
+ */
+Comment.instances_ = {};
+
+/** 
+ *  Schema
+ *
+ *  @type {Object}
+ *  @override
+ */
+Comment.prototype.schema = {
+    "id": {
+        type: String,
+        value: ''
+    },
+    "uri": {
+        type: String,
+        value: ''
+    },
+    "owner": {
+        type: String,
+        value: ''
+    },
+    "text": {
+        type: String,
+        value: ''
+    },
+    "created": {
+        type: Date,
+        value: null
+    },
+    "target": {
+        type: String,
+        value: null
+    },
+    "range": {
+        type: Object,
+        value: null
+    }
+};
+
+/**
+ *  Get Comment data by comment ID
+ *  @param {string} commentId the comment id.
+ *  @param {Function} callback callback function.
+ */
+Comment.getById = function(commentId, callback) {
+    API.get('/comment/' + commentId,
+        function(err, res) {
+            if (err) {
+                return callback(err, null);
+            }
+
+            return callback(null, new Comment(res));
+        });
+};
+
+/**
+ *  Update comment data.
+ *  @params {Function} callback callback function.
+ */
+Comment.prototype.update = function(callback) {
+    if (!app.isAuthed || app.authedUser.name !== this.owner) {
+        return callback(APIError.PERMISSION_DENIED, null);
+    }
+
+    API.patch(this.uri, {
+            text: this.text
+        },
+
+        function(err, res) {
+            if (err) {
+                return callback(err, null);
+            }
+
+            return callback(null, new Comment(res));
+        });
+};
+
+/**
+ *  Delete comment data.
+ *  @param {Function} callback callback function.
+ */
+Comment.prototype.delete = function(callback) {
+    if (!app.isAuthed || app.authedUser.name !== this.owner) {
+        return callback(APIError.PERMISSION_DENIED, null);
+    }
+
+    API.delete(this.uri,
+
+        function(err, res) {
+            if (err) {
+                return callback(err, null);
+            }
+
+            //@TODO: インスタンスを消す。
+            return callback(null, res);
+        });
+};
+
+
+
+
 
 /**
  *  Project Model.
@@ -2085,9 +2239,7 @@ Project.prototype.schema = {
  *  @param {Function} callback callback function.
  */
 Project.getByName = function(userName, projectName, callback) {
-    API.Project.get(
-        userName,
-        projectName,
+    API.get('/user/' + userName + '/project/' + projectName,
         function(err, res) {
             if (err) {
                 return callback(err, null);
@@ -2103,8 +2255,7 @@ Project.getByName = function(userName, projectName, callback) {
  *  @param {Function} callback callback function.
  */
 Project.getAll = function(userName, callback) {
-    API.Project.getAll(
-        userName,
+    API.get('/user/' + userName + '/project',
         function(err, res) {
             if (err) {
                 return callback(err, null);
@@ -2124,9 +2275,7 @@ Project.create = function(projectName, callback) {
         return callback(APIError.PERMISSION_DENIED, null);
     }
 
-    API.Project.post(
-        app.authedUser.name,
-        projectName,
+    API.post('/user/' + app.authedUser.name + '/project',
         function(err, res) {
             if (err) {
                 return callback(err, null);
@@ -2137,20 +2286,28 @@ Project.create = function(projectName, callback) {
 };
 
 /**
- *  Update user data.
+ *  Update project data.
  *  @param {Object} params update datas.
  *  @params {Function} callback callback function.
  */
-Project.prototype.update = function(params, callback) {
+Project.prototype.update = function(callback) {
     if (!app.isAuthed || app.authedUser.name !== this.owner) {
         return callback(APIError.PERMISSION_DENIED, null);
     }
 
-    Project.update(this.owner, this.name, params, callback);
+    API.patch(this.uri, {
+        name: this.name
+    }, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, new Project(res));
+    });
 };
 
 /**
- *  Delete user data.
+ *  Delete project data.
  *  @param {Function} callback callback function.
  */
 Project.prototype.delete = function(callback) {
@@ -2158,7 +2315,28 @@ Project.prototype.delete = function(callback) {
         return callback(APIError.PERMISSION_DENIED, null);
     }
 
-    Project.delete(this.owner, this.name, callback);
+    API.delete(this.uri, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        //@TODO: インスタンスを消す
+        return callback(null, new Project(res));
+    });
+};
+
+/**
+ *  Get project comments.
+ *  @param {Function} callback callback function.
+ */
+Project.prototype.getComments = function(callback) {
+    API.get(this.uri + '/comment', function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, res.map(Comment));
+    });
 };
 
 
