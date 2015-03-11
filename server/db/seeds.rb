@@ -19,6 +19,6 @@ Project.create!([
   {id: 4, owner: "jinssk", name: "JinsskProject", user_id: 3},
 ])
 Comment.create!([
-  {id: 1, owner: "kikurage", text: "それな", user_id: 1, project_id: 4},
-  {id: 2, owner: "kikurage", text: "それはない", user_id: 1, project_id: 3}
+  {id: 1, owner: "kikurage", text: "それな", user_id: 1, target: "/jinssk/project/JinsskProject", project_id: 4},
+  {id: 2, owner: "kikurage", text: "それはない", user_id: 1, target: "stogu/project/StoguProject", project_id: 3}
 ])
