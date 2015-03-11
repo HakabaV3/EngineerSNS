@@ -4,5 +4,6 @@ module V1
 
     mount V1::Users
     mount V1::Projects
+    mount V1::Comments
   end
 end

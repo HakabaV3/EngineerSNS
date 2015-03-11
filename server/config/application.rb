@@ -16,6 +16,13 @@ module Server
       env['api.tilt.root'] = Rails.root.join 'app', 'views', 'api'
     end
 
+    # Time Zone
+    config.active_record.default_timezone = :local
+    config.time_zone = 'Tokyo'
+
+    # Language
+    config.i18n.default_locale = :ja
+
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration should go into files in config/initializers
     # -- all .rb files in that directory are automatically loaded.
