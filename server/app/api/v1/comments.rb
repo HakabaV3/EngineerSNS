@@ -12,7 +12,7 @@ module V1
       end
 
       namespace 'project/:projectName' do
-          
+
         resource "comment" do
 
           # GET /user/:userName/project/:projectName/comment
