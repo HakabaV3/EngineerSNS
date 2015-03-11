@@ -1,3 +1,5 @@
+require 'securerandom'
+
 module V1
   class Users < Grape::API
     
@@ -10,7 +12,6 @@ module V1
       # GET /user/:userName
       params do
       end
-
       get '/', jbuilder:'/user/index' do
         @users = User.all
       end
