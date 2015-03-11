@@ -1,0 +1,19 @@
+//@include userview.html
+//@include projectlistview.html
+
+<template name="UserPageView">
+	<div class="UserPageView grid-container">
+		<div class="UserPageView-nameSection grid-12">
+			<img class="UserPageView-icon" src="{{ user.icon }}" />
+			<h3 class="UserPageView-userName">{{ user.name }}</h3>
+		</div>
+
+		<div class="grid-6">
+			{{view view=UserView name=userView }}
+		</div>
+
+		<div class="grid-6">
+			{{view view=ProjectListView name=projectListView }}
+		</div>
+	</div>
+</template>

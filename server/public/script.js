@@ -1125,9 +1125,16 @@ View.prototype.finalize = function() {
  *  @param {string} templateId Template ID.
  */
 View.prototype.loadTemplate = function(templateId) {
-    var created = Template.create(templateId, this);
+    var created = Template.create(templateId, this),
+        self = this;
+
     this.$.root = created.node;
     this.$.container = this.$.root.querySelector('[container]') || this.$.root;
+
+    forEach(this.$.root.querySelectorAll('[name]'), function(node) {
+        self.$[node.getAttribute('name')] = node;
+    });
+
     this.childViews = created.childViews;
     this.queries = created.queries;
 };
@@ -1207,8 +1214,23 @@ var BaseView = function() {
     View.call(this);
 
     this.loadTemplate('BaseView');
+
+    this.mode = null;
+
+    app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
 };
 extendClass(BaseView, View);
+
+BaseView.prototype.finalize = function() {
+    app.off('rout.change', this.onChangeRout)
+    this.onChangeRout = null;
+
+    View.prototype.finalize.call(this);
+};
+
+BaseView.prototype.onChangeRout = function(rout) {
+    this.mode = rout.mode;
+};
 
 
 
@@ -1845,15 +1867,6 @@ User.prototype.delete = function(callback) {
 var Application = function() {};
 extendClass(Application, EventDispatcher);
 
-/**
- *  Event names
- *  @enum {string}
- */
-Application.Event = {
-    CHANGE_AUTH_STATE: 'CHANGE_AUTH_STATE',
-    CHANGE_ROUT: 'CHANGE_ROUT'
-};
-
 Application.prototype.init = function() {
     /**
      *  @NOTE singleton
@@ -1909,8 +1922,7 @@ Application.prototype.updateAuthState = function() {
             self.authedUser = me;
         }
 
-        self.fire(
-            Application.Event.CHANGE_AUTH_STATE,
+        self.fire('auth.change',
             self.isAuthed,
             self.authedUser
         );
@@ -1978,7 +1990,7 @@ Application.prototype.routing = function(url) {
     } else {
         //  no match.
         params = {
-            mode: 'error'
+            mode: 'error404'
         }
     }
 
@@ -1987,7 +1999,7 @@ Application.prototype.routing = function(url) {
 
 Application.prototype.onHashChange = function() {
     this.rout = this.routing()
-    this.fire(Application.Event.CHANGE_ROUT, this.rout);
+    this.fire('rout.change', this.rout);
 };
 
 
@@ -2157,14 +2169,14 @@ var UserPageView = function() {
     this.loadTemplate('UserPageView');
 
     this.user = null;
-    this.projects = [];
 
-    app.on(Application.Event.CHANGE_ROUT, this.onChangeRout = this.onChangeRout.bind(this));
+    app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
 };
 extendClass(UserPageView, View);
 
 UserPageView.prototype.finalize = function() {
-    app.off(Application.Event.CHANGE_ROUT, this.onChangeRout);
+    app.off('rout.change', this.onChangeRout);
+    this.onChangeRout = null;
 
     if (this.user) {
         this.user.off('update', this.onModelUpdate);
@@ -2174,8 +2186,7 @@ UserPageView.prototype.finalize = function() {
 };
 
 UserPageView.prototype.loadUserWithRout = function(rout) {
-    if (rout.mode !== 'user' &&
-        rout.mode !== 'project') return;
+    if (rout.mode !== 'user') return;
 
     var self = this;
 
@@ -2192,11 +2203,9 @@ UserPageView.prototype.loadUserProjects = function() {
 
     user.getAllProjects(function(err, projects) {
         if (err) {
-            self.projects = [];
-            self.childViews.projectListView.setProjects([]);
+            self.childViews.projectListView.setItems([]);
         } else {
-            self.projects = projects;
-            self.childViews.projectListView.setProjects(projects);
+            self.childViews.projectListView.setItems(projects);
         }
     });
 };
@@ -2209,8 +2218,7 @@ UserPageView.prototype.setUser = function(user) {
     }
 
     this.user = user;
-    this.childViews.userView.user = user;
-    this.projects = [];
+    this.childViews.userView.setUser(user);
 
     if (user) {
         user.on('update', this.onModelUpdate);
@@ -2223,30 +2231,6 @@ UserPageView.prototype.onChangeRout = function(rout) {
 };
 
 UserPageView.prototype.onModelUpdate = function() {};
-
-
-
-
-
-
-var ProjectPageView = function() {
-    View.call(this);
-
-    this.loadTemplate('ProjectPageView');
-};
-extendClass(ProjectPageView, View);
-
-
-
-
-
-
-var Error404PageView = function() {
-    View.call(this);
-
-    this.loadTemplate('Error404PageView');
-};
-extendClass(Error404PageView, View);
 
 
 
@@ -2268,6 +2252,83 @@ UserView.prototype.finalize = function() {
     View.prototype.finalize.call(this);
 };
 
+UserView.prototype.setUser = function(user) {
+    this.user = user;
+};
+
+
+
+
+
+
+
+
+var UserInlineView = function() {
+    View.call(this);
+
+    this.loadTemplate('UserInlineView');
+
+    this.user = null;
+};
+extendClass(UserInlineView, View);
+
+UserInlineView.prototype.finalize = function() {
+    View.prototype.finalize.call(this);
+};
+
+UserInlineView.prototype.setUser = function(user) {
+    this.user = user;
+};
+
+
+
+
+
+
+
+
+var ProjectPageView = function() {
+    View.call(this);
+
+    /**
+     *  @type {Project}
+     */
+    this.project = null;
+
+    this.loadTemplate('ProjectPageView');
+
+    app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
+};
+extendClass(ProjectPageView, View);
+
+ProjectPageView.prototype.finalize = function() {
+    app.off('rout.change', this.onChangeRout);
+    this.onChangeRout = null;
+
+    View.prototype.finalize.call(this);
+};
+
+ProjectPageView.prototype.loadProjectWithRout = function(rout) {
+    if (rout.mode !== 'project') return;
+
+    var self = this;
+
+    Project.getByName(rout.userName, rout.projectName, function(err, project) {
+        self.setProject(project);
+    });
+
+    User.getByName(rout.userName, function(err, user) {
+        self.childViews.userInlineView.setUser(user);
+    });
+};
+
+ProjectPageView.prototype.onChangeRout = function(rout) {
+    this.loadProjectWithRout(rout);
+};
+
+ProjectPageView.prototype.setProject = function(project) {
+    this.project = project;
+};
 
 
 
@@ -2281,55 +2342,124 @@ UserView.prototype.finalize = function() {
 
 
 
+/**
+ *  リスト表示用の抽象クラス。
+ *  使用する際は、継承先で
+ *  - View#loadTemplateを呼び出す。
+ *  - List#setItemsを用いてデータを設定する。
+ *  - ListView#itemViewConstructorにリストアイテムビューのコンストラクタを設定する。
+ *  の2点を行うこと。
+ */
+var ListView = function() {
+    View.call(this);
+
+    /**
+     *  @type {[Model]}
+     */
+    this.items = [];
+
+    /**
+     *  @type {Function}
+     */
+    this.itemViewConstructor = null;
+
+    /**
+     *  @type {[View]}
+     */
+    this.itemViews = [];
+};
+extendClass(ListView, View);
+
+ListView.prototype.finalize = function() {
+    this.setItems([]);
+
+    View.prototype.finalize.call(this);
+};
+
+/**
+ *  @param {[Model]} items items.
+ */
+ListView.prototype.setItems = function(items) {
+    this.items = items
+    this.update();
+};
+
+ListView.prototype.update = function() {
+    var itemViewConstructor = this.itemViewConstructor,
+        self = this;
+
+    this.itemViews.forEach(function(itemView) {
+        itemView.finalize();
+    });
+
+    if (!itemViewConstructor) {
+        console.warn('ListView#itemViewConstructor must be set.');
+        return
+    }
+
+    this.itemViews = this.items.map(function(item) {
+        var itemView = new itemViewConstructor();
+        itemView.setModel(item);
+
+        self.appendChild(itemView);
+
+        return itemView;
+    });
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ *  リストのアイテム用の抽象クラス。
+ *  使用する際は、継承先で
+ *  - ListItemView#setModelをオーバーライドする。
+ *  を行うこと。
+ */
+var ListItemView = function() {
+    View.call(this);
+};
+extendClass(ListItemView, View);
+
+/**
+ *  @param {Model} model model.
+ */
+ListItemView.prototype.setModel = function(model) {
+    console.warn('ListItemView#setModel must be overrided.');
+};
 
 var ProjectListItemView = function() {
-    View.call(this);
+    ListItemView.call(this);
 
     this.loadTemplate('ProjectListItemView');
 
     this.project = null;
 };
-extendClass(ProjectListItemView, View);
+extendClass(ProjectListItemView, ListItemView);
 
-ProjectListItemView.prototype.finalize = function() {
-    View.prototype.finalize.call(this);
+ProjectListItemView.prototype.setModel = function(project) {
+    this.project = project;
 };
 
 var ProjectListView = function() {
-    View.call(this);
+    ListView.call(this);
 
     this.loadTemplate('ProjectListView');
+    this.itemViewConstructor = ProjectListItemView;
 
     this.projects = [];
     this.listItems = [];
 };
-extendClass(ProjectListView, View);
-
-ProjectListView.prototype.finalize = function() {
-    View.prototype.finalize.call(this);
-};
-
-ProjectListView.prototype.setProjects = function(projects) {
-    this.projects = projects;
-    this.update();
-};
-
-ProjectListView.prototype.update = function() {
-    var self = this;
-
-    this.listItems.forEach(function(listItem) {
-        listItem.finalize();
-    });
-
-    this.listItems = this.projects.map(function(project) {
-        var listItem = new ProjectListItemView();
-        listItem.project = project;
-
-        self.appendChild(listItem);
-
-        return listItem;
-    });
-}
+extendClass(ProjectListView, ListView);
 
 
 
@@ -2349,6 +2479,188 @@ var ToolBarView = function() {
 };
 
 extendClass(ToolBarView, View);
+
+
+
+
+
+
+var SignInPageView = function() {
+    View.call(this);
+
+    this.loadTemplate('SignInPageView');
+
+    this.userName = '';
+    this.password = '';
+
+    this.$.form.addEventListener('submit', this.onSubmit = this.onSubmit.bind(this));
+    app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
+};
+extendClass(SignInPageView, View);
+
+SignInPageView.prototype.finalize = function() {
+    this.$.form.removeEventListener('submit', this.onSubmit);
+    this.onSubmit = null;
+
+    app.off('rout.change', this.onChangeRout);
+    this.onChangeRout = null;
+
+    View.prototype.finalize.call(this);
+};
+
+SignInPageView.prototype.signIn = function() {
+    var userName, password;
+
+    if (!this.validate()) return;
+
+    userName = this.$.userName.value;
+    password = this.$.password.value;
+
+    //@TODO
+    console.log('サインイン処理(NIY)');
+};
+
+SignInPageView.prototype.validate = function() {
+    var userName = this.$.userName.value,
+        password = this.$.password.value,
+        isValidate = true;
+
+    if (!password) {
+        isValidate = false;
+        this.$.password.classList.add('is-error');
+        this.$.password.focus();
+    } else {
+        this.$.password.classList.remove('is-error');
+    }
+
+    if (!userName) {
+        isValidate = false;
+        this.$.userName.classList.add('is-error');
+        this.$.userName.focus();
+    } else {
+        this.$.userName.classList.remove('is-error');
+    }
+
+    return isValidate;
+};
+
+SignInPageView.prototype.onChangeRout = function(rout) {
+    var self;
+
+    if (rout.mode !== 'signin') return;
+
+    self = this;
+    setTimeout(function() {
+        self.$.userName.focus();
+    });
+
+    this.userName = '';
+    this.password = '';
+};
+
+SignInPageView.prototype.onSubmit = function(ev) {
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    this.signIn();
+};
+
+
+
+
+
+
+var SignUpPageView = function() {
+    View.call(this);
+
+    this.loadTemplate('SignUpPageView');
+
+    this.userName = '';
+    this.password = '';
+
+    this.$.form.addEventListener('submit', this.onSubmit = this.onSubmit.bind(this));
+    app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
+};
+extendClass(SignUpPageView, View);
+
+SignUpPageView.prototype.finalize = function() {
+    this.$.form.removeEventListener('submit', this.onSubmit);
+    this.onSubmit = null;
+
+    app.off('rout.change', this.onChangeRout);
+    this.onChangeRout = null;
+
+    View.prototype.finalize.call(this);
+};
+
+SignUpPageView.prototype.signUp = function() {
+    var userName, password;
+
+    if (!this.validate()) return;
+
+    userName = this.$.userName.value;
+    password = this.$.password.value;
+
+    //@TODO
+    console.log('サインアップ処理(NIY)');
+};
+
+SignUpPageView.prototype.validate = function() {
+    var userName = this.$.userName.value,
+        password = this.$.password.value,
+        isValidate = true;
+
+    if (!password) {
+        isValidate = false;
+        this.$.password.classList.add('is-error');
+        this.$.password.focus();
+    } else {
+        this.$.password.classList.remove('is-error');
+    }
+
+    if (!userName) {
+        isValidate = false;
+        this.$.userName.classList.add('is-error');
+        this.$.userName.focus();
+    } else {
+        this.$.userName.classList.remove('is-error');
+    }
+
+    return isValidate;
+};
+
+SignUpPageView.prototype.onChangeRout = function(rout) {
+    var self;
+
+    if (rout.mode !== 'signup') return;
+
+    self = this;
+    setTimeout(function() {
+        self.$.userName.focus();
+    });
+
+    this.userName = '';
+    this.password = '';
+};
+
+SignUpPageView.prototype.onSubmit = function(ev) {
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    this.signUp();
+};
+
+
+
+
+
+
+var Error404PageView = function() {
+    View.call(this);
+
+    this.loadTemplate('Error404PageView');
+};
+extendClass(Error404PageView, View);
 
 /**
  *	bootstrap
