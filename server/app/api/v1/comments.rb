@@ -3,7 +3,7 @@ module V1
     
     namespace 'user/:userName' do
 
-      # GET /user/:userName/comment
+      # GET /user/:userName/comment (Public)
       params do
         requires :userName, type: String
       end
@@ -15,7 +15,7 @@ module V1
 
         resource "comment" do
 
-          # GET /user/:userName/project/:projectName/comment
+          # GET /user/:userName/project/:projectName/comment (Public)
           params do
             requires :userName, type: String
             requires :projectName, type: String
@@ -26,14 +26,14 @@ module V1
             @comments = @projects.find_by(name: params[:projectName]).comments
           end
 
-          # POST /user/:userName/project/:projectName/comment
+          # POST /user/:userName/project/:projectName/comment (Private)
           params do
             requires :userName, type: String
             requires :projectName, type: String
             optional :text, type: String
           end
           post '', jbuilder: 'comment/new' do
-            error!("ユーザーが見つけられません。", 404) if User.find_by(name: params[:userName]).blank?
+            who_am_i(headers)
             @user = User.find_by(name: params[:userName])
             @project = @user.projects.find_by(name: params[:projectName])
             @comment = Comment.create(owner: @user.name, text: params[:text], user_id: @user.id, project_id: @project.id)
@@ -44,25 +44,36 @@ module V1
 
     namespace 'comment/:commentId' do
 
-      # PATCH
+      # GET /comment/:commentId (Public)
+      params do
+        requires :commentId, type: Integer
+      end
+      get '', jbuilder: 'comment/show' do
+        @comment = Comment.find_by(id: params[:commentId])
+        error!("該当するデータがありません。", 404) if @comment.blank?
+      end
+
+      # PATCH /comment/:commentId (Private)
       params do
         requires :commentId, type: Integer
         optional :text, type: String
       end
       patch '', jbuilder: 'comment/update' do
-        error!("コメントを見つけられません。", 404) if Comment.find_by(id: params[:commentId]).blank?
+        who_am_i(headers)
         @comment = Comment.find_by(id: params[:commentId])
+        authenticated(@comment)
         @comment.text = params[:text] || @comment.text
         @comment.save
       end
 
-    	# DELETE /comment/:commentId
+      # DELETE /comment/:commentId (Private)
       params do
         requires :commentId, type: Integer
       end
       delete '', jbuilder: 'comment/delete' do
-        error!("コメントを見つけられません。", 404) if Comment.find_by(id: params[:commentId]).blank? 
+        who_am_i(headers)
         @comment = Comment.find_by(id: params[:commentId])
+        authenticated(@comment)
         @comment.delete
       end
     end

@@ -51,7 +51,7 @@ module V1
         patch ':projectName', jbuilder: 'project/update' do
           who_am_i(headers)
           @project = @user.project(params[:projectName])
-          error!("プロジェクトが見つかりません。", 404) if @project.blank?
+          authenticated(@project)
           @project.name = params[:name] || @project.name
           token
         end
@@ -64,6 +64,7 @@ module V1
         delete ':projectName', jbuilder: 'project/delete' do
           who_am_i(headers)
           @project = @user.projects.find_by(name: params[:projectName])
+          authenticated(@project)
           @project.delete
         end
       end
