@@ -1363,7 +1363,6 @@ Model.prototype.dispatchUpdate = function() {
 
 
 
-
 /**
  *  namespace for definition of API Errors
  *  @namespace
@@ -1581,20 +1580,24 @@ API.ajax = function(method, url, headers, body, callback) {
     var xhr = new XMLHttpRequest();
     xhr.open(method, API.EntryPoint + url);
 
-    if (API.token) {
-        xhr.setHeader('X-token', API.token);
+    if (API.hasToken()) {
+        xhr.setRequestHeader('X-Token', API.getToken());
     }
 
     if (headers) {
         Object.keys(headers).forEach(function(key) {
-            xhr.setHeader(key, headers[key]);
+            xhr.setRequestHeader(key, headers[key]);
         });
     }
 
     xhr.onload = function() {
-        var result;
+        var result,
+            token;
 
-        //@TODO response headerからトークンを読み取って更新する処理
+        token = xhr.getResponseHeader('X-Token');
+        if (token) {
+            API.updateToken(token);
+        }
 
         try {
             result = JSON.parse(xhr.responseText);
@@ -1616,45 +1619,43 @@ API.ajax = function(method, url, headers, body, callback) {
     xhr.send(body);
 };
 
-API.User = {
-    get: function(userName, callback) {
-        return API.get('/user/' + userName, callback);
-    },
-    me: function(callback) {
-        return API.get('/user/me', callback);
-    },
-    post: function(userName, password, callback) {
-        return API.post('/user/' + userName, {
-            'password': password
-        }, callback);
-    },
-    patch: function(userName, params, callback) {
-        return API.patch('/user/' + userName, params, callback);
-    },
-    patchIcon: function(userName, blob, callback) {
-        return API.patchB('/user/' + userName + '/icon', blob, callback);
-    },
-    delete: function(userName, callback) {
-        return API.delete('/user/' + userName, callback);
-    }
+
+/**
+ *  authentication token.
+ *  @type {string|null}
+ */
+API.token = null;
+
+/**
+ *  The key name of authentication token in Local Storage.
+ */
+API.KEY_TOKEN = 'token';
+
+/** 
+ *  Update authentication token.
+ *  @param {string|null} token token.
+ */
+API.updateToken = function(token) {
+    API.token = token;
+    localStorage.setItem(API.KEY_TOKEN, token || '');
 };
 
-API.Project = {
-    get: function(userName, projectName, callback) {
-        return API.get('/user/' + userName + '/project/' + projectName, callback);
-    },
-    getAll: function(userName, callback) {
-        return API.get('/user/' + userName + '/project', callback);
-    },
-    post: function(userName, projectName, callback) {
-        return API.post('/user/' + userName + '/project/' + projectName, callback);
-    },
-    patch: function(userName, projectName, callback) {
-        return API.patch('/user/' + userName + '/project/' + projectName, callback);
-    },
-    delete: function(userName, projectName, callback) {
-        return API.delete('/user/' + userName + '/project/' + projectName, callback);
-    }
+/** 
+ *  Get authentication token.
+ *  @return {string|null} token.
+ */
+API.getToken = function() {
+    if (API.token) return API.token;
+
+    return API.token = localStorage.getItem(API.KEY_TOKEN);
+};
+
+/** 
+ *  Check if authentication token is exist.
+ *  @return {boolean} If true, the token is exist.
+ */
+API.hasToken = function() {
+    return API.getToken() !== '';
 };
 
 /**
@@ -1750,7 +1751,7 @@ User.prototype.schema = {
  *  @param {Function} callback callback function.
  */
 User.getByName = function(userName, callback) {
-    API.User.get(userName, function(err, res) {
+    API.get('/user/' + userName, function(err, res) {
         if (err) {
             return callback(err, null);
         }
@@ -1764,7 +1765,7 @@ User.getByName = function(userName, callback) {
  *  @param {Function} callback callback function.
  */
 User.getMe = function(callback) {
-    API.User.me(function(err, res) {
+    API.get('/auth/me', function(err, res) {
         if (err) {
             return callback(err, null);
         }
@@ -1794,7 +1795,9 @@ User.prototype.getAllProjects = function(callback) {
  *  @param {Function} callback callback function.
  */
 User.create = function(userName, password, callback) {
-    API.User.post(userName, password, function(err, res) {
+    API.post('/user/' + userName, {
+        password: password
+    }, function(err, res) {
         if (err) {
             return callback(err, null);
         }
@@ -1813,7 +1816,10 @@ User.prototype.update = function(params, callback) {
         return callback(APIError.PERMISSION_DENIED, null);
     };
 
-    API.User.patch(this.name, params, function(err, res) {
+    API.patch(this.uri, {
+        name: this.name,
+        description: this.description
+    }, function(err, res) {
         if (err) {
             return callback(err, null);
         }
@@ -1828,11 +1834,13 @@ User.prototype.update = function(params, callback) {
  *  @param {Function} callback callback function.
  */
 User.prototype.updateIcon = function(blob, callback) {
+    console.warn('User#updateIcon: NIY.');
+
     if (!app.isAuthed || this !== app.authedUser) {
         return callback(APIError.PERMISSION_DENIED, null);
     };
 
-    API.User.patchIcon(this.name, blob, function(err, res) {
+    API.patchB(this.uri + '/icon', blob, function(err, res) {
         if (err) {
             return callback(err, null);
         }
@@ -1850,12 +1858,27 @@ User.prototype.delete = function(callback) {
         return callback(APIError.PERMISSION_DENIED, null);
     };
 
-    API.User.delete(this.name, function(err, res) {
+    API.delete(this.uri, function(err, res) {
         if (err) {
             return callback(err, null);
         }
 
+        //@TODO: インスタンスを消す
         return callback(null, res);
+    });
+};
+
+/**
+ *  Get user's comments.
+ *  @param {Function} callback callback function.
+ */
+User.prototype.getComments = function(callback) {
+    API.get(this.uri + '/comment', function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, res.map(Comment));
     });
 };
 
@@ -1868,6 +1891,8 @@ var Application = function() {};
 extendClass(Application, EventDispatcher);
 
 Application.prototype.init = function() {
+    var self = this;
+
     /**
      *  @NOTE singleton
      */
@@ -1894,38 +1919,69 @@ Application.prototype.init = function() {
      */
     this.authedUser = null;
 
-    this.updateAuthState();
-
     this.baseView = new BaseView();
     this.baseView.appendTo(document.body);
 
     window.addEventListener('hashchange', this.onHashChange.bind(this));
-    this.onHashChange();
+
+    this.updateAuthState(function() {
+        self.onHashChange();
+    })
 };
 
 /**
  *  check authentication state
  */
-Application.prototype.updateAuthState = function() {
+Application.prototype.updateAuthState = function(callback) {
     var self = this;
 
     /**
      *  @TODO LocalStorageからtoken取り出す
      */
 
-    API.User.me(function(err, me) {
+    User.getMe(function(err, me) {
         if (err) {
-            self.isAuthed = false;
-            self.authedUser = null;
-        } else {
-            self.isAuthed = true;
-            self.authedUser = me;
+            self.setAuthedUser(null);
+            callback(err, null);
+            return;
         }
 
-        self.fire('auth.change',
-            self.isAuthed,
-            self.authedUser
-        );
+        self.setAuthedUser(new User(me));
+        callback(null, me);
+    });
+};
+
+Application.prototype.setAuthedUser = function(user) {
+    if (this.authedUser === user) return;
+
+    if (user) {
+        this.isAuthed = true;
+        this.authedUser = user;
+    } else {
+        this.isAuthed = false;
+        this.authedUser = null;
+    }
+
+    this.fire('auth.change',
+        this.isAuthed,
+        this.authedUser
+    );
+};
+
+/**
+ *  Sign in.
+ */
+Application.prototype.signIn = function(userName, password, callback) {
+    var self = this;
+
+    Auth.signIn(userName, password, function(err, user, token) {
+
+        if (err) {
+            return callback(err, null);
+        }
+
+        self.setAuthedUser(user);
+        callback(null, user);
     });
 };
 
@@ -1961,7 +2017,19 @@ Application.prototype.routing = function(url) {
 
     url = url || window.location.hash.substr(2);
 
-    if (url === '/signup') {
+    if (url === '') {
+        if (this.isAuthed) {
+            params = {
+                mode: 'user',
+                userName: this.authedUser.name
+            };
+        } else {
+            params = {
+                mode: 'signin'
+            };
+        }
+
+    } else if (url === '/signup') {
         params = {
             mode: 'signup'
         };
@@ -2016,11 +2084,143 @@ Application.prototype.onHashChange = function() {
 
 
 
+
+
+
 /**
  *  @TODO
  *  API.Userへの依存をなくす
  *  Model#uriを用いて、API_coreだけで対応する。
  */
+
+/**
+ *  Comment Model.
+ *  @constructor
+ *  @param {Object} data initial data.
+ *  @extends {Model}
+ */
+var Comment = function(data) {
+    if (!(this instanceof Comment)) return new Comment(data);
+
+    if (isObject(data)) {
+        if (Comment.hasInstance(data.id)) {
+            return Comment.getInstance(data.id).updateWithData(data);
+        }
+    }
+
+    Model.call(this, data);
+};
+extendClass(Comment, Model);
+
+Comment.prototype.hoge = function(name, key) {};
+
+/**
+ *  model instances map
+ *  @type {Object}
+ *  @private
+ *  @overrides
+ */
+Comment.instances_ = {};
+
+/** 
+ *  Schema
+ *
+ *  @type {Object}
+ *  @override
+ */
+Comment.prototype.schema = {
+    "id": {
+        type: String,
+        value: ''
+    },
+    "uri": {
+        type: String,
+        value: ''
+    },
+    "owner": {
+        type: String,
+        value: ''
+    },
+    "text": {
+        type: String,
+        value: ''
+    },
+    "created": {
+        type: Date,
+        value: null
+    },
+    "target": {
+        type: String,
+        value: null
+    },
+    "range": {
+        type: Object,
+        value: null
+    }
+};
+
+/**
+ *  Get Comment data by comment ID
+ *  @param {string} commentId the comment id.
+ *  @param {Function} callback callback function.
+ */
+Comment.getById = function(commentId, callback) {
+    API.get('/comment/' + commentId,
+        function(err, res) {
+            if (err) {
+                return callback(err, null);
+            }
+
+            return callback(null, new Comment(res));
+        });
+};
+
+/**
+ *  Update comment data.
+ *  @params {Function} callback callback function.
+ */
+Comment.prototype.update = function(callback) {
+    if (!app.isAuthed || app.authedUser.name !== this.owner) {
+        return callback(APIError.PERMISSION_DENIED, null);
+    }
+
+    API.patch(this.uri, {
+            text: this.text
+        },
+
+        function(err, res) {
+            if (err) {
+                return callback(err, null);
+            }
+
+            return callback(null, new Comment(res));
+        });
+};
+
+/**
+ *  Delete comment data.
+ *  @param {Function} callback callback function.
+ */
+Comment.prototype.delete = function(callback) {
+    if (!app.isAuthed || app.authedUser.name !== this.owner) {
+        return callback(APIError.PERMISSION_DENIED, null);
+    }
+
+    API.delete(this.uri,
+
+        function(err, res) {
+            if (err) {
+                return callback(err, null);
+            }
+
+            //@TODO: インスタンスを消す。
+            return callback(null, res);
+        });
+};
+
+
+
+
 
 /**
  *  Project Model.
@@ -2085,9 +2285,7 @@ Project.prototype.schema = {
  *  @param {Function} callback callback function.
  */
 Project.getByName = function(userName, projectName, callback) {
-    API.Project.get(
-        userName,
-        projectName,
+    API.get('/user/' + userName + '/project/' + projectName,
         function(err, res) {
             if (err) {
                 return callback(err, null);
@@ -2103,8 +2301,7 @@ Project.getByName = function(userName, projectName, callback) {
  *  @param {Function} callback callback function.
  */
 Project.getAll = function(userName, callback) {
-    API.Project.getAll(
-        userName,
+    API.get('/user/' + userName + '/project',
         function(err, res) {
             if (err) {
                 return callback(err, null);
@@ -2124,9 +2321,7 @@ Project.create = function(projectName, callback) {
         return callback(APIError.PERMISSION_DENIED, null);
     }
 
-    API.Project.post(
-        app.authedUser.name,
-        projectName,
+    API.post('/user/' + app.authedUser.name + '/project',
         function(err, res) {
             if (err) {
                 return callback(err, null);
@@ -2137,20 +2332,28 @@ Project.create = function(projectName, callback) {
 };
 
 /**
- *  Update user data.
+ *  Update project data.
  *  @param {Object} params update datas.
  *  @params {Function} callback callback function.
  */
-Project.prototype.update = function(params, callback) {
+Project.prototype.update = function(callback) {
     if (!app.isAuthed || app.authedUser.name !== this.owner) {
         return callback(APIError.PERMISSION_DENIED, null);
     }
 
-    Project.update(this.owner, this.name, params, callback);
+    API.patch(this.uri, {
+        name: this.name
+    }, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, new Project(res));
+    });
 };
 
 /**
- *  Delete user data.
+ *  Delete project data.
  *  @param {Function} callback callback function.
  */
 Project.prototype.delete = function(callback) {
@@ -2158,7 +2361,40 @@ Project.prototype.delete = function(callback) {
         return callback(APIError.PERMISSION_DENIED, null);
     }
 
-    Project.delete(this.owner, this.name, callback);
+    API.delete(this.uri, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        //@TODO: インスタンスを消す
+        return callback(null, new Project(res));
+    });
+};
+
+/**
+ *  Get project comments.
+ *  @param {Function} callback callback function.
+ */
+Project.prototype.getComments = function(callback) {
+    API.get(this.uri + '/comment', function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, res.map(Comment));
+    });
+};
+
+Project.prototype.postComment = function(text, callback) {
+    API.post(this.uri + '/comment', null, {
+        text: text
+    }, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, Comment(res));
+    });
 };
 
 
@@ -2177,10 +2413,6 @@ extendClass(UserPageView, View);
 UserPageView.prototype.finalize = function() {
     app.off('rout.change', this.onChangeRout);
     this.onChangeRout = null;
-
-    if (this.user) {
-        this.user.off('update', this.onModelUpdate);
-    }
 
     View.prototype.finalize.call(this);
 };
@@ -2213,24 +2445,14 @@ UserPageView.prototype.loadUserProjects = function() {
 UserPageView.prototype.setUser = function(user) {
     if (this.user === user) return;
 
-    if (this.user) {
-        this.user.off('update', this.onModelUpdate);
-    }
-
     this.user = user;
     this.childViews.userView.setUser(user);
-
-    if (user) {
-        user.on('update', this.onModelUpdate);
-        this.loadUserProjects();
-    }
+    this.loadUserProjects();
 };
 
 UserPageView.prototype.onChangeRout = function(rout) {
     this.loadUserWithRout(rout);
 };
-
-UserPageView.prototype.onModelUpdate = function() {};
 
 
 
@@ -2327,7 +2549,10 @@ ProjectPageView.prototype.onChangeRout = function(rout) {
 };
 
 ProjectPageView.prototype.setProject = function(project) {
+    if (this.project === project) return;
+
     this.project = project;
+    this.childViews.commentListView.setTarget(project);
 };
 
 
@@ -2468,36 +2693,232 @@ extendClass(ProjectListView, ListView);
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+var CommentListItemView = function() {
+    ListItemView.call(this);
+
+    this.loadTemplate('CommentListItemView');
+
+    this.comment = null;
+};
+extendClass(CommentListItemView, ListItemView);
+
+CommentListItemView.prototype.setModel = function(comment) {
+    var self = this;
+
+    this.comment = comment;
+
+    if (comment) {
+        User.getByName(comment.owner, function(err, user) {
+            self.childViews.userInlineView.setUser(user);
+        });
+    }
+};
+
+var CommentListView = function() {
+    ListView.call(this);
+
+    this.loadTemplate('CommentListView');
+
+    /**
+     * 表示対象のオブジェクト
+     * @type {(Project|Item)}
+     */
+    this.target = null;
+
+    this.itemViewConstructor = CommentListItemView;
+
+    this.$.form.addEventListener('submit', this.onSubmit = this.onSubmit.bind(this));
+};
+extendClass(CommentListView, ListView);
+
+CommentListView.prototype.finalize = function() {
+    this.$.form.removeEventListener('submit', this.onSubmit);
+    this.onSubmit = null;
+
+    ListView.prototype.finalize.call(this);
+};
+
+CommentListView.prototype.loadComments = function() {
+    var target = this.target,
+        self = this;
+
+    if (!target) return;
+
+    target.getComments(function(err, comments) {
+        if (err) {
+            self.setItems([]);
+        } else {
+            self.setItems(comments);
+        }
+    });
+};
+
+CommentListView.prototype.setTarget = function(target) {
+    if (this.target === target) return;
+
+    this.target = target;
+    this.loadComments();
+};
+
+CommentListView.prototype.submit = function() {
+    var self;
+
+    if (!this.validate()) return;
+
+    self = this;
+
+    this.target.postComment(this.$.text.value, function(err, res) {
+        if (err) {
+            console.log(err);
+            return
+        }
+
+        self.loadComments();
+    })
+};
+
+CommentListView.prototype.validate = function() {
+    var text = this.$.text.value,
+        isValidate = true;
+
+    //@TODO: debug only
+    // if (!app.isAuthed) {
+    //     isValidate = false;
+    // }
+
+    if (!text) {
+        isValidate = false;
+    }
+
+    return isValidate;
+};
+
+CommentListView.prototype.onSubmit = function(ev) {
+    ev.stopPropagation();
+    ev.preventDefault();
+
+    this.submit();
+};
+
+
+
+
+
+
+
+
+
+
+/**
+ *	ToolBarView
+ *	@constructor
+ *	@extend {View}
+ */
 var ToolBarView = function() {
     View.call(this);
 
-    this.state = {
-        loginState: false
-    }
+    /**
+     *	Authed user.
+     *	@type {User}
+     */
+    this.authedUser = null;
 
     this.loadTemplate('ToolBarView');
+
+    app.on('auth.change', this.onChangeAuth = this.onChangeAuth.bind(this));
 };
 
 extendClass(ToolBarView, View);
 
+/**
+ *	Finalize.
+ */
+ToolBarView.prototype.finalize = function() {
+    app.off('auth.change', this.onChangeAuth);
+    this.onChangeAuth = null;
+
+    View.prototype.finalize.call(this);
+};
+
+/**
+ *	EventListener: Application#on('auth.change')
+ *	@param {boolean} isAuthed isAuthed.
+ *	@param {User} authedUser authedUser.
+ */
+ToolBarView.prototype.onChangeAuth = function(isAuthed, authedUser) {
+    this.authedUser = authedUser;
+};
 
 
 
 
 
+
+
+/**
+ *  Authentication methods.
+ *
+ *  This API category DOES NOT have any model (as 'Auth'), methods only.
+ *
+ *  @namespace
+ */
+Auth = {};
+
+/**
+ *  Sign in.
+ *  @param {string} userName userName.
+ *  @param {string} password password.
+ *  @param {Function} callback callback.
+ */
+Auth.signIn = function(userName, password, callback) {
+    API.post('/auth', null, {
+        'userName': userName,
+        'password': password
+    }, function(err, res) {
+        var token;
+
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, new User(res));
+    });
+};
+
+
+
+/**
+ *  SignInPageView
+ *  @constructor
+ *  @extend {View}
+ */
 var SignInPageView = function() {
     View.call(this);
 
     this.loadTemplate('SignInPageView');
 
-    this.userName = '';
-    this.password = '';
-
     this.$.form.addEventListener('submit', this.onSubmit = this.onSubmit.bind(this));
     app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
+    app.on('auth.change', this.onChangeAuth = this.onChangeAuth.bind(this));
 };
 extendClass(SignInPageView, View);
 
+/**
+ *  Finalize.
+ */
 SignInPageView.prototype.finalize = function() {
     this.$.form.removeEventListener('submit', this.onSubmit);
     this.onSubmit = null;
@@ -2505,21 +2926,15 @@ SignInPageView.prototype.finalize = function() {
     app.off('rout.change', this.onChangeRout);
     this.onChangeRout = null;
 
+    app.off('auth.change', this.onChangeAuth);
+    this.onChangeAuth = null;
+
     View.prototype.finalize.call(this);
 };
 
-SignInPageView.prototype.signIn = function() {
-    var userName, password;
-
-    if (!this.validate()) return;
-
-    userName = this.$.userName.value;
-    password = this.$.password.value;
-
-    //@TODO
-    console.log('サインイン処理(NIY)');
-};
-
+/**
+ *  Check if all input forms are validate.
+ */
 SignInPageView.prototype.validate = function() {
     var userName = this.$.userName.value,
         password = this.$.password.value,
@@ -2544,10 +2959,25 @@ SignInPageView.prototype.validate = function() {
     return isValidate;
 };
 
+/**
+ *  Check authentication state.
+ */
+SignInPageView.prototype.checkAuthState = function() {
+    if (!app.isAuthed) return;
+
+    this.childViews.userInlineView.setUser(app.authedUser);
+};
+
+/**
+ *  EventListener: Application#on("rout.change")
+ *  @param {Object} rout routing data.
+ */
 SignInPageView.prototype.onChangeRout = function(rout) {
     var self;
 
     if (rout.mode !== 'signin') return;
+
+    this.checkAuthState();
 
     self = this;
     setTimeout(function() {
@@ -2558,11 +2988,28 @@ SignInPageView.prototype.onChangeRout = function(rout) {
     this.password = '';
 };
 
+/**
+ *  EventListener: Application#on("auth.change")
+ *  @param {boolean} isAuthed isAuthed.
+ *  @param {User} authedUser authedUser
+ */
+SignInPageView.prototype.onChangeAuth = function(isAuthed, authedUser) {
+    this.checkAuthState();
+};
+
+/**
+ *  EventListener: HTMLFormElement#on("submit")
+ *  @param {Event} ev event object.
+ */
 SignInPageView.prototype.onSubmit = function(ev) {
     ev.preventDefault();
     ev.stopPropagation();
 
-    this.signIn();
+    if (!this.validate()) return;
+
+    app.signIn(this.$.userName.value, this.$.password.value, function(err, user) {
+        app.setHashAsync(user.uri);
+    });
 };
 
 
@@ -2570,19 +3017,24 @@ SignInPageView.prototype.onSubmit = function(ev) {
 
 
 
+/**
+ *  SignUpPageView
+ *  @constructor
+ *  @extend {View}
+ */
 var SignUpPageView = function() {
     View.call(this);
 
     this.loadTemplate('SignUpPageView');
-
-    this.userName = '';
-    this.password = '';
 
     this.$.form.addEventListener('submit', this.onSubmit = this.onSubmit.bind(this));
     app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
 };
 extendClass(SignUpPageView, View);
 
+/**
+ *  Finalize.
+ */
 SignUpPageView.prototype.finalize = function() {
     this.$.form.removeEventListener('submit', this.onSubmit);
     this.onSubmit = null;
@@ -2593,6 +3045,9 @@ SignUpPageView.prototype.finalize = function() {
     View.prototype.finalize.call(this);
 };
 
+/**
+ *  Sign up.
+ */
 SignUpPageView.prototype.signUp = function() {
     var userName, password;
 
@@ -2605,6 +3060,9 @@ SignUpPageView.prototype.signUp = function() {
     console.log('サインアップ処理(NIY)');
 };
 
+/**
+ *  Check if all input forms are validate.
+ */
 SignUpPageView.prototype.validate = function() {
     var userName = this.$.userName.value,
         password = this.$.password.value,
@@ -2629,6 +3087,10 @@ SignUpPageView.prototype.validate = function() {
     return isValidate;
 };
 
+/**
+ *  EventListener: Application#on('rout.change')
+ *  @param {Object} rout routing data.
+ */
 SignUpPageView.prototype.onChangeRout = function(rout) {
     var self;
 
@@ -2643,6 +3105,10 @@ SignUpPageView.prototype.onChangeRout = function(rout) {
     this.password = '';
 };
 
+/**
+ *  EventListener: HTMLFormElement#on('submit')
+ *  @param {Event} rout routing data.
+ */
 SignUpPageView.prototype.onSubmit = function(ev) {
     ev.preventDefault();
     ev.stopPropagation();

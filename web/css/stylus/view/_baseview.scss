@@ -1,2 +1,39 @@
 .BaseView {
+	.SignInPageView,
+	.SignUpPageView,
+	.UserPageView,
+	.ProjectPageView,
+	.Error404PageView {
+		display: none;
+	}
+
+	&.is-mode-signin {
+		.SignInPageView {
+			display: block;
+		}
+	}
+
+	&.is-mode-signup {
+		.SignUpPageView {
+			display: block;
+		}
+	}
+
+	&.is-mode-user {
+		.UserPageView {
+			display: block;
+		}
+	}
+
+	&.is-mode-project {
+		.ProjectPageView {
+			display: block;
+		}
+	}
+
+	&.is-mode-error404 {
+		.Error404PageView {
+			display: block;
+		}
+	}
 }

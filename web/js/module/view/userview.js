@@ -14,3 +14,7 @@ extendClass(UserView, View);
 UserView.prototype.finalize = function() {
     View.prototype.finalize.call(this);
 };
+
+UserView.prototype.setUser = function(user) {
+    this.user = user;
+};

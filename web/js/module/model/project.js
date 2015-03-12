@@ -1,12 +1,7 @@
 //@include model.js
+//@include comment.js
 //@include ../service/util.js
 //@include ../service/api.js
-
-/**
- *  @TODO
- *  API.Userへの依存をなくす
- *  Model#uriを用いて、API_coreだけで対応する。
- */
 
 /**
  *  Project Model.
@@ -71,9 +66,7 @@ Project.prototype.schema = {
  *  @param {Function} callback callback function.
  */
 Project.getByName = function(userName, projectName, callback) {
-    API.Project.get(
-        userName,
-        projectName,
+    API.get('/user/' + userName + '/project/' + projectName,
         function(err, res) {
             if (err) {
                 return callback(err, null);
@@ -89,8 +82,7 @@ Project.getByName = function(userName, projectName, callback) {
  *  @param {Function} callback callback function.
  */
 Project.getAll = function(userName, callback) {
-    API.Project.getAll(
-        userName,
+    API.get('/user/' + userName + '/project',
         function(err, res) {
             if (err) {
                 return callback(err, null);
@@ -110,9 +102,7 @@ Project.create = function(projectName, callback) {
         return callback(APIError.PERMISSION_DENIED, null);
     }
 
-    API.Project.post(
-        app.authedUser.name,
-        projectName,
+    API.post('/user/' + app.authedUser.name + '/project',
         function(err, res) {
             if (err) {
                 return callback(err, null);
@@ -123,20 +113,28 @@ Project.create = function(projectName, callback) {
 };
 
 /**
- *  Update user data.
+ *  Update project data.
  *  @param {Object} params update datas.
  *  @params {Function} callback callback function.
  */
-Project.prototype.update = function(params, callback) {
+Project.prototype.update = function(callback) {
     if (!app.isAuthed || app.authedUser.name !== this.owner) {
         return callback(APIError.PERMISSION_DENIED, null);
     }
 
-    Project.update(this.owner, this.name, params, callback);
+    API.patch(this.uri, {
+        name: this.name
+    }, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, new Project(res));
+    });
 };
 
 /**
- *  Delete user data.
+ *  Delete project data.
  *  @param {Function} callback callback function.
  */
 Project.prototype.delete = function(callback) {
@@ -144,5 +142,38 @@ Project.prototype.delete = function(callback) {
         return callback(APIError.PERMISSION_DENIED, null);
     }
 
-    Project.delete(this.owner, this.name, callback);
+    API.delete(this.uri, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        //@TODO: インスタンスを消す
+        return callback(null, new Project(res));
+    });
+};
+
+/**
+ *  Get project comments.
+ *  @param {Function} callback callback function.
+ */
+Project.prototype.getComments = function(callback) {
+    API.get(this.uri + '/comment', function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, res.map(Comment));
+    });
+};
+
+Project.prototype.postComment = function(text, callback) {
+    API.post(this.uri + '/comment', null, {
+        text: text
+    }, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, Comment(res));
+    });
 };

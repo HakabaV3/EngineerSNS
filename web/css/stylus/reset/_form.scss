@@ -1,0 +1,82 @@
+@import "../function/_function.scss";
+
+.Input-base {
+	display: inline-block;
+	position: relative;
+	padding: 8px 10px;
+	margin: 8px 5px;
+	box-sizing: border-box;
+
+	&.Input-block {
+		@include center-horizontal();
+		display: block;
+		width: 100%;
+	}
+}
+
+.Input-label {
+	@extend .Input-base;
+	padding: 0;
+	margin-left: 0;
+	margin-right: 0;
+	line-height: 31px;
+}
+
+input[type="text"],
+input[type="password"],
+textarea {
+	@extend .Input-base;
+
+	border: 1px solid #ccc;
+	border-radius: 3px;
+	background: #fff;
+	box-shadow: inset 0 0 1px rgba(0,0,0,0.2);
+	outline: none;
+	cursor: text;
+	@include transition(0.3s ease);
+
+	&:hover {
+		box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+	}
+	&:focus {
+		box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+		border-color: #4d90fe;
+	}
+	&:active {
+		box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+		border-color: #4d90fe;
+	}
+
+	&.is-error {
+		border-color: #f00;
+		background: #fff0f0;
+	}
+}
+
+input[type="button"],
+input[type="submit"],
+button {
+	@extend .Input-base;
+
+	border: 1px solid #ccc;
+	border-radius: 3px;
+	background: #fff;
+	box-shadow: 0 0 1px rgba(0,0,0,0.2);
+	outline: none;
+	cursor: pointer;
+	font: inherit;
+	@include transition(0.3s ease);
+
+	&:hover {
+		box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+	}
+	&:focus {
+		box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+		border-color: #4d90fe;
+	}
+	&:active {
+		box-shadow: none;
+		background: #eee;
+		border-color: #4d90fe;
+	}
+}

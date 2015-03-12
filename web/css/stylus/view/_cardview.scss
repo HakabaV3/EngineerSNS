@@ -1,5 +1,7 @@
+@import "../var/_definitions.scss";
+
 .CardView {
-	border: 1px solid #ccc;
+	border: 1px solid $cBack;
 	border-radius: 3px;
 	margin-bottom: 15px;
 	overflow: hidden;
@@ -9,14 +11,24 @@
 	display: block;
 	padding: 8px 15px;
 	border-bottom: 1px solid #ccc;
+	background: #fff;
 
 	&:last-child {
 		border-bottom: none;
 	}
+
+	&.CardView-noPadding {
+		padding: 0;
+
+		.CardView-sectionHeader {
+			margin: 0 0 8px;
+		}
+	}
 }
 .CardView-header {
 	@extend .CardView-section;
-	background: #f0f0f0;
+	background: $cBack;
+	color: $cFore;
 	font-weight: bold;
 }
 .CardView-sectionHeader {
@@ -26,4 +38,8 @@
 	color: #aaa;
 	font-size: 0.8em;
 	font-weight: bold;
+
+	&.CardView-noPadding {
+		padding: 0;
+	}
 }

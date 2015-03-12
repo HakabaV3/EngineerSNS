@@ -1,16 +1,16 @@
 //@include ../service/util.js
 //@include ../model/project.js
-//@include view.js
+//@include listitemview.js
 
 var ProjectListItemView = function() {
-    View.call(this);
+    ListItemView.call(this);
 
     this.loadTemplate('ProjectListItemView');
 
     this.project = null;
 };
-extendClass(ProjectListItemView, View);
+extendClass(ProjectListItemView, ListItemView);
 
-ProjectListItemView.prototype.finalize = function() {
-    View.prototype.finalize.call(this);
+ProjectListItemView.prototype.setModel = function(project) {
+    this.project = project;
 };

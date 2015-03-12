@@ -26,13 +26,16 @@ time, mark, audio, video {
 }
 a {
     text-decoration: none;
-    color: inherit;
+    color: #4183c4;
 
-    &:hover,
+    &:hover {
+        color: #4183c4;
+        text-decoration: underline;
+    }
     &:active,
     &:visited,
     &:focus {
-        color: inherit;
+        color: #4183c4;
     }
 }
 /* HTML5 display-role reset for older browsers */

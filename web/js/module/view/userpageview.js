@@ -9,25 +9,20 @@ var UserPageView = function() {
     this.loadTemplate('UserPageView');
 
     this.user = null;
-    this.projects = [];
 
-    app.on(Application.Event.CHANGE_ROUT, this.onChangeRout = this.onChangeRout.bind(this));
+    app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
 };
 extendClass(UserPageView, View);
 
 UserPageView.prototype.finalize = function() {
-    app.off(Application.Event.CHANGE_ROUT, this.onChangeRout);
-
-    if (this.user) {
-        this.user.off('update', this.onModelUpdate);
-    }
+    app.off('rout.change', this.onChangeRout);
+    this.onChangeRout = null;
 
     View.prototype.finalize.call(this);
 };
 
 UserPageView.prototype.loadUserWithRout = function(rout) {
-    if (rout.mode !== 'user' &&
-        rout.mode !== 'project') return;
+    if (rout.mode !== 'user') return;
 
     var self = this;
 
@@ -44,11 +39,9 @@ UserPageView.prototype.loadUserProjects = function() {
 
     user.getAllProjects(function(err, projects) {
         if (err) {
-            self.projects = [];
-            self.childViews.projectListView.setProjects([]);
+            self.childViews.projectListView.setItems([]);
         } else {
-            self.projects = projects;
-            self.childViews.projectListView.setProjects(projects);
+            self.childViews.projectListView.setItems(projects);
         }
     });
 };
@@ -56,22 +49,11 @@ UserPageView.prototype.loadUserProjects = function() {
 UserPageView.prototype.setUser = function(user) {
     if (this.user === user) return;
 
-    if (this.user) {
-        this.user.off('update', this.onModelUpdate);
-    }
-
     this.user = user;
-    this.childViews.userView.user = user;
-    this.projects = [];
-
-    if (user) {
-        user.on('update', this.onModelUpdate);
-        this.loadUserProjects();
-    }
+    this.childViews.userView.setUser(user);
+    this.loadUserProjects();
 };
 
 UserPageView.prototype.onChangeRout = function(rout) {
     this.loadUserWithRout(rout);
 };
-
-UserPageView.prototype.onModelUpdate = function() {};

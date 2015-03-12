@@ -1,48 +1,70 @@
-.PHONY: js html
-
 default:
 	cat Makefile
 
-#全部まとめてコンパイルする
+#---------------------------------------------------------
+# 監視
+
+#一括
+watch:
+	$(MAKE) watch-stop
+	$(MAKE) watch-js&
+	$(MAKE) watch-html&
+	$(MAKE) watch-css
+
+#監視の終了
+watch-stop:
+	pgrep fswatch-run | xargs -I$$ kill $$
+
+#js
+watch-js:
+	fswatch-run -r -e \.tmp$$ ./js "make compile-js"
+
+#html
+watch-html:
+	fswatch-run -r -e \.tmp$$ ./html "make compile-html"
+
+#css
+watch-css:
+	fswatch-run -r -e \.tmp$$ ./css "make compile-css"
+
+#---------------------------------------------------------
+# コンパイル
+
+#一括
 compile:
-	$(MAKE) compile-stop
-	$(MAKE) js&
-	$(MAKE) html&
+	$(MAKE) compile-js
+	$(MAKE) compile-html
+	$(MAKE) compile-css
 
-#全部まとめてコンパイルの停止。
-compile-stop:
-	which packjs | xargs -I$$ pgrep -f $$ | xargs -I$$ kill $$
+#js
+compile-js:
+	packjs js/script.js ../server/public/script.js
 
-#jsモジュールの結合
-js:
-	packjs js/script.js script.js
-	packjs js/script.js script.js -w
+#html
+compile-html:
+	packjs html/index.html ../server/public/index.html
 
-#htmlモジュールの結合
-html:
-	packjs html/index.html index.html
-	packjs html/index.html index.html -w
+#css
+compile-css:
+	sass --no-cache ./css/style.scss ../server/public/style.css
 
-#pullしてからすることリスト
-run:
-	$(MAKE) install
-	$(MAKE) init
-	$(MAKE) start
+#---------------------------------------------------------
+# サーバー
 
-#パッケージ類のインストール
-install:
-	bower install
-	npm install
+#一括
+server:
+	$(MAKE) server-install
+	$(MAKE) server-init
+	$(MAKE) server-start
+
+#gemのインストール
+server-install:
 	(cd ../server && bundle install)
 
-#データベースの初期化(MAMP用)
-init:
+#DBの初期化(MAMP用)
+server-init:
 	(cd ../server && rake db:reset RAILS_ENV=mamp)
 
-#サーバーの起動
-start:
+#起動
+server-start:
 	(cd ../server && rails server -e mamp)
-
-#パブリックへコピー
-copy:
-	cp index.html script.js style.css style.css.map ../server/public/

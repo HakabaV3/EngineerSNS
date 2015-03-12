@@ -1,3 +1,14 @@
+//@include userinlineview.html
+//@include commentlistview.html
+
 <template name="ProjectPageView">
-	<div class="ProjectPageView"></div>
+	<div class="ProjectPageView grid-container">
+		<div class="ProjectPageView-header grid-12">
+			<h3 class="ProjectPageView-projectName">{{ project.name }}</h3>
+			{{view view=UserInlineView name=userInlineView }}
+		</div>
+		<div class="ProjectPageView-comments grid-6 grid-offset-6">
+			{{view view=CommentListView name=commentListView}}
+		</div>
+	</div>
 </template>
