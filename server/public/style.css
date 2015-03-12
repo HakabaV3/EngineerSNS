@@ -534,23 +534,59 @@ button {
 .BaseView .ProjectPageView,
 .BaseView .Error404PageView {
   display: none; }
-.BaseView.is-mode-signin .SignInPageView {
-  display: block; }
-.BaseView.is-mode-signup .SignUpPageView {
-  display: block; }
-.BaseView.is-mode-user .UserPageView {
-  display: block; }
-.BaseView.is-mode-project .ProjectPageView {
-  display: block; }
-.BaseView.is-mode-error404 .Error404PageView {
-  display: block; }
+  .BaseView .SignInPageView.is-visible,
+  .BaseView .SignUpPageView.is-visible,
+  .BaseView .UserPageView.is-visible,
+  .BaseView .ProjectPageView.is-visible,
+  .BaseView .Error404PageView.is-visible {
+    display: block; }
+.BaseView .ProgressBarView {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 65535; }
+
+.ProgressBarView {
+  position: absolute;
+  display: block;
+  width: 100%;
+  height: 3px; }
+
+.ProgressBarView-inner {
+  position: absolute;
+  display: block;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  width: 100;
+  background: #fff;
+  opacity: 1.0;
+  z-index: 1;
+  -webkit-transition: 0.5s ease;
+  -moz-transition: 0.5s ease;
+  -ms-transition: 0.5s ease;
+  transition: 0.5s ease; }
+  .ProgressBarView-inner.is-complete {
+    width: 100%;
+    opacity: 0; }
+  .ProgressBarView-inner.is-initial {
+    -webkit-transition: none;
+    -moz-transition: none;
+    -ms-transition: none;
+    transition: none;
+    width: 0%;
+    opacity: 1; }
 
 .ToolBarView {
   position: relative;
   top: 0;
   left: 0;
   right: 0;
-  height: 40px;
+  min-height: 58px;
   margin-bottom: 10px;
   background: #3383C7;
   color: #fff;
@@ -560,11 +596,22 @@ button {
     display: block;
     content: ' ';
     clear: both; }
+  .ToolBarView a {
+    color: #fff; }
+  .ToolBarView .UserInlineView {
+    display: none;
+    margin-top: 0;
+    margin-bottom: 0; }
+  .ToolBarView .ToolBarView-signInLink {
+    display: inline-block; }
+  .ToolBarView.is-authed .UserInlineView {
+    display: inline-block; }
+  .ToolBarView.is-authed .ToolBarView-signInLink {
+    display: none; }
 
 .ToolBarView-itemContainer, .ToolBarView-left, .ToolBarView-right {
   position: relative;
-  height: 20px;
-  line-height: 20px; }
+  line-height: 38px; }
   .ToolBarView-itemContainer > *, .ToolBarView-left > *, .ToolBarView-right > * {
     vertical-align: middle; }
 
@@ -574,10 +621,19 @@ button {
 .ToolBarView-right {
   float: right; }
 
+.ToolBarView-title {
+  font-size: 1.4em; }
+
+.SignInPageView.is-authed .SignInPageView-authedUser {
+  display: block; }
+
 .SignInPageView-row {
   margin-top: 15px; }
   .SignInPageView-row:last-child {
     margin-bottom: 15px; }
+
+.SignInPageView-authedUser {
+  display: none; }
 
 .SignUpPageView-row {
   margin-top: 15px; }
@@ -595,8 +651,10 @@ button {
   float: left;
   width: 128px;
   height: 128px;
-  border: 1px solid #ccc;
   border-radius: 50%;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
   overflow: hidden; }
 
 .UserPageView-userName {
@@ -608,12 +666,16 @@ button {
 
 .UserInlineView {
   display: inline-block;
+  word-wrap: nowrap;
   margin: 3px 5px; }
 
 .UserInlineView-icon {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   vertical-align: middle;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
   border-radius: 50%; }
 
 .UserInlineView-name {
@@ -641,6 +703,14 @@ button {
   font-size: 48px;
   float: left;
   vertical-align: middle; }
+
+.CommentListItemView {
+  overflow: hidden;
+  box-sizing: border-box; }
+  .CommentListItemView.is-close {
+    margin-top: -8px;
+    margin-bottom: -9px;
+    height: 0px; }
 
 .CommentListItemView-header {
   font-weight: normal; }

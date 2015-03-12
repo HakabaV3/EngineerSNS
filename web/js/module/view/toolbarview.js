@@ -10,15 +10,11 @@
 var ToolBarView = function() {
     View.call(this);
 
-    /**
-     *	Authed user.
-     *	@type {User}
-     */
-    this.authedUser = null;
-
     this.loadTemplate('ToolBarView');
 
     app.on('auth.change', this.onChangeAuth = this.onChangeAuth.bind(this));
+
+    this.checkAuthState();
 };
 
 extendClass(ToolBarView, View);
@@ -34,10 +30,23 @@ ToolBarView.prototype.finalize = function() {
 };
 
 /**
+ *	Check authentication state.
+ */
+ToolBarView.prototype.checkAuthState = function() {
+    if (app.isAuthed) {
+        this.$.root.classList.add('is-authed');
+    } else {
+        this.$.root.classList.remove('is-hide');
+    }
+
+    this.childViews.userInlineView.setUser(app.authedUser);
+};
+
+/**
  *	EventListener: Application#on('auth.change')
  *	@param {boolean} isAuthed isAuthed.
  *	@param {User} authedUser authedUser.
  */
 ToolBarView.prototype.onChangeAuth = function(isAuthed, authedUser) {
-    this.authedUser = authedUser;
+    this.checkAuthState();
 };

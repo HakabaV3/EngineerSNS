@@ -1,3 +1,5 @@
+@import "../function/_function.scss";
+
 .BaseView {
 	.SignInPageView,
 	.SignUpPageView,
@@ -5,35 +7,18 @@
 	.ProjectPageView,
 	.Error404PageView {
 		display: none;
-	}
 
-	&.is-mode-signin {
-		.SignInPageView {
+		&.is-visible {
 			display: block;
 		}
 	}
 
-	&.is-mode-signup {
-		.SignUpPageView {
-			display: block;
-		}
-	}
-
-	&.is-mode-user {
-		.UserPageView {
-			display: block;
-		}
-	}
-
-	&.is-mode-project {
-		.ProjectPageView {
-			display: block;
-		}
-	}
-
-	&.is-mode-error404 {
-		.Error404PageView {
-			display: block;
-		}
+	.ProgressBarView {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		height: 3px;
+		z-index: 65535;
 	}
 }

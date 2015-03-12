@@ -1,3 +1,4 @@
+//@include progressbarview.html
 //@include toolbarview.html
 //@include signinpageview.html
 //@include signuppageview.html
@@ -6,14 +7,17 @@
 //@include error404pageview.html
 
 <template name="BaseView">
-	<div class="BaseView is-mode-{{mode}}">
-		{{view view=ToolBarView name=toolBarView}}
+	<div class="BaseView">
+		{{ view class=ToolBarView name=toolBarView }}
+		
 		<div class="BaseView-body">
-			{{view view=SignInPageView name=signInPageView}}
-			{{view view=SignUpPageView name=signUpPageView}}
-			{{view view=UserPageView name=userPageView}}
-			{{view view=ProjectPageView name=projectPageView}}
-			{{view view=Error404PageView name=error404pageView}}
+			{{ view class=SignInPageView   name=signInPageView   }}
+			{{ view class=SignUpPageView   name=signUpPageView   }}
+			{{ view class=UserPageView     name=userPageView     }}
+			{{ view class=ProjectPageView  name=projectPageView  }}
+			{{ view class=Error404PageView name=error404pageView }}
 		</div>
+
+		{{ view class=ProgressBarView name=progressBarView }}
 	</div>
 </template>

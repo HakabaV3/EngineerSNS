@@ -5,10 +5,10 @@
 	<div class="ProjectPageView grid-container">
 		<div class="ProjectPageView-header grid-12">
 			<h3 class="ProjectPageView-projectName">{{ project.name }}</h3>
-			{{view view=UserInlineView name=userInlineView }}
+			{{ view class=UserInlineView name=userInlineView }}
 		</div>
 		<div class="ProjectPageView-comments grid-6 grid-offset-6">
-			{{view view=CommentListView name=commentListView}}
+			{{ view class=CommentListView name=commentListView }}
 		</div>
 	</div>
 </template>

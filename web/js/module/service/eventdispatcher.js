@@ -65,6 +65,16 @@ EventDispatcher.prototype.off = function(type, listener) {
     return this;
 };
 
+EventDispatcher.prototype.once = function(type, listener) {
+    var self = this,
+        proxy = function() {
+            self.off(type, proxy);
+            listener.apply(this, arguments);
+        };
+
+    this.on(type, proxy);
+};
+
 /**
  *  fire the event.
  *

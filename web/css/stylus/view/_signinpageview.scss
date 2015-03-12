@@ -1,9 +1,21 @@
 @import "../var/_definitions.scss";
 
+.SignInPageView {
+	&.is-authed {
+		.SignInPageView-authedUser {
+			display: block;
+		}
+	}
+}
+
 .SignInPageView-row {
 	margin-top: 15px;
 
 	&:last-child {
 		margin-bottom: 15px;
 	}
+}
+
+.SignInPageView-authedUser {
+	display: none;
 }

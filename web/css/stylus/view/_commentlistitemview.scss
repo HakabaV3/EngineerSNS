@@ -1,3 +1,16 @@
+@import "../function/_function.scss";
+
+.CommentListItemView {
+	overflow: hidden;
+	box-sizing: border-box;
+
+	&.is-close {
+		margin-top: -8px;
+		margin-bottom: -9px;
+		height: 0px;
+	}
+}
+
 .CommentListItemView-header {
 	font-weight: normal;
 }

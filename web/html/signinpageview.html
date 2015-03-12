@@ -11,13 +11,13 @@
 					<label class="SignInPageView-row grid-container grid-12">
 						<span class="grid-3 Input-label">ユーザー名</span>
 						<span class="grid-9">
-							<input type="text" name="userName" class="SignInPageView-userName Input-block grid-9" value="{{userName}}">
+							<input type="text" name="userName" class="SignInPageView-userName Input-block grid-9">
 						</span>
 					</label>
 					<label class="SignInPageView-row grid-container grid-12">
 						<span class="grid-3 Input-label">パスワード</span>
 						<span class="grid-9">
-							<input type="password" name="password"  class="SignInPageView-password Input-block" value="{{password}}">
+							<input type="password" name="password"  class="SignInPageView-password Input-block">
 						</span>
 					</label>
 					<div class="SignInPageView-row grid-container grid-12">
@@ -30,12 +30,12 @@
 					</p>
 				</section>
 			</form>
-			<div class="CardView">
+			<div class="CardView SignInPageView-authedUser">
 				<header class="CardView-header">
 					サインイン済みのユーザー
 				</header>
 				<section class="CardView-section">
-					{{view view=UserInlineView name=userInlineView}}
+					{{ view class=UserInlineView name=userInlineView }}
 				</section>
 			</div>
 		</div>

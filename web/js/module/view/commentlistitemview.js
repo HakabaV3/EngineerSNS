@@ -9,6 +9,12 @@ var CommentListItemView = function() {
     this.loadTemplate('CommentListItemView');
 
     this.comment = null;
+
+    var self = this;
+    this.$.root.classList.add('is-close');
+    setTimeout(function() {
+        self.$.root.classList.remove('is-close');
+    }, 100);
 };
 extendClass(CommentListItemView, ListItemView);
 

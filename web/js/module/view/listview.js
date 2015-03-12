@@ -14,19 +14,25 @@ var ListView = function() {
     View.call(this);
 
     /**
-     *  @type {[Model]}
-     */
-    this.items = [];
-
-    /**
      *  @type {Function}
      */
     this.itemViewConstructor = null;
 
     /**
+     *  @type {[Model]}
+     */
+    this.items = [];
+
+    /**
      *  @type {[View]}
      */
     this.itemViews = [];
+
+    /**
+     *  @type {[Model]}
+     *  @private
+     */
+    this.oldItems_ = [];
 };
 extendClass(ListView, View);
 
@@ -45,24 +51,44 @@ ListView.prototype.setItems = function(items) {
 };
 
 ListView.prototype.update = function() {
-    var itemViewConstructor = this.itemViewConstructor,
-        self = this;
+    var oldItems = this.oldItems_,
+        oldItemsCount = oldItems.length,
+        oldIndex = 0,
 
-    this.itemViews.forEach(function(itemView) {
-        itemView.finalize();
-    });
+        newItems = this.items,
+        newItemsCount = newItems.length,
+        newIndex = 0,
+
+        views = this.itemViews,
+        view,
+
+        itemViewConstructor = this.itemViewConstructor,
+        max, i;
 
     if (!itemViewConstructor) {
         console.warn('ListView#itemViewConstructor must be set.');
-        return
+        return;
     }
 
-    this.itemViews = this.items.map(function(item) {
-        var itemView = new itemViewConstructor();
-        itemView.setModel(item);
+    while (oldIndex < oldItemsCount) {
+        if (oldItems[oldIndex] === newItems[newIndex]) {
+            newIndex++;
 
-        self.appendChild(itemView);
+        } else {
+            views[newIndex].finalize();
+            views.splice(newIndex, 1);
+        }
 
-        return itemView;
-    });
+        oldIndex++;
+    }
+
+    for (i = newIndex, max = newItemsCount; i < max; i++) {
+        view = new itemViewConstructor();
+        view.setModel(newItems[i]);
+
+        this.appendChild(view);
+        views.push(view);
+    }
+
+    this.oldItems_ = this.items.slice(0);
 };
