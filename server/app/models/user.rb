@@ -1,3 +1,5 @@
+require 'securerandom'
+
 class User < ActiveRecord::Base
 
   has_many :projects, dependent: :destroy
@@ -8,6 +10,14 @@ class User < ActiveRecord::Base
   
   def uri
     return "/user/#{self.name}"
+  end
+
+  def project(project_name)
+    return self.projects.find_by(name: project_name)
+  end
+
+  def create_token
+    self.token = SecureRandom.hex(16)
   end
 
   def self.comments(name)

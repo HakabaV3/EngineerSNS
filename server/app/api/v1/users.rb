@@ -1,5 +1,3 @@
-require 'securerandom'
-
 module V1
   class Users < Grape::API
     
@@ -9,25 +7,24 @@ module V1
         response_header
       end
 
-      # GET /user/:userName
-      params do
-      end
+      # GET /user (Public)
       get '/', jbuilder:'/user/index' do
         @users = User.all
       end
 
+      # GET /user/:userName (Public)
       params do
         requires :name, type: String
       end
       get ':name', jbuilder:'/user/show' do
-        @user = User.where(name: params[:name]).first
+        @user = User.find_by(name: params[:name])
         error!("ユーザーが見つかりません。", 404) if @user.blank?
       end
 
-      # POST /user/:userName
+      # POST /user/:userName (Public)
       params do
         requires :name, type: String
-        optional :password, type: String
+        requires :password, type: String
       end
       post ':name', jbuilder: '/user/new' do
         if User.where(name: params[:name]).count > 0
@@ -36,22 +33,23 @@ module V1
         @user = User.create(name: params[:name], password: params[:password])
       end
 
-      # PATCH /user/:userName
+      # PATCH /user/:userName (Private)
       params do
         requires :name, type: String
         optional :description, type: String
         optional :icon, type: String
       end
       patch ':name', jbuilder: '/user/update' do
-        @user = User.where(name: params[:name]).first
+        who_am_i(headers)
         @user.description = params[:description] || @user.description
         @user.icon = params[:icon] || @user.icon
         @user.save
       end
 
-      # DELETE
+      # DELETE (Private)
       delete ':userName', jbuilder: '/user/delete' do
-
+        who_am_i(headers)
+        @user.delete
       end
 
     end

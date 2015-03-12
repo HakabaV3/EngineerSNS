@@ -3,9 +3,13 @@
 ## 開発環境
 
 - Ruby
-    - version 2.1.2
+    - version 2.2.1
 - Rails
     - version 4.1.8
+
+## 環境構築
+
+- [rbenv を利用した Ruby 環境の構築](http://dev.classmethod.jp/server-side/language/build-ruby-environment-by-rbenv/)
 
 ## サーバー起動方法
 
@@ -98,4 +102,11 @@ http://localhost:3000/api/v1/user
 }
 ```
 
+## Rakeタスク
+
+```
+$ rake curl:user_post
+$ rake curl:auth_signin
+$ rake curl:auth_me
+```
 
