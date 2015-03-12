@@ -17,7 +17,7 @@ namespace :curl do
   # ユーザーログイン
   task :auth_signin => :environment do
     @body = '-d \'{"userName": "susaki", "password": "susaki"}\' '
-    @command = @command + "-X POST " + @header + @body + @url + "/auth/signin"
+    @command = @command + "-X POST " + @header + @body + @url + "/auth"
     result = system("#{@command}")
     puts "\ndone."
   end

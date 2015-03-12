@@ -3,12 +3,12 @@ module V1
     
     namespace 'auth' do
 
-      # POST /auth/signin
+      # POST /auth
       params do
         requires :userName, type: String
         requires :password, type: String
       end
-      post '/signin', jbuilder: '/user/show' do
+      post '', jbuilder: '/user/show' do
         @user = User.find_by(name: params[:userName])
         error!("ユーザー名が見つかりません。", 404) if @user.blank?
 
