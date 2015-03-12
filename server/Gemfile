@@ -31,6 +31,9 @@ gem 'grape'
 gem 'grape-jbuilder'
 gem "hashie_rails"
 
+# Uploader
+gem "carrierwave"
+
 group :development, :test do
   gem 'rspec-rails', '~> 3.0'
   gem 'capybara'

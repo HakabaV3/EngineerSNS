@@ -7,10 +7,10 @@
 #   Mayor.create(name: 'Emanuel', city: cities.first)
 
 User.create!([
-  {id: 1, name: "kikurage", description: "I am Kikurage", icon: "https://1tess.files.wordpress.com/2008/08/kikurage_0096.jpg"},
-  {id: 2, name: "stogu", description: "I am stogu", icon: "http://static.panoramio.com/photos/large/4953084.jpg"},
-  {id: 3, name: "jinssk", description: "I am jinssk", icon: "http://3.bp.blogspot.com/-qvJINsskM_k/TysTXG8-k9I/AAAAAAAAAKY/h0RN1E5abyQ/s1600/davidoakesaswilliamhamleigh-16.jpg"},
-  {id: 4, name: "guerrini", description: "I am hotel", icon: "http://accordionplus.com/images/Oxford.jpg"}
+  {id: 1, name: "kikurage", password: "kikurage", description: "I am Kikurage", icon: "https://1tess.files.wordpress.com/2008/08/kikurage_0096.jpg"},
+  {id: 2, name: "stogu", password: "stogu", description: "I am stogu", icon: "http://static.panoramio.com/photos/large/4953084.jpg"},
+  {id: 3, name: "jinssk", password: "jinssk", description: "I am jinssk", icon: "http://3.bp.blogspot.com/-qvJINsskM_k/TysTXG8-k9I/AAAAAAAAAKY/h0RN1E5abyQ/s1600/davidoakesaswilliamhamleigh-16.jpg"},
+  {id: 4, name: "guerrini", password: "guerrini", description: "I am hotel", icon: "http://accordionplus.com/images/Oxford.jpg"}
 ])
 Project.create!([
   {id: 1, owner: "kikurage", name: "KikurageProject", user_id: 1},
