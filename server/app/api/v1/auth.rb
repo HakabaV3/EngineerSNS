@@ -13,7 +13,7 @@ module V1
         error!("ユーザー名が見つかりません。", 404) if @user.blank?
 
         if @user.password === params[:password]
-          @user.token = SecureRandom.hex(16)
+          @user.create_token
           @user.save
           token
         else
