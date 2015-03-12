@@ -10,14 +10,14 @@ module V1
       end
       post '/signin', jbuilder: '/user/show' do
         @user = User.find_by(name: params[:userName])
-        error!("ユーザー名が見つかりません。", 404) if @user.blank?
+        error!("ユーザー名またはパスワードに誤りがあります。", 404) if @user.blank?
 
         if @user.password === params[:password]
           @user.token = SecureRandom.hex(16)
           @user.save
           token
         else
-          error!("パスワードに誤りがあります。", 404)
+          error!("ユーザー名またはパスワードに誤りがあります。", 404)
         end
       end
 
