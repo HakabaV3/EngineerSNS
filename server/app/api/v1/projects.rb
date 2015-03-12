@@ -9,7 +9,7 @@ module V1
           response_header
         end
 
-        # GET /user/:userName/project
+        # GET /user/:userName/project (Public)
         params do
           requires :userName, type: String
         end
@@ -18,7 +18,7 @@ module V1
           @projects = User.projects(params[:userName])
         end
 
-        # GET /user/:userName/project/:projectName
+        # GET /user/:userName/project/:projectName (Public)
         params do
         	requires :userName, type: String
        	  requires :projectName, type: String
@@ -31,26 +31,38 @@ module V1
           error!("プロジェクトが見つかりません。", 404) if @project.blank?
         end
 
-        # POST /user/:userName/project/:projectName
+        # POST /user/:userName/project/:projectName (Private)
         params do
           requires :userName, type: String
           requires :projectName, type: String
         end
         post ':projectName', jbuilder: 'project/new' do
-          @user = User.find_by(name: params[:userName])
+          who_am_i(headers)
           @project = Project.create(owner: params[:userName], name: params[:projectName], user_id: @user.id)
+          token
         end
 
-        # PATCH /user/:userName/project/:projectName
+        # PATCH /user/:userName/project/:projectName (Private)
+        params do
+          requires :userName, type: String
+          requires :projectName, type: String
+          optional :name, type: String
+        end
+        patch ':projectName', jbuilder: 'project/update' do
+          who_am_i(headers)
+          @project = @user.project(params[:projectName])
+          error!("プロジェクトが見つかりません。", 404) if @project.blank?
+          @project.name = params[:name] || @project.name
+          token
+        end
 
-
-        # DELETE /user/:userName/project/:projectName
+        # DELETE /user/:userName/project/:projectName (Private)
         params do
           requires :userName, type: String
           requires :projectName, type: String
         end
         delete ':projectName', jbuilder: 'project/delete' do
-          @user = User.find_by(name: params[:userName])
+          who_am_i(headers)
           @project = @user.projects.find_by(name: params[:projectName])
           @project.delete
         end
