@@ -20,7 +20,7 @@ class API < Grape::API
     def who_am_i(headers)
       error!("X-tokenがNULLです。", 400) if headers["X-Token"].blank?
       @user = User.find_by(token: headers["X-Token"])
-      error!("ユーザーが見つかりません", 404) if @user.blank?
+      error!("ユーザーが見つかりません", 401) if @user.blank?
     end
 
     def authenticated(obj)
