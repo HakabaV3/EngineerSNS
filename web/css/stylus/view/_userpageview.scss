@@ -8,8 +8,10 @@
 	float: left;
 	width: 128px;
 	height: 128px;
-	border: 1px solid #ccc;
 	border-radius: 50%;
+	background-position: center;
+	background-size: cover;
+	background-repeat: no-repeat;
 	overflow: hidden;
 }
 .UserPageView-userName {

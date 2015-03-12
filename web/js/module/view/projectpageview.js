@@ -30,6 +30,7 @@ ProjectPageView.prototype.loadProjectWithRout = function(rout) {
 
     Project.getByName(rout.userName, rout.projectName, function(err, project) {
         self.setProject(project);
+        self.fire('load');
     });
 
     User.getByName(rout.userName, function(err, user) {

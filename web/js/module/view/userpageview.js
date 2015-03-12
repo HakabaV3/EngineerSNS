@@ -10,6 +10,11 @@ var UserPageView = function() {
 
     this.user = null;
 
+    /**
+     *  @type {boolean}
+     */
+    this.isProjectsLoaded = false;
+
     app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
 };
 extendClass(UserPageView, View);
@@ -28,6 +33,7 @@ UserPageView.prototype.loadUserWithRout = function(rout) {
 
     User.getByName(rout.userName, function(err, user) {
         self.setUser(user);
+        self.fire('load');
     });
 };
 
@@ -35,14 +41,17 @@ UserPageView.prototype.loadUserProjects = function() {
     var user = this.user,
         self = this;
 
-    if (!user) return;
+    if (!user) {
+        return;
+    }
 
     user.getAllProjects(function(err, projects) {
         if (err) {
             self.childViews.projectListView.setItems([]);
-        } else {
-            self.childViews.projectListView.setItems(projects);
+            return;
         }
+
+        self.childViews.projectListView.setItems(projects);
     });
 };
 

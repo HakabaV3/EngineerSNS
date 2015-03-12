@@ -4,16 +4,16 @@
 <template name="UserPageView">
 	<div class="UserPageView grid-container">
 		<div class="UserPageView-header grid-12">
-			<img class="UserPageView-icon" src="{{ user.icon }}" />
+			<img class="UserPageView-icon" src="/img/empty.gif" style="background-image:url({{ user.icon }});" />
 			<h3 class="UserPageView-userName">{{ user.name }}</h3>
 		</div>
 
 		<div class="grid-6">
-			{{view view=UserView name=userView }}
+			{{ view class=UserView name=userView }}
 		</div>
 
 		<div class="grid-6">
-			{{view view=ProjectListView name=projectListView }}
+			{{ view class=ProjectListView name=projectListView }}
 		</div>
 	</div>
 </template>

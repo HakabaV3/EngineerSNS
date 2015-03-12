@@ -55,6 +55,7 @@ compile-css:
 server:
 	$(MAKE) server-install
 	$(MAKE) server-init
+	$(MAKE) server-copy
 	$(MAKE) server-start
 
 #gemのインストール
@@ -64,6 +65,10 @@ server-install:
 #DBの初期化(MAMP用)
 server-init:
 	(cd ../server && rake db:reset RAILS_ENV=mamp)
+
+#静的ファイルの移動
+server-copy:
+	cp -rf ./img ../server/public
 
 #起動
 server-start:

@@ -269,7 +269,6 @@ Template.parseTemplateQueryText = function(queryText) {
             }
         }
         pivot = ma.index + ma[0].length;
-
         tagText = ma[1].trim();
         tagTextParts = tagText.split(regSplitter);
 
@@ -291,6 +290,16 @@ Template.parseTemplateQueryText = function(queryText) {
                 break;
         }
     };
+    if (pivot !== queryText.length) {
+        queryTextPart = queryText.substring(pivot).trim();
+        if (queryTextPart.length) {
+            //string
+            datas.push({
+                type: Template.QueryPart.Type.TEXT,
+                data: queryTextPart
+            });
+        }
+    }
 
     return datas;
 };
@@ -311,8 +320,8 @@ Template.parseQueryPartsForView = function(tagTextParts) {
         result[keyAndVal[0]] = keyAndVal[1];
     });
 
-    if (result.view && isFunction(global[result.view])) {
-        result.viewConstructor = global[result.view];
+    if (result['class'] && isFunction(global[result['class']])) {
+        result.viewConstructor = global[result['class']];
     }
 
     return result;

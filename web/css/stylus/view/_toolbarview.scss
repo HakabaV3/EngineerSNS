@@ -1,7 +1,7 @@
 @import "../function/_function.scss";
 @import "../var/_definitions.scss";
 
-$itemHeight: 20px;
+$itemHeight: 38px;
 
 .ToolBarView {
 	@include clearfix();
@@ -9,17 +9,40 @@ $itemHeight: 20px;
 	top: 0;
 	left: 0;
 	right: 0;
-	height: $itemHeight + 20px;
+	min-height: $itemHeight + 20px;
 	margin-bottom: 10px;
 	background: $cBack;
 	color: $cFore;
 	border-bottom: 1px solid #eee;
 	padding: 10px 0;
+
+	a {
+		color: $cFore;
+	}
+
+	.UserInlineView {
+		display: none;
+		margin-top: 0;
+		margin-bottom: 0;
+	}
+
+	.ToolBarView-signInLink {
+		display: inline-block;
+	}
+
+	&.is-authed {
+		.UserInlineView {
+			display: inline-block;
+		}
+
+		.ToolBarView-signInLink {
+			display: none;
+		}
+	}
 }
 
 .ToolBarView-itemContainer {
 	position: relative;
-	height: $itemHeight;
 	line-height: $itemHeight;
 
 	> * {
@@ -35,4 +58,5 @@ $itemHeight: 20px;
 	float: right;
 }
 .ToolBarView-title {
+	font-size: 1.4em;
 }

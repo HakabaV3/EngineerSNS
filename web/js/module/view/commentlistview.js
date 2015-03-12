@@ -15,6 +15,12 @@ var CommentListView = function() {
      */
     this.target = null;
 
+    /**
+     *  @type {boolean}
+     */
+    this.isLoading;
+    this.setLoadingState(true);
+
     this.itemViewConstructor = CommentListItemView;
 
     this.$.form.addEventListener('submit', this.onSubmit = this.onSubmit.bind(this));
@@ -28,6 +34,15 @@ CommentListView.prototype.finalize = function() {
     ListView.prototype.finalize.call(this);
 };
 
+CommentListView.prototype.setItems = function(items) {
+    items = items.slice(0).sort(function(a, b) {
+        return a.created > b.created ? -1 :
+            a.created < b.created ? 1 : 0;
+    });
+
+    return ListView.prototype.setItems.call(this, items);
+};
+
 CommentListView.prototype.loadComments = function() {
     var target = this.target,
         self = this;
@@ -37,16 +52,30 @@ CommentListView.prototype.loadComments = function() {
     target.getComments(function(err, comments) {
         if (err) {
             self.setItems([]);
-        } else {
-            self.setItems(comments);
+            self.setLoadingState(false);
+            return;
         }
+
+        self.setItems(comments);
+        self.setLoadingState(false);
     });
 };
 
+CommentListView.prototype.setLoadingState = function(state) {
+    if (state === this.isLoading) return;
+
+    if (state) {
+        this.$.root.classList.add('is-loading');
+
+    } else {
+        this.$.root.classList.remove('is-loading');
+    }
+}
 CommentListView.prototype.setTarget = function(target) {
     if (this.target === target) return;
 
     this.target = target;
+    this.setItems([]);
     this.loadComments();
 };
 

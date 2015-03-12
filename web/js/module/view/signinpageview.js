@@ -66,9 +66,16 @@ SignInPageView.prototype.validate = function() {
  *  Check authentication state.
  */
 SignInPageView.prototype.checkAuthState = function() {
-    if (!app.isAuthed) return;
+    var self = this;
 
-    this.childViews.userInlineView.setUser(app.authedUser);
+    if (app.isAuthed) {
+        this.$.root.classList.add('is-authed');
+        this.childViews.userInlineView.setUser(app.authedUser);
+    } else {
+        this.$.root.classList.remove('is-authed');
+        this.childViews.userInlineView.setUser(null);
+    }
+
 };
 
 /**
@@ -83,7 +90,8 @@ SignInPageView.prototype.onChangeRout = function(rout) {
     this.checkAuthState();
 
     self = this;
-    setTimeout(function() {
+    runAsync(function() {
+        self.fire('load');
         self.$.userName.focus();
     });
 

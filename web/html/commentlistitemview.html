@@ -4,14 +4,14 @@
 	<li class="CommentListItemView CardView-section">
 		<p>
 			<span>
-				{{view view=UserInlineView name=userInlineView}}
+				{{ view class=UserInlineView name=userInlineView }}
 			</span>
 			<span class="CommentListItemView-created">
-				{{comment.created}}
+				{{ comment.created }}
 			</span>
 		</p>
 		<p>
-			{{comment.text}}
+			{{ comment.text }}
 		</p>
 	</li>
 </template>

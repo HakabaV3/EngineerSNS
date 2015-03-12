@@ -9,6 +9,12 @@
 
 <body>
 
+<template name="ProgressBarView">
+	<div class="ProgressBarView">
+		<div class="ProgressBarView-inner is-initial" name="inner"></div>
+	</div>
+</template>
+
 <template name="ToolBarView">
 	<div class="ToolBarView">
 		<div class="grid-container">
@@ -18,7 +24,8 @@
 				</div>
 
 				<div class="ToolBarView-right">
-					<span class="ToolBarView-auth">{{authedUser.name}}</span>			
+					{{ view class=UserInlineView name=userInlineView }}
+					<a class="ToolBarView-signInLink" href="#!/signin">サインイン</a>
 				</div>
 			</div>
 		</div>
@@ -28,9 +35,9 @@
 
 <template name="UserInlineView">
 	<div class="UserInlineView">
-		<img class="UserInlineView-icon" src="{{user.icon}}">
-		<a href="#!{{user.uri}}">
-			<span class="UserInlineView-name">{{user.name}}</span>
+		<img class="UserInlineView-icon" src="/img/empty.gif" style="background-image:url({{ user.icon }});">
+		<a href="#!{{ user.uri }}">
+			<span class="UserInlineView-name">{{ user.name }}</span>
 		</a>
 	</div>
 </template>
@@ -45,13 +52,13 @@
 					<label class="SignInPageView-row grid-container grid-12">
 						<span class="grid-3 Input-label">ユーザー名</span>
 						<span class="grid-9">
-							<input type="text" name="userName" class="SignInPageView-userName Input-block grid-9" value="{{userName}}">
+							<input type="text" name="userName" class="SignInPageView-userName Input-block grid-9">
 						</span>
 					</label>
 					<label class="SignInPageView-row grid-container grid-12">
 						<span class="grid-3 Input-label">パスワード</span>
 						<span class="grid-9">
-							<input type="password" name="password"  class="SignInPageView-password Input-block" value="{{password}}">
+							<input type="password" name="password"  class="SignInPageView-password Input-block">
 						</span>
 					</label>
 					<div class="SignInPageView-row grid-container grid-12">
@@ -64,12 +71,12 @@
 					</p>
 				</section>
 			</form>
-			<div class="CardView">
+			<div class="CardView SignInPageView-authedUser">
 				<header class="CardView-header">
 					サインイン済みのユーザー
 				</header>
 				<section class="CardView-section">
-					{{view view=UserInlineView name=userInlineView}}
+					{{ view class=UserInlineView name=userInlineView }}
 				</section>
 			</div>
 		</div>
@@ -88,13 +95,13 @@
 					<label class="SignUpPageView-row grid-container grid-12">
 						<span class="grid-3 Input-label">ユーザー名</span>
 						<span class="grid-9">
-							<input type="text" name="userName" class="SignUpPageView-userName Input-block grid-9" value="{{userName}}">
+							<input type="text" name="userName" class="SignUpPageView-userName Input-block grid-9">
 						</span>
 					</label>
 					<label class="SignUpPageView-row grid-container grid-12">
 						<span class="grid-3 Input-label">パスワード</span>
 						<span class="grid-9">
-							<input type="password" name="password"  class="SignUpPageView-password Input-block" value="{{password}}">
+							<input type="password" name="password"  class="SignUpPageView-password Input-block">
 						</span>
 					</label>
 					<div class="SignUpPageView-row grid-container grid-12">
@@ -120,30 +127,30 @@
 		</header>
 		<section class="CardView-section">
 			<header class="CardView-sectionHeader">name</header>
-			<span>{{user.name}}</span>
+			<span>{{ user.name }}</span>
 		</section>
 		<section class="CardView-section">
 			<header class="CardView-sectionHeader">id</header>
-			<span>{{user.id}}</span>
+			<span>{{ user.id }}</span>
 		</section>
 		<section class="CardView-section">
 			<header class="CardView-sectionHeader">uri</header>
-			<a href="#!{{user.uri}}">
-				<span>{{user.uri}}</span>
+			<a href="#!{{ user.uri }}">
+				<span>{{ user.uri }}</span>
 			</a>
 		</section>
 		<section class="CardView-section">
 			<header class="CardView-sectionHeader">description</header>
-			<span>{{user.description}}</span>
+			<span>{{ user.description }}</span>
 		</section>
 	</div>
 </template>
 
 
 <template name="ProjectListItemView">
-	<a href="#!{{project.uri}}" class="ProjectListItemView CardView-section">
+	<a href="#!{{ project.uri }}" class="ProjectListItemView CardView-section">
 		<li>
-			{{project.name}}
+			{{ project.name }}
 		</li>
 	</a>
 </template>
@@ -160,16 +167,16 @@
 <template name="UserPageView">
 	<div class="UserPageView grid-container">
 		<div class="UserPageView-header grid-12">
-			<img class="UserPageView-icon" src="{{ user.icon }}" />
+			<img class="UserPageView-icon" src="/img/empty.gif" style="background-image:url({{ user.icon }});" />
 			<h3 class="UserPageView-userName">{{ user.name }}</h3>
 		</div>
 
 		<div class="grid-6">
-			{{view view=UserView name=userView }}
+			{{ view class=UserView name=userView }}
 		</div>
 
 		<div class="grid-6">
-			{{view view=ProjectListView name=projectListView }}
+			{{ view class=ProjectListView name=projectListView }}
 		</div>
 	</div>
 </template>
@@ -184,14 +191,14 @@
 	<li class="CommentListItemView CardView-section">
 		<p>
 			<span>
-				{{view view=UserInlineView name=userInlineView}}
+				{{ view class=UserInlineView name=userInlineView }}
 			</span>
 			<span class="CommentListItemView-created">
-				{{comment.created}}
+				{{ comment.created }}
 			</span>
 		</p>
 		<p>
-			{{comment.text}}
+			{{ comment.text }}
 		</p>
 	</li>
 </template>
@@ -214,14 +221,15 @@
 	</div>
 </template>
 
+
 <template name="ProjectPageView">
 	<div class="ProjectPageView grid-container">
 		<div class="ProjectPageView-header grid-12">
 			<h3 class="ProjectPageView-projectName">{{ project.name }}</h3>
-			{{view view=UserInlineView name=userInlineView }}
+			{{ view class=UserInlineView name=userInlineView }}
 		</div>
 		<div class="ProjectPageView-comments grid-6 grid-offset-6">
-			{{view view=CommentListView name=commentListView}}
+			{{ view class=CommentListView name=commentListView }}
 		</div>
 	</div>
 </template>
@@ -236,15 +244,18 @@
 </template>
 
 <template name="BaseView">
-	<div class="BaseView is-mode-{{mode}}">
-		{{view view=ToolBarView name=toolBarView}}
+	<div class="BaseView">
+		{{ view class=ToolBarView name=toolBarView }}
+		
 		<div class="BaseView-body">
-			{{view view=SignInPageView name=signInPageView}}
-			{{view view=SignUpPageView name=signUpPageView}}
-			{{view view=UserPageView name=userPageView}}
-			{{view view=ProjectPageView name=projectPageView}}
-			{{view view=Error404PageView name=error404pageView}}
+			{{ view class=SignInPageView   name=signInPageView   }}
+			{{ view class=SignUpPageView   name=signUpPageView   }}
+			{{ view class=UserPageView     name=userPageView     }}
+			{{ view class=ProjectPageView  name=projectPageView  }}
+			{{ view class=Error404PageView name=error404pageView }}
 		</div>
+
+		{{ view class=ProgressBarView name=progressBarView }}
 	</div>
 </template>
 <script src="./script.js"></script>

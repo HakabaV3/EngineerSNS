@@ -7,7 +7,8 @@
 				</div>
 
 				<div class="ToolBarView-right">
-					<span class="ToolBarView-auth">{{authedUser.name}}</span>			
+					{{ view class=UserInlineView name=userInlineView }}
+					<a class="ToolBarView-signInLink" href="#!/signin">サインイン</a>
 				</div>
 			</div>
 		</div>

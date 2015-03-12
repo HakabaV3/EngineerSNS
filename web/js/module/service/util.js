@@ -115,3 +115,16 @@ function escapeForXSS(src) {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
 }
+
+
+/** 
+ *  run function asynclonously
+ *  @param {Function} fn function
+ */
+function runAsync(fn) {
+    if (isFunction(requestAnimationFrame)) {
+        requestAnimationFrame(fn);
+    } else {
+        setTimeout(fn);
+    }
+}

@@ -1,11 +1,15 @@
 .UserInlineView {
 	display: inline-block;
+	word-wrap: nowrap;
 	margin: 3px 5px;
 }
 .UserInlineView-icon {
-	width: 24px;
-	height: 24px;
+	width: 32px;
+	height: 32px;
 	vertical-align: middle;
+	background-position: center;
+	background-size: cover;
+	background-repeat: no-repeat;
 	border-radius: 50%;
 }
 .UserInlineView-name {

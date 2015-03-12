@@ -75,6 +75,16 @@ Comment.prototype.schema = {
 };
 
 /**
+ *  @override
+ */
+Comment.prototype.updateWithData = function(data) {
+    Model.prototype.updateWithData.call(this, data);
+
+    this.created = new Date(data.created);
+    return this;
+};
+
+/**
  *  Get Comment data by comment ID
  *  @param {string} commentId the comment id.
  *  @param {Function} callback callback function.
