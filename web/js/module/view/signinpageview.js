@@ -1,19 +1,27 @@
 //@include ../service/util.js
+//@include ../model/user.js
+//@include ../model/auth.js
 //@include view.js
 
+/**
+ *  SignInPageView
+ *  @constructor
+ *  @extend {View}
+ */
 var SignInPageView = function() {
     View.call(this);
 
     this.loadTemplate('SignInPageView');
 
-    this.userName = '';
-    this.password = '';
-
     this.$.form.addEventListener('submit', this.onSubmit = this.onSubmit.bind(this));
     app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
+    app.on('auth.change', this.onChangeAuth = this.onChangeAuth.bind(this));
 };
 extendClass(SignInPageView, View);
 
+/**
+ *  Finalize.
+ */
 SignInPageView.prototype.finalize = function() {
     this.$.form.removeEventListener('submit', this.onSubmit);
     this.onSubmit = null;
@@ -21,21 +29,15 @@ SignInPageView.prototype.finalize = function() {
     app.off('rout.change', this.onChangeRout);
     this.onChangeRout = null;
 
+    app.off('auth.change', this.onChangeAuth);
+    this.onChangeAuth = null;
+
     View.prototype.finalize.call(this);
 };
 
-SignInPageView.prototype.signIn = function() {
-    var userName, password;
-
-    if (!this.validate()) return;
-
-    userName = this.$.userName.value;
-    password = this.$.password.value;
-
-    //@TODO
-    console.log('サインイン処理(NIY)');
-};
-
+/**
+ *  Check if all input forms are validate.
+ */
 SignInPageView.prototype.validate = function() {
     var userName = this.$.userName.value,
         password = this.$.password.value,
@@ -60,10 +62,25 @@ SignInPageView.prototype.validate = function() {
     return isValidate;
 };
 
+/**
+ *  Check authentication state.
+ */
+SignInPageView.prototype.checkAuthState = function() {
+    if (!app.isAuthed) return;
+
+    this.childViews.userInlineView.setUser(app.authedUser);
+};
+
+/**
+ *  EventListener: Application#on("rout.change")
+ *  @param {Object} rout routing data.
+ */
 SignInPageView.prototype.onChangeRout = function(rout) {
     var self;
 
     if (rout.mode !== 'signin') return;
+
+    this.checkAuthState();
 
     self = this;
     setTimeout(function() {
@@ -74,9 +91,26 @@ SignInPageView.prototype.onChangeRout = function(rout) {
     this.password = '';
 };
 
+/**
+ *  EventListener: Application#on("auth.change")
+ *  @param {boolean} isAuthed isAuthed.
+ *  @param {User} authedUser authedUser
+ */
+SignInPageView.prototype.onChangeAuth = function(isAuthed, authedUser) {
+    this.checkAuthState();
+};
+
+/**
+ *  EventListener: HTMLFormElement#on("submit")
+ *  @param {Event} ev event object.
+ */
 SignInPageView.prototype.onSubmit = function(ev) {
     ev.preventDefault();
     ev.stopPropagation();
 
-    this.signIn();
+    if (!this.validate()) return;
+
+    app.signIn(this.$.userName.value, this.$.password.value, function(err, user) {
+        app.setHashAsync(user.uri);
+    });
 };

@@ -2,12 +2,14 @@
 
 <template name="CommentListItemView">
 	<li class="CommentListItemView CardView-section">
-		<header class="CommentListItemView-header CardView-sectionHeader">
+		<p>
 			<span>
 				{{view view=UserInlineView name=userInlineView}}
 			</span>
-			update: {{comment.created}}
-		</header>
+			<span class="CommentListItemView-created">
+				{{comment.created}}
+			</span>
+		</p>
 		<p>
 			{{comment.text}}
 		</p>

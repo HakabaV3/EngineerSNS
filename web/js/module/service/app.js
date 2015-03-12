@@ -9,6 +9,8 @@ var Application = function() {};
 extendClass(Application, EventDispatcher);
 
 Application.prototype.init = function() {
+    var self = this;
+
     /**
      *  @NOTE singleton
      */
@@ -35,38 +37,69 @@ Application.prototype.init = function() {
      */
     this.authedUser = null;
 
-    this.updateAuthState();
-
     this.baseView = new BaseView();
     this.baseView.appendTo(document.body);
 
     window.addEventListener('hashchange', this.onHashChange.bind(this));
-    this.onHashChange();
+
+    this.updateAuthState(function() {
+        self.onHashChange();
+    })
 };
 
 /**
  *  check authentication state
  */
-Application.prototype.updateAuthState = function() {
+Application.prototype.updateAuthState = function(callback) {
     var self = this;
 
     /**
      *  @TODO LocalStorageからtoken取り出す
      */
 
-    API.User.me(function(err, me) {
+    User.getMe(function(err, me) {
         if (err) {
-            self.isAuthed = false;
-            self.authedUser = null;
-        } else {
-            self.isAuthed = true;
-            self.authedUser = me;
+            self.setAuthedUser(null);
+            callback(err, null);
+            return;
         }
 
-        self.fire('auth.change',
-            self.isAuthed,
-            self.authedUser
-        );
+        self.setAuthedUser(new User(me));
+        callback(null, me);
+    });
+};
+
+Application.prototype.setAuthedUser = function(user) {
+    if (this.authedUser === user) return;
+
+    if (user) {
+        this.isAuthed = true;
+        this.authedUser = user;
+    } else {
+        this.isAuthed = false;
+        this.authedUser = null;
+    }
+
+    this.fire('auth.change',
+        this.isAuthed,
+        this.authedUser
+    );
+};
+
+/**
+ *  Sign in.
+ */
+Application.prototype.signIn = function(userName, password, callback) {
+    var self = this;
+
+    Auth.signIn(userName, password, function(err, user, token) {
+
+        if (err) {
+            return callback(err, null);
+        }
+
+        self.setAuthedUser(user);
+        callback(null, user);
     });
 };
 
@@ -102,7 +135,19 @@ Application.prototype.routing = function(url) {
 
     url = url || window.location.hash.substr(2);
 
-    if (url === '/signup') {
+    if (url === '') {
+        if (this.isAuthed) {
+            params = {
+                mode: 'user',
+                userName: this.authedUser.name
+            };
+        } else {
+            params = {
+                mode: 'signin'
+            };
+        }
+
+    } else if (url === '/signup') {
         params = {
             mode: 'signup'
         };

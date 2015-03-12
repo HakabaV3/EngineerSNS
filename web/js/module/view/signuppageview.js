@@ -1,19 +1,24 @@
 //@include ../service/util.js
 //@include view.js
 
+/**
+ *  SignUpPageView
+ *  @constructor
+ *  @extend {View}
+ */
 var SignUpPageView = function() {
     View.call(this);
 
     this.loadTemplate('SignUpPageView');
-
-    this.userName = '';
-    this.password = '';
 
     this.$.form.addEventListener('submit', this.onSubmit = this.onSubmit.bind(this));
     app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
 };
 extendClass(SignUpPageView, View);
 
+/**
+ *  Finalize.
+ */
 SignUpPageView.prototype.finalize = function() {
     this.$.form.removeEventListener('submit', this.onSubmit);
     this.onSubmit = null;
@@ -24,6 +29,9 @@ SignUpPageView.prototype.finalize = function() {
     View.prototype.finalize.call(this);
 };
 
+/**
+ *  Sign up.
+ */
 SignUpPageView.prototype.signUp = function() {
     var userName, password;
 
@@ -36,6 +44,9 @@ SignUpPageView.prototype.signUp = function() {
     console.log('サインアップ処理(NIY)');
 };
 
+/**
+ *  Check if all input forms are validate.
+ */
 SignUpPageView.prototype.validate = function() {
     var userName = this.$.userName.value,
         password = this.$.password.value,
@@ -60,6 +71,10 @@ SignUpPageView.prototype.validate = function() {
     return isValidate;
 };
 
+/**
+ *  EventListener: Application#on('rout.change')
+ *  @param {Object} rout routing data.
+ */
 SignUpPageView.prototype.onChangeRout = function(rout) {
     var self;
 
@@ -74,6 +89,10 @@ SignUpPageView.prototype.onChangeRout = function(rout) {
     this.password = '';
 };
 
+/**
+ *  EventListener: HTMLFormElement#on('submit')
+ *  @param {Event} rout routing data.
+ */
 SignUpPageView.prototype.onSubmit = function(ev) {
     ev.preventDefault();
     ev.stopPropagation();

@@ -611,13 +611,12 @@ button {
   margin: 3px 5px; }
 
 .UserInlineView-icon {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   vertical-align: middle;
   border-radius: 50%; }
 
 .UserInlineView-name {
-  font-size: 18px;
   margin-left: 8px;
   vertical-align: middle; }
 
@@ -645,5 +644,9 @@ button {
 
 .CommentListItemView-header {
   font-weight: normal; }
+
+.CommentListItemView-created {
+  color: #aaa;
+  font-size: 0.8em; }
 
 /*# sourceMappingURL=style.css.map */

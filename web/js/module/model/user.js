@@ -109,7 +109,7 @@ User.getByName = function(userName, callback) {
  *  @param {Function} callback callback function.
  */
 User.getMe = function(callback) {
-    API.get('/user/me', function(err, res) {
+    API.get('/auth/me', function(err, res) {
         if (err) {
             return callback(err, null);
         }

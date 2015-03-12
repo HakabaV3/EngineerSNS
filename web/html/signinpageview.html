@@ -1,3 +1,5 @@
+//@include userinlineview.html
+
 <template name="SignInPageView">
 	<div class="SignInPageView grid-container">
 		<div class="grid-6 grid-offset-3">
@@ -28,6 +30,14 @@
 					</p>
 				</section>
 			</form>
+			<div class="CardView">
+				<header class="CardView-header">
+					サインイン済みのユーザー
+				</header>
+				<section class="CardView-section">
+					{{view view=UserInlineView name=userInlineView}}
+				</section>
+			</div>
 		</div>
 	</div>
 </template>

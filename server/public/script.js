@@ -1363,7 +1363,6 @@ Model.prototype.dispatchUpdate = function() {
 
 
 
-
 /**
  *  namespace for definition of API Errors
  *  @namespace
@@ -1581,8 +1580,8 @@ API.ajax = function(method, url, headers, body, callback) {
     var xhr = new XMLHttpRequest();
     xhr.open(method, API.EntryPoint + url);
 
-    if (API.token) {
-        xhr.setHeader('X-token', API.token);
+    if (API.hasToken()) {
+        xhr.setRequestHeader('X-Token', API.getToken());
     }
 
     if (headers) {
@@ -1592,9 +1591,13 @@ API.ajax = function(method, url, headers, body, callback) {
     }
 
     xhr.onload = function() {
-        var result;
+        var result,
+            token;
 
-        //@TODO response headerからトークンを読み取って更新する処理
+        token = xhr.getResponseHeader('X-Token');
+        if (token) {
+            API.updateToken(token);
+        }
 
         try {
             result = JSON.parse(xhr.responseText);
@@ -1616,45 +1619,43 @@ API.ajax = function(method, url, headers, body, callback) {
     xhr.send(body);
 };
 
-API.User = {
-    get: function(userName, callback) {
-        return API.get('/user/' + userName, callback);
-    },
-    me: function(callback) {
-        return API.get('/user/me', callback);
-    },
-    post: function(userName, password, callback) {
-        return API.post('/user/' + userName, {
-            'password': password
-        }, callback);
-    },
-    patch: function(userName, params, callback) {
-        return API.patch('/user/' + userName, params, callback);
-    },
-    patchIcon: function(userName, blob, callback) {
-        return API.patchB('/user/' + userName + '/icon', blob, callback);
-    },
-    delete: function(userName, callback) {
-        return API.delete('/user/' + userName, callback);
-    }
+
+/**
+ *  authentication token.
+ *  @type {string|null}
+ */
+API.token = null;
+
+/**
+ *  The key name of authentication token in Local Storage.
+ */
+API.KEY_TOKEN = 'token';
+
+/** 
+ *  Update authentication token.
+ *  @param {string|null} token token.
+ */
+API.updateToken = function(token) {
+    API.token = token;
+    localStorage.setItem(API.KEY_TOKEN, token || '');
 };
 
-API.Project = {
-    get: function(userName, projectName, callback) {
-        return API.get('/user/' + userName + '/project/' + projectName, callback);
-    },
-    getAll: function(userName, callback) {
-        return API.get('/user/' + userName + '/project', callback);
-    },
-    post: function(userName, projectName, callback) {
-        return API.post('/user/' + userName + '/project/' + projectName, callback);
-    },
-    patch: function(userName, projectName, callback) {
-        return API.patch('/user/' + userName + '/project/' + projectName, callback);
-    },
-    delete: function(userName, projectName, callback) {
-        return API.delete('/user/' + userName + '/project/' + projectName, callback);
-    }
+/** 
+ *  Get authentication token.
+ *  @return {string|null} token.
+ */
+API.getToken = function() {
+    if (API.token) return API.token;
+
+    return API.token = localStorage.getItem(API.KEY_TOKEN);
+};
+
+/** 
+ *  Check if authentication token is exist.
+ *  @return {boolean} If true, the token is exist.
+ */
+API.hasToken = function() {
+    return API.getToken() !== '';
 };
 
 /**
@@ -1764,7 +1765,7 @@ User.getByName = function(userName, callback) {
  *  @param {Function} callback callback function.
  */
 User.getMe = function(callback) {
-    API.get('/user/me', function(err, res) {
+    API.get('/auth/me', function(err, res) {
         if (err) {
             return callback(err, null);
         }
@@ -1890,6 +1891,8 @@ var Application = function() {};
 extendClass(Application, EventDispatcher);
 
 Application.prototype.init = function() {
+    var self = this;
+
     /**
      *  @NOTE singleton
      */
@@ -1916,38 +1919,69 @@ Application.prototype.init = function() {
      */
     this.authedUser = null;
 
-    this.updateAuthState();
-
     this.baseView = new BaseView();
     this.baseView.appendTo(document.body);
 
     window.addEventListener('hashchange', this.onHashChange.bind(this));
-    this.onHashChange();
+
+    this.updateAuthState(function() {
+        self.onHashChange();
+    })
 };
 
 /**
  *  check authentication state
  */
-Application.prototype.updateAuthState = function() {
+Application.prototype.updateAuthState = function(callback) {
     var self = this;
 
     /**
      *  @TODO LocalStorageからtoken取り出す
      */
 
-    API.User.me(function(err, me) {
+    User.getMe(function(err, me) {
         if (err) {
-            self.isAuthed = false;
-            self.authedUser = null;
-        } else {
-            self.isAuthed = true;
-            self.authedUser = me;
+            self.setAuthedUser(null);
+            callback(err, null);
+            return;
         }
 
-        self.fire('auth.change',
-            self.isAuthed,
-            self.authedUser
-        );
+        self.setAuthedUser(new User(me));
+        callback(null, me);
+    });
+};
+
+Application.prototype.setAuthedUser = function(user) {
+    if (this.authedUser === user) return;
+
+    if (user) {
+        this.isAuthed = true;
+        this.authedUser = user;
+    } else {
+        this.isAuthed = false;
+        this.authedUser = null;
+    }
+
+    this.fire('auth.change',
+        this.isAuthed,
+        this.authedUser
+    );
+};
+
+/**
+ *  Sign in.
+ */
+Application.prototype.signIn = function(userName, password, callback) {
+    var self = this;
+
+    Auth.signIn(userName, password, function(err, user, token) {
+
+        if (err) {
+            return callback(err, null);
+        }
+
+        self.setAuthedUser(user);
+        callback(null, user);
     });
 };
 
@@ -1983,7 +2017,19 @@ Application.prototype.routing = function(url) {
 
     url = url || window.location.hash.substr(2);
 
-    if (url === '/signup') {
+    if (url === '') {
+        if (this.isAuthed) {
+            params = {
+                mode: 'user',
+                userName: this.authedUser.name
+            };
+        } else {
+            params = {
+                mode: 'signin'
+            };
+        }
+
+    } else if (url === '/signup') {
         params = {
             mode: 'signup'
         };
@@ -2774,36 +2820,105 @@ CommentListView.prototype.onSubmit = function(ev) {
 
 
 
+
+
+/**
+ *	ToolBarView
+ *	@constructor
+ *	@extend {View}
+ */
 var ToolBarView = function() {
     View.call(this);
 
-    this.state = {
-        loginState: false
-    }
+    /**
+     *	Authed user.
+     *	@type {User}
+     */
+    this.authedUser = null;
 
     this.loadTemplate('ToolBarView');
+
+    app.on('auth.change', this.onChangeAuth = this.onChangeAuth.bind(this));
 };
 
 extendClass(ToolBarView, View);
 
+/**
+ *	Finalize.
+ */
+ToolBarView.prototype.finalize = function() {
+    app.off('auth.change', this.onChangeAuth);
+    this.onChangeAuth = null;
+
+    View.prototype.finalize.call(this);
+};
+
+/**
+ *	EventListener: Application#on('auth.change')
+ *	@param {boolean} isAuthed isAuthed.
+ *	@param {User} authedUser authedUser.
+ */
+ToolBarView.prototype.onChangeAuth = function(isAuthed, authedUser) {
+    this.authedUser = authedUser;
+};
 
 
 
 
 
+
+
+/**
+ *  Authentication methods.
+ *
+ *  This API category DOES NOT have any model (as 'Auth'), methods only.
+ *
+ *  @namespace
+ */
+Auth = {};
+
+/**
+ *  Sign in.
+ *  @param {string} userName userName.
+ *  @param {string} password password.
+ *  @param {Function} callback callback.
+ */
+Auth.signIn = function(userName, password, callback) {
+    API.post('/auth', null, {
+        'userName': userName,
+        'password': password
+    }, function(err, res) {
+        var token;
+
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, new User(res));
+    });
+};
+
+
+
+/**
+ *  SignInPageView
+ *  @constructor
+ *  @extend {View}
+ */
 var SignInPageView = function() {
     View.call(this);
 
     this.loadTemplate('SignInPageView');
 
-    this.userName = '';
-    this.password = '';
-
     this.$.form.addEventListener('submit', this.onSubmit = this.onSubmit.bind(this));
     app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
+    app.on('auth.change', this.onChangeAuth = this.onChangeAuth.bind(this));
 };
 extendClass(SignInPageView, View);
 
+/**
+ *  Finalize.
+ */
 SignInPageView.prototype.finalize = function() {
     this.$.form.removeEventListener('submit', this.onSubmit);
     this.onSubmit = null;
@@ -2811,21 +2926,15 @@ SignInPageView.prototype.finalize = function() {
     app.off('rout.change', this.onChangeRout);
     this.onChangeRout = null;
 
+    app.off('auth.change', this.onChangeAuth);
+    this.onChangeAuth = null;
+
     View.prototype.finalize.call(this);
 };
 
-SignInPageView.prototype.signIn = function() {
-    var userName, password;
-
-    if (!this.validate()) return;
-
-    userName = this.$.userName.value;
-    password = this.$.password.value;
-
-    //@TODO
-    console.log('サインイン処理(NIY)');
-};
-
+/**
+ *  Check if all input forms are validate.
+ */
 SignInPageView.prototype.validate = function() {
     var userName = this.$.userName.value,
         password = this.$.password.value,
@@ -2850,10 +2959,25 @@ SignInPageView.prototype.validate = function() {
     return isValidate;
 };
 
+/**
+ *  Check authentication state.
+ */
+SignInPageView.prototype.checkAuthState = function() {
+    if (!app.isAuthed) return;
+
+    this.childViews.userInlineView.setUser(app.authedUser);
+};
+
+/**
+ *  EventListener: Application#on("rout.change")
+ *  @param {Object} rout routing data.
+ */
 SignInPageView.prototype.onChangeRout = function(rout) {
     var self;
 
     if (rout.mode !== 'signin') return;
+
+    this.checkAuthState();
 
     self = this;
     setTimeout(function() {
@@ -2864,11 +2988,28 @@ SignInPageView.prototype.onChangeRout = function(rout) {
     this.password = '';
 };
 
+/**
+ *  EventListener: Application#on("auth.change")
+ *  @param {boolean} isAuthed isAuthed.
+ *  @param {User} authedUser authedUser
+ */
+SignInPageView.prototype.onChangeAuth = function(isAuthed, authedUser) {
+    this.checkAuthState();
+};
+
+/**
+ *  EventListener: HTMLFormElement#on("submit")
+ *  @param {Event} ev event object.
+ */
 SignInPageView.prototype.onSubmit = function(ev) {
     ev.preventDefault();
     ev.stopPropagation();
 
-    this.signIn();
+    if (!this.validate()) return;
+
+    app.signIn(this.$.userName.value, this.$.password.value, function(err, user) {
+        app.setHashAsync(user.uri);
+    });
 };
 
 
@@ -2876,19 +3017,24 @@ SignInPageView.prototype.onSubmit = function(ev) {
 
 
 
+/**
+ *  SignUpPageView
+ *  @constructor
+ *  @extend {View}
+ */
 var SignUpPageView = function() {
     View.call(this);
 
     this.loadTemplate('SignUpPageView');
-
-    this.userName = '';
-    this.password = '';
 
     this.$.form.addEventListener('submit', this.onSubmit = this.onSubmit.bind(this));
     app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
 };
 extendClass(SignUpPageView, View);
 
+/**
+ *  Finalize.
+ */
 SignUpPageView.prototype.finalize = function() {
     this.$.form.removeEventListener('submit', this.onSubmit);
     this.onSubmit = null;
@@ -2899,6 +3045,9 @@ SignUpPageView.prototype.finalize = function() {
     View.prototype.finalize.call(this);
 };
 
+/**
+ *  Sign up.
+ */
 SignUpPageView.prototype.signUp = function() {
     var userName, password;
 
@@ -2911,6 +3060,9 @@ SignUpPageView.prototype.signUp = function() {
     console.log('サインアップ処理(NIY)');
 };
 
+/**
+ *  Check if all input forms are validate.
+ */
 SignUpPageView.prototype.validate = function() {
     var userName = this.$.userName.value,
         password = this.$.password.value,
@@ -2935,6 +3087,10 @@ SignUpPageView.prototype.validate = function() {
     return isValidate;
 };
 
+/**
+ *  EventListener: Application#on('rout.change')
+ *  @param {Object} rout routing data.
+ */
 SignUpPageView.prototype.onChangeRout = function(rout) {
     var self;
 
@@ -2949,6 +3105,10 @@ SignUpPageView.prototype.onChangeRout = function(rout) {
     this.password = '';
 };
 
+/**
+ *  EventListener: HTMLFormElement#on('submit')
+ *  @param {Event} rout routing data.
+ */
 SignUpPageView.prototype.onSubmit = function(ev) {
     ev.preventDefault();
     ev.stopPropagation();

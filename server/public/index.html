@@ -18,13 +18,22 @@
 				</div>
 
 				<div class="ToolBarView-right">
-					<span class="ToolBarView-auth">{{state.loginState}}</span>			
+					<span class="ToolBarView-auth">{{authedUser.name}}</span>			
 				</div>
 			</div>
 		</div>
 	</div>
 </template>
 
+
+<template name="UserInlineView">
+	<div class="UserInlineView">
+		<img class="UserInlineView-icon" src="{{user.icon}}">
+		<a href="#!{{user.uri}}">
+			<span class="UserInlineView-name">{{user.name}}</span>
+		</a>
+	</div>
+</template>
 <template name="SignInPageView">
 	<div class="SignInPageView grid-container">
 		<div class="grid-6 grid-offset-3">
@@ -55,6 +64,14 @@
 					</p>
 				</section>
 			</form>
+			<div class="CardView">
+				<header class="CardView-header">
+					サインイン済みのユーザー
+				</header>
+				<section class="CardView-section">
+					{{view view=UserInlineView name=userInlineView}}
+				</section>
+			</div>
 		</div>
 	</div>
 </template>
@@ -158,26 +175,21 @@
 </template>
 
 
-<template name="UserInlineView">
-	<div class="UserInlineView">
-		<img class="UserInlineView-icon" src="{{user.icon}}">
-		<a href="#!{{user.uri}}">
-			<span class="UserInlineView-name">{{user.name}}</span>
-		</a>
-	</div>
-</template>
+
 
 
 
 
 <template name="CommentListItemView">
 	<li class="CommentListItemView CardView-section">
-		<header class="CommentListItemView-header CardView-sectionHeader">
+		<p>
 			<span>
 				{{view view=UserInlineView name=userInlineView}}
 			</span>
-			update: {{comment.created}}
-		</header>
+			<span class="CommentListItemView-created">
+				{{comment.created}}
+			</span>
+		</p>
 		<p>
 			{{comment.text}}
 		</p>
