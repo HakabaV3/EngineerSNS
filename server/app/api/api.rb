@@ -25,7 +25,7 @@ class API < Grape::API
 
     def authenticated(obj)
       error!("該当するデータがありません。", 404) if obj.blank?
-      error!("権限がありません。", 403) if @user.name !== obj.owner
+      error!("権限がありません。", 403) if @user.name != obj.owner
     end
   end
 

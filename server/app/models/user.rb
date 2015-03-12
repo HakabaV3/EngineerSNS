@@ -21,13 +21,11 @@ class User < ActiveRecord::Base
   end
 
   def self.comments(name)
-    user = User.find_by(name: name)
-    return user.comments.all
+    return User.find_by(name: name).comments.all
   end
 
   def self.projects(name)
-    user = User.find_by(name: name)
-    return user.projects.all
+    return User.find_by(name: name).projects.all
   end
 
 end
