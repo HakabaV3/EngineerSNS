@@ -60,6 +60,10 @@ Comment.prototype.schema = {
         type: String,
         value: ''
     },
+    "html": {
+        type: String,
+        value: ''
+    },
     "created": {
         type: Date,
         value: null
@@ -79,6 +83,10 @@ Comment.prototype.schema = {
  */
 Comment.prototype.updateWithData = function(data) {
     Model.prototype.updateWithData.call(this, data);
+
+    this.html = this.text
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
 
     this.created = new Date(data.created);
     return this;

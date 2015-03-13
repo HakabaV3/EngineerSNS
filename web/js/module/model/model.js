@@ -42,7 +42,7 @@ Model.prototype.schema = {};
  *  Finalizer.
  */
 Model.prototype.finalize = function() {
-    EventDispatcher.finalize.call(this);
+    EventDispatcher.prototype.finalize.call(this);
 };
 
 /**

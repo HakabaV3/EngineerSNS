@@ -18,8 +18,8 @@ var User = function(data) {
     if (!(this instanceof User)) return new User(data);
 
     if (isObject(data)) {
-        if (User.hasInstance(data.id)) {
-            return User.getInstance(data.id).updateWithData(data);
+        if (User.hasInstance(data.name)) {
+            return User.getInstance(data.name).updateWithData(data);
         }
     }
 
@@ -90,11 +90,52 @@ User.prototype.schema = {
 };
 
 /**
+ *  Check if the instance is exist.
+ *  @param {string} name user name.
+ *  @return {boolean} If true, the instance is exist.
+ *  @override
+ */
+User.hasInstance = function(name) {
+    return !!this.instances_[name];
+};
+
+/**
+ *  add instance.
+ *  @param {User} instance instance
+ *  @override
+ */
+User.addInstance = function(instance) {
+    this.instances_[instance.name] = instance;
+};
+
+/**
+ *  get instance.
+ *  @param {string} name user name.
+ *  @return {User} the instance.
+ *  @override
+ */
+User.getInstance = function(name) {
+    return this.instances_[name];
+};
+
+/**
  *  Get User data by user name.
  *  @param {string} userName the user name.
  *  @param {Function} callback callback function.
  */
 User.getByName = function(userName, callback) {
+    var instance;
+
+    if (this.hasInstance(userName)) {
+        instance = this.getInstance(userName);
+
+        runAsync(function() {
+            callback(null, instance);
+        });
+
+        return;
+    }
+
     API.get('/user/' + userName, function(err, res) {
         if (err) {
             return callback(err, null);
