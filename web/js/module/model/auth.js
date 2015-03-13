@@ -18,9 +18,27 @@ Auth.signIn = function(userName, password, callback) {
         'userName': userName,
         'password': password
     }, function(err, res) {
-        var token;
-
         if (err) {
+            API.updateToken(null);
+            return callback(err, null);
+        }
+
+        return callback(null, new User(res));
+    });
+};
+
+/**
+ *  Sign up.
+ *  @param {string} userName userName.
+ *  @param {string} password password.
+ *  @param {Function} callback callback.
+ */
+Auth.signUp = function(userName, password, callback) {
+    API.post('/user/' + userName, null, {
+        'password': password
+    }, function(err, res) {
+        if (err) {
+            API.updateToken(null);
             return callback(err, null);
         }
 
