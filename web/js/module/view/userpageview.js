@@ -15,13 +15,12 @@ var UserPageView = function() {
      */
     this.isProjectsLoaded = false;
 
-    app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
+    app.on('rout.change', this.onChangeRout, this);
 };
 extendClass(UserPageView, View);
 
 UserPageView.prototype.finalize = function() {
-    app.off('rout.change', this.onChangeRout);
-    this.onChangeRout = null;
+    app.off('rout.change', this.onChangeRout, this);
 
     View.prototype.finalize.call(this);
 };

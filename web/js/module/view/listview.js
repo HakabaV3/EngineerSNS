@@ -45,8 +45,24 @@ ListView.prototype.finalize = function() {
 /**
  *  @param {[Model]} items items.
  */
-ListView.prototype.setItems = function(items) {
-    this.items = items
+ListView.prototype.setItems = function(newItems) {
+    var oldItems = this.items,
+        self = this;
+    newItems = newItems || [];
+
+    if (oldItems) {
+        oldItems.forEach(function(item) {
+            item.off('delete', self.onDeleteItem, self);
+        });
+    }
+
+    if (newItems) {
+        newItems.forEach(function(item) {
+            item.on('delete', self.onDeleteItem, self);
+        });
+    }
+
+    this.items = newItems;
     this.update();
 };
 
@@ -60,35 +76,54 @@ ListView.prototype.update = function() {
         newIndex = 0,
 
         views = this.itemViews,
+        viewCount = this.itemViews.length,
         view,
 
-        itemViewConstructor = this.itemViewConstructor,
-        max, i;
+        itemViewConstructor = this.itemViewConstructor;
 
     if (!itemViewConstructor) {
         console.warn('ListView#itemViewConstructor must be set.');
         return;
     }
 
-    while (oldIndex < oldItemsCount) {
+    while (newIndex < newItemsCount) {
         if (oldItems[oldIndex] === newItems[newIndex]) {
-            newIndex++;
+            oldIndex++;
 
         } else {
-            views[newIndex].finalize();
-            views.splice(newIndex, 1);
+            view = new itemViewConstructor();
+            view.setModel(newItems[newIndex]);
+
+            if (newIndex < viewCount) {
+                view.insertBefore(views[newIndex]);
+                views.splice(newIndex, 0, view);
+            } else {
+                view.appendTo(this);
+                views.push(view);
+            }
+            viewCount++;
         }
 
-        oldIndex++;
+        newIndex++;
     }
 
-    for (i = newIndex, max = newItemsCount; i < max; i++) {
-        view = new itemViewConstructor();
-        view.setModel(newItems[i]);
-
-        this.appendChild(view);
-        views.push(view);
+    while (viewCount > newItemsCount) {
+        views.pop().finalize();
+        viewCount--;
     }
 
     this.oldItems_ = this.items.slice(0);
+};
+
+ListView.prototype.onDeleteItem = function(item) {
+    var oldItems = this.items,
+        index = oldItems.indexOf(item),
+        newItems;
+
+    if (index === -1) return;
+
+    newItems = oldItems.slice(0);
+    newItems.splice(index, 1);
+
+    this.setItems(newItems);
 };

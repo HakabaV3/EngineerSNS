@@ -58,7 +58,7 @@ table {
 body {
   font-size: 14px;
   font-family: Helvetica, arial, freesans, clean, sans-serif, 'Segoe UI Emoji', 'Segoe UI Symbol';
-  background: #f8f8f8; }
+  background: #fff; }
 
 table {
   width: 100%;
@@ -624,6 +624,10 @@ button {
 .ToolBarView-title {
   font-size: 1.4em; }
 
+.SignInPageView.is-error-invalid_parameter .SignUpPageView-errorMsg-invalid_parameter {
+  display: block; }
+.SignInPageView.is-error-unknown .SignUpPageView-errorMsg-unknown {
+  display: block; }
 .SignInPageView.is-authed .SignInPageView-authedUser {
   display: block; }
 
@@ -635,13 +639,36 @@ button {
 .SignInPageView-authedUser {
   display: none; }
 
+.SignUpPageView-errorMsg-invalid_parameter,
+.SignUpPageView-errorMsg-unknown {
+  display: none;
+  color: #f00;
+  text-align: center; }
+
+.SignUpPageView-signUpLink {
+  text-align: center; }
+
+.SignUpPageView.is-error-used_name .SignUpPageView-errorMsg-used_name {
+  display: block; }
+.SignUpPageView.is-error-unknown .SignUpPageView-errorMsg-unknown {
+  display: block; }
+
 .SignUpPageView-row {
   margin-top: 15px; }
   .SignUpPageView-row:last-child {
     margin-bottom: 15px; }
 
+.SignUpPageView-errorMsg-used_name,
+.SignUpPageView-errorMsg-unknown {
+  display: none;
+  color: #f00;
+  text-align: center; }
+
+.SignUpPageView-signInLink {
+  text-align: center; }
+
 .UserPageView-header {
-  margin-bottom: 15px; }
+  margin: 30px 0 50px; }
   .UserPageView-header:after {
     display: block;
     content: ' ';
@@ -707,10 +734,8 @@ button {
 .CommentListItemView {
   overflow: hidden;
   box-sizing: border-box; }
-  .CommentListItemView.is-close {
-    margin-top: -8px;
-    margin-bottom: -9px;
-    height: 0px; }
+  .CommentListItemView.is-owner .CommentListItemView-deleteLink {
+    display: inline-block; }
 
 .CommentListItemView-header {
   font-weight: normal; }
@@ -718,5 +743,8 @@ button {
 .CommentListItemView-created {
   color: #aaa;
   font-size: 0.8em; }
+
+.CommentListItemView-deleteLink {
+  display: none; }
 
 /*# sourceMappingURL=style.css.map */

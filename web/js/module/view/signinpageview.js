@@ -14,8 +14,8 @@ var SignInPageView = function() {
     this.loadTemplate('SignInPageView');
 
     this.$.form.addEventListener('submit', this.onSubmit = this.onSubmit.bind(this));
-    app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
-    app.on('auth.change', this.onChangeAuth = this.onChangeAuth.bind(this));
+    app.on('rout.change', this.onChangeRout, this);
+    app.on('auth.change', this.onChangeAuth, this);
 };
 extendClass(SignInPageView, View);
 
@@ -26,13 +26,37 @@ SignInPageView.prototype.finalize = function() {
     this.$.form.removeEventListener('submit', this.onSubmit);
     this.onSubmit = null;
 
-    app.off('rout.change', this.onChangeRout);
-    this.onChangeRout = null;
-
-    app.off('auth.change', this.onChangeAuth);
-    this.onChangeAuth = null;
+    app.off('rout.change', this.onChangeRout, this);
+    app.off('auth.change', this.onChangeAuth, this);
 
     View.prototype.finalize.call(this);
+};
+
+SignInPageView.prototype.signIn = function() {
+    var self = this;
+    if (!this.validate()) return;
+
+    this.showErrorMessage(null);
+    app.signIn(this.$.userName.value, this.$.password.value, function(err, user) {
+        self.showErrorMessage(err);
+
+        if (err) {
+            return;
+        }
+
+        app.setHashAsync(user.uri);
+    });
+}
+
+/**
+ *  Show error message corresponding to error type.
+ *  @param {Object} err error object
+ */
+SignInPageView.prototype.showErrorMessage = function(err) {
+    err = err || APIError.SUCCESS;
+
+    this.$.root.classList.toggle('is-error-invalid_parameter', err.code === APIError.Code.INVALID_PARAMETER);
+    this.$.root.classList.toggle('is-error-unknown', err.code === APIError.Code.UNKNOWN);
 };
 
 /**
@@ -95,8 +119,8 @@ SignInPageView.prototype.onChangeRout = function(rout) {
         self.$.userName.focus();
     });
 
-    this.userName = '';
-    this.password = '';
+    this.$.userName.value = '';
+    this.$.password.value = '';
 };
 
 /**
@@ -116,9 +140,5 @@ SignInPageView.prototype.onSubmit = function(ev) {
     ev.preventDefault();
     ev.stopPropagation();
 
-    if (!this.validate()) return;
-
-    app.signIn(this.$.userName.value, this.$.password.value, function(err, user) {
-        app.setHashAsync(user.uri);
-    });
+    this.signIn();
 };

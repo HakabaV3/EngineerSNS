@@ -16,13 +16,12 @@ var BaseView = function() {
      */
     this.currentPageView = null;
 
-    app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
+    app.on('rout.change', this.onChangeRout, this);
 };
 extendClass(BaseView, View);
 
 BaseView.prototype.finalize = function() {
-    app.off('rout.change', this.onChangeRout)
-    this.onChangeRout = null;
+    app.off('rout.change', this.onChangeRout, this)
 
     View.prototype.finalize.call(this);
 };

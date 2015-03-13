@@ -13,6 +13,8 @@
 Template.Binding = function(target, propNames) {
     EventDispatcher.call(this);
 
+    this.onChangeHandler = this.onChangeHandler.bind(this);
+
     /**
      *  バインド対象
      *  @type {Object}
@@ -24,8 +26,6 @@ Template.Binding = function(target, propNames) {
      *  @type {[string]}
      */
     this.propNames = propNames;
-
-    this.onChangeHandler = this.onChangeHandler.bind(this);
 
     this.resetObserve(0);
 };

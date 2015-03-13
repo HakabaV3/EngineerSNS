@@ -71,6 +71,13 @@ Model.getInstance = function(id) {
     return this.instances_[id];
 };
 
+Model.deleteInstance = function(instance) {
+    instance.fire('delete', instance);
+
+    this.instances_[instance.id] = null;
+    instance.finalize();
+};
+
 /**
  *  Initialize model data for schema.
  *  @return {Model} this.

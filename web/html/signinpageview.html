@@ -8,6 +8,15 @@
 					サインイン
 				</header>
 				<section class="CardView-section CardView-noPadding grid-container">
+					<div class="SignUpPageView-row grid-container grid-12">
+						<p class="SignUpPageView-errorMsg-invalid_parameter grid-12">
+							ユーザー名またはパスワードに誤りがあります。
+						</p>
+						<p class="SignUpPageView-errorMsg-unknown grid-12">
+							現在、何らかの不具合が生じております。<br />
+							しばらくたってから再度サインインしてみてください。
+						</p>
+					</div>
 					<label class="SignInPageView-row grid-container grid-12">
 						<span class="grid-3 Input-label">ユーザー名</span>
 						<span class="grid-9">
@@ -25,9 +34,11 @@
 							<input type="submit" name="submit" class="SignInPageView-submit Input-block" value="サインイン">
 						</p>
 					</div>
-					<p class="SignUpPageView-row grid-container grid-12">
-						<a href="#!/signup">アカウントをお持ちでない方はこちら</a>
-					</p>
+					<div class="SignUpPageView-row grid-container grid-12">
+						<p class="SignUpPageView-signInLink grid-12">
+							<a href="#!/signup">アカウントをお持ちでない方はこちら</a>
+						</p>
+					</div>
 				</section>
 			</form>
 			<div class="CardView SignInPageView-authedUser">

@@ -135,6 +135,8 @@ Comment.prototype.update = function(callback) {
  *  @param {Function} callback callback function.
  */
 Comment.prototype.delete = function(callback) {
+    var self = this;
+
     if (!app.isAuthed || app.authedUser.name !== this.owner) {
         return callback(APIError.PERMISSION_DENIED, null);
     }
@@ -146,7 +148,8 @@ Comment.prototype.delete = function(callback) {
                 return callback(err, null);
             }
 
-            //@TODO: インスタンスを消す。
+            Comment.deleteInstance(self);
+
             return callback(null, res);
         });
 };

@@ -6,6 +6,15 @@
 					サインアップ
 				</header>
 				<section class="CardView-section CardView-noPadding grid-container">
+					<div class="SignUpPageView-row grid-container grid-12">
+						<p class="SignUpPageView-errorMsg-used_name grid-12">
+							そのユーザー名はすでに使用されています。
+						</p>
+						<p class="SignUpPageView-errorMsg-unknown grid-12">
+							現在、何らかの不具合が生じております。<br />
+							しばらくたってから再度サインインしてみてください。
+						</p>
+					</div>
 					<label class="SignUpPageView-row grid-container grid-12">
 						<span class="grid-3 Input-label">ユーザー名</span>
 						<span class="grid-9">
@@ -23,9 +32,11 @@
 							<input type="submit" name="submit" class="SignUpPageView-submit Input-block" value="サインアップ">
 						</p>
 					</div>
-					<p class="SignUpPageView-row grid-container grid-12">
-						<a href="#!/signin">アカウントをすでにお持ちの方はこちら</a>
-					</p>
+					<div class="SignUpPageView-row grid-container grid-12">
+						<p class="SignUpPageView-signInLink grid-12">
+							<a href="#!/signin">アカウントをすでにお持ちの方はこちら</a>
+						</p>
+					</div>
 				</section>
 			</form>
 		</div>

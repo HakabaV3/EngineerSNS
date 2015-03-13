@@ -4,10 +4,10 @@
 	overflow: hidden;
 	box-sizing: border-box;
 
-	&.is-close {
-		margin-top: -8px;
-		margin-bottom: -9px;
-		height: 0px;
+	&.is-owner {
+		.CommentListItemView-deleteLink {
+			display: inline-block;
+		}
 	}
 }
 
@@ -17,4 +17,7 @@
 .CommentListItemView-created {
 	color: #aaa;
 	font-size: 0.8em;
+}
+.CommentListItemView-deleteLink {
+	display: none;
 }

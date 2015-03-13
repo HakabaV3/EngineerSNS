@@ -23,11 +23,15 @@ var CommentListView = function() {
 
     this.itemViewConstructor = CommentListItemView;
 
+    this.$.text.addEventListener('keydown', this.onKeyDown = this.onKeyDown.bind(this));
     this.$.form.addEventListener('submit', this.onSubmit = this.onSubmit.bind(this));
 };
 extendClass(CommentListView, ListView);
 
 CommentListView.prototype.finalize = function() {
+    this.$.text.addEventListener('keydown', this.onKeyDown)
+    this.onKeyDown = null;
+
     this.$.form.removeEventListener('submit', this.onSubmit);
     this.onSubmit = null;
 
@@ -86,12 +90,14 @@ CommentListView.prototype.submit = function() {
 
     self = this;
 
-    this.target.postComment(this.$.text.value, function(err, res) {
+    this.target.postComment(this.$.text.value.trim(), function(err, res) {
         if (err) {
             console.log(err);
             return
         }
 
+        self.$.text.value = '';
+        self.$.text.focus();
         self.loadComments();
     })
 };
@@ -110,6 +116,25 @@ CommentListView.prototype.validate = function() {
     }
 
     return isValidate;
+};
+
+CommentListView.prototype.onKeyDown = function(ev) {
+    var KeyCode = {
+        ENTER: 13
+    };
+
+    switch (ev.keyCode) {
+        case KeyCode.ENTER:
+            if (ev.metaKey) {
+                this.$.submit.click();
+                ev.preventDefault();
+                ev.stopPropagation();
+            }
+            break;
+
+        default:
+            break;
+    }
 };
 
 CommentListView.prototype.onSubmit = function(ev) {

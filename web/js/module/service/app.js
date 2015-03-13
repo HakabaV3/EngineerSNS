@@ -1,5 +1,7 @@
 //@include ../view/baseview.js
 //@include ../model/user.js
+//@include ../model/auth.js
+//@include apierror.js
 //@include util.js
 
 /**
@@ -92,9 +94,31 @@ Application.prototype.setAuthedUser = function(user) {
 Application.prototype.signIn = function(userName, password, callback) {
     var self = this;
 
-    Auth.signIn(userName, password, function(err, user, token) {
+    Auth.signIn(userName, password, function(err, user) {
 
         if (err) {
+            self.setAuthedUser(null);
+            return callback(err, null);
+        }
+
+        self.setAuthedUser(user);
+        callback(null, user);
+    });
+};
+
+/**
+ *  Sign up.
+ *  @param {string} userName userName.
+ *  @param {string} password password.
+ *  @param {Function} callback callback.
+ */
+Application.prototype.signUp = function(userName, password, callback) {
+    var self = this;
+
+    Auth.signUp(userName, password, function(err, user) {
+
+        if (err) {
+            self.setAuthedUser(null);
             return callback(err, null);
         }
 

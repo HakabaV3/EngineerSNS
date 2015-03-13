@@ -8,8 +8,6 @@
 Template.Query = function(node, attrName, parts) {
     if (!(this instanceof Template.Query)) return new Template.Query(node, attrName, parts);
 
-    this.update = this.update.bind(this);
-
     /**
      *  @type {Node}
      */
@@ -32,7 +30,6 @@ Template.Query.prototype.finalize = function() {
         part.finalize();
     });
     this.node = null;
-    this.update = null;
 };
 
 Template.Query.prototype.setParts = function(newParts) {
@@ -41,7 +38,12 @@ Template.Query.prototype.setParts = function(newParts) {
 
     if (oldParts) {
         oldParts.forEach(function(oldPart) {
-            oldPart.off('change', self.update);
+            /**
+             *  @TODO @NOTE
+             *  ここでoldPartのfinalizeは不要なのか？
+             */
+
+            oldPart.off('change', self.update, self);
         });
     }
 
@@ -49,7 +51,7 @@ Template.Query.prototype.setParts = function(newParts) {
 
     if (newParts) {
         newParts.forEach(function(newPart) {
-            newPart.on('change', self.update);
+            newPart.on('change', self.update, self);
         });
     }
 

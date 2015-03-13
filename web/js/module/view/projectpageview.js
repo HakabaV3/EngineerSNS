@@ -12,13 +12,12 @@ var ProjectPageView = function() {
 
     this.loadTemplate('ProjectPageView');
 
-    app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
+    app.on('rout.change', this.onChangeRout, this);
 };
 extendClass(ProjectPageView, View);
 
 ProjectPageView.prototype.finalize = function() {
-    app.off('rout.change', this.onChangeRout);
-    this.onChangeRout = null;
+    app.off('rout.change', this.onChangeRout, this);
 
     View.prototype.finalize.call(this);
 };

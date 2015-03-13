@@ -12,7 +12,7 @@ var ToolBarView = function() {
 
     this.loadTemplate('ToolBarView');
 
-    app.on('auth.change', this.onChangeAuth = this.onChangeAuth.bind(this));
+    app.on('auth.change', this.onChangeAuth, this);
 
     this.checkAuthState();
 };
@@ -23,8 +23,7 @@ extendClass(ToolBarView, View);
  *	Finalize.
  */
 ToolBarView.prototype.finalize = function() {
-    app.off('auth.change', this.onChangeAuth);
-    this.onChangeAuth = null;
+    app.off('auth.change', this.onChangeAuth, this);
 
     View.prototype.finalize.call(this);
 };
@@ -36,7 +35,7 @@ ToolBarView.prototype.checkAuthState = function() {
     if (app.isAuthed) {
         this.$.root.classList.add('is-authed');
     } else {
-        this.$.root.classList.remove('is-hide');
+        this.$.root.classList.remove('is-authed');
     }
 
     this.childViews.userInlineView.setUser(app.authedUser);

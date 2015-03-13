@@ -1,4 +1,5 @@
 //@include ../service/util.js
+//@include ../service/apierror.js
 //@include view.js
 
 /**
@@ -12,7 +13,7 @@ var SignUpPageView = function() {
     this.loadTemplate('SignUpPageView');
 
     this.$.form.addEventListener('submit', this.onSubmit = this.onSubmit.bind(this));
-    app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
+    app.on('rout.change', this.onChangeRout, this);
 };
 extendClass(SignUpPageView, View);
 
@@ -23,8 +24,7 @@ SignUpPageView.prototype.finalize = function() {
     this.$.form.removeEventListener('submit', this.onSubmit);
     this.onSubmit = null;
 
-    app.off('rout.change', this.onChangeRout);
-    this.onChangeRout = null;
+    app.off('rout.change', this.onChangeRout, this);
 
     View.prototype.finalize.call(this);
 };
@@ -33,15 +33,31 @@ SignUpPageView.prototype.finalize = function() {
  *  Sign up.
  */
 SignUpPageView.prototype.signUp = function() {
-    var userName, password;
+    var self = this;
 
     if (!this.validate()) return;
 
-    userName = this.$.userName.value;
-    password = this.$.password.value;
+    this.showErrorMessage(null);
+    app.signUp(this.$.userName.value, this.$.password.value, function(err, user) {
+        self.showErrorMessage(err);
 
-    //@TODO
-    console.log('サインアップ処理(NIY)');
+        if (err) {
+            return;
+        }
+
+        app.setHashAsync(user.uri);
+    });
+};
+
+/**
+ *  Show error message corresponding to error type.
+ *  @param {Object} err error object
+ */
+SignUpPageView.prototype.showErrorMessage = function(err) {
+    err = err || APIError.SUCCESS;
+
+    this.$.root.classList.toggle('is-error-used_name', err.code === APIError.Code.USED_NAME);
+    this.$.root.classList.toggle('is-error-unknown', err.code === APIError.Code.UNKNOWN);
 };
 
 /**
@@ -81,12 +97,13 @@ SignUpPageView.prototype.onChangeRout = function(rout) {
     if (rout.mode !== 'signup') return;
 
     self = this;
-    setTimeout(function() {
+    runAsync(function() {
         self.$.userName.focus();
+        self.fire('load');
     });
 
-    this.userName = '';
-    this.password = '';
+    this.$.userName.value = '';
+    this.$.password.value = '';
 };
 
 /**

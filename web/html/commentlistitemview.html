@@ -9,9 +9,10 @@
 			<span class="CommentListItemView-created">
 				{{ comment.created }}
 			</span>
+			<a class="CommentListItemView-deleteLink" name="deleteLink" href="#">削除</a>
 		</p>
-		<p>
-			{{ comment.text }}
-		</p>
+		<pre>
+			{{ comment.html }}
+		</pre>
 	</li>
 </template>

@@ -173,14 +173,18 @@ EventDispatcher.prototype.finalize = function() {
  *  @param {Function} listener the event listener to attach.
  *  @return {EventDispatcher} this.
  */
-EventDispatcher.prototype.on = function(type, listener) {
+EventDispatcher.prototype.on = function(type, listener, context) {
     var listeners = this.eventListeners_[type];
+    context = context || this;
 
     if (!listeners) {
         listeners = this.eventListeners_[type] = [];
     }
 
-    listeners.push(listener);
+    listeners.push({
+        listener: listener,
+        context: context
+    });
 
     return this;
 };
@@ -194,14 +198,16 @@ EventDispatcher.prototype.on = function(type, listener) {
  *  @param {Function} listener the event listener to detach.
  *  @return {EventDispatcher} this.
  */
-EventDispatcher.prototype.off = function(type, listener) {
+EventDispatcher.prototype.off = function(type, listener, context) {
     var listeners = this.eventListeners_[type],
         i, max;
+    context = context || this;
 
     if (!listeners) return this;
 
     for (i = 0, max = listeners.length; i < max; i++) {
-        if (listeners[i] == listener) {
+        if (listeners[i].listener === listener &&
+            listeners[i].context === context) {
             listeners.splice(i, 1);
             i--;
             max--;
@@ -211,14 +217,14 @@ EventDispatcher.prototype.off = function(type, listener) {
     return this;
 };
 
-EventDispatcher.prototype.once = function(type, listener) {
+EventDispatcher.prototype.once = function(type, listener, context) {
     var self = this,
         proxy = function() {
-            self.off(type, proxy);
+            self.off(type, proxy, context);
             listener.apply(this, arguments);
         };
 
-    this.on(type, proxy);
+    this.on(type, proxy, context);
 };
 
 /**
@@ -238,7 +244,7 @@ EventDispatcher.prototype.fire = function(type, optArgs) {
     listeners = listeners.slice(0);
 
     for (i = 0, max = listeners.length; i < max; i++) {
-        listeners[i].apply(this, args);
+        listeners[i].listener.apply(listeners[i].context, args);
     }
 
     return this;
@@ -516,6 +522,8 @@ Observer.observeCallback = function(changes) {
 Template.Binding = function(target, propNames) {
     EventDispatcher.call(this);
 
+    this.onChangeHandler = this.onChangeHandler.bind(this);
+
     /**
      *  バインド対象
      *  @type {Object}
@@ -527,8 +535,6 @@ Template.Binding = function(target, propNames) {
      *  @type {[string]}
      */
     this.propNames = propNames;
-
-    this.onChangeHandler = this.onChangeHandler.bind(this);
 
     this.resetObserve(0);
 };
@@ -705,8 +711,6 @@ Template.QueryViewPart.prototype.getValue = function() {
 Template.Query = function(node, attrName, parts) {
     if (!(this instanceof Template.Query)) return new Template.Query(node, attrName, parts);
 
-    this.update = this.update.bind(this);
-
     /**
      *  @type {Node}
      */
@@ -729,7 +733,6 @@ Template.Query.prototype.finalize = function() {
         part.finalize();
     });
     this.node = null;
-    this.update = null;
 };
 
 Template.Query.prototype.setParts = function(newParts) {
@@ -738,7 +741,12 @@ Template.Query.prototype.setParts = function(newParts) {
 
     if (oldParts) {
         oldParts.forEach(function(oldPart) {
-            oldPart.off('change', self.update);
+            /**
+             *  @TODO @NOTE
+             *  ここでoldPartのfinalizeは不要なのか？
+             */
+
+            oldPart.off('change', self.update, self);
         });
     }
 
@@ -746,7 +754,7 @@ Template.Query.prototype.setParts = function(newParts) {
 
     if (newParts) {
         newParts.forEach(function(newPart) {
-            newPart.on('change', self.update);
+            newPart.on('change', self.update, self);
         });
     }
 
@@ -1257,13 +1265,12 @@ var BaseView = function() {
      */
     this.currentPageView = null;
 
-    app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
+    app.on('rout.change', this.onChangeRout, this);
 };
 extendClass(BaseView, View);
 
 BaseView.prototype.finalize = function() {
-    app.off('rout.change', this.onChangeRout)
-    this.onChangeRout = null;
+    app.off('rout.change', this.onChangeRout, this)
 
     View.prototype.finalize.call(this);
 };
@@ -1351,7 +1358,7 @@ Model.prototype.schema = {};
  *  Finalizer.
  */
 Model.prototype.finalize = function() {
-    EventDispatcher.finalize.call(this);
+    EventDispatcher.prototype.finalize.call(this);
 };
 
 /**
@@ -1378,6 +1385,13 @@ Model.addInstance = function(instance) {
  */
 Model.getInstance = function(id) {
     return this.instances_[id];
+};
+
+Model.deleteInstance = function(instance) {
+    instance.fire('delete', instance);
+
+    this.instances_[instance.id] = null;
+    instance.finalize();
 };
 
 /**
@@ -1441,21 +1455,48 @@ Model.prototype.dispatchUpdate = function() {
  *  namespace for definition of API Errors
  *  @namespace
  */
-var APIError = {
+var APIError = {};
+
+APIError.Code = {
+    SUCCESS: 0,
+    PERMISSION_DENIED: 1,
+    PARSE_FAILED: 2,
+    CONNECTION_FAILED: 3,
+    USED_NAME: 4,
+    INVALID_PARAMETER: 5,
+    UNKNOWN: 999
+};
+
+extend(APIError, {
+    SUCCESS: {
+        code: APIError.Code.SUCCESS,
+        msg: 'success'
+    },
     PERMISSION_DENIED: {
-        code: 0,
+        code: APIError.Code.PERMISSION_DENIED,
         msg: 'Permission denied.',
     },
     PARSE_FAILED: {
-        code: 1,
+        code: APIError.Code.PARSE_FAILED,
         msg: 'Failed to parse response.',
     },
     CONNECTION_FAILED: {
-        code: 2,
+        code: APIError.Code.CONNECTION_FAILED,
         msg: 'Failed to connect server.',
+    },
+    USED_NAME: {
+        code: APIError.Code.USED_NAME,
+        msg: 'This user name is already used.'
+    },
+    INVALID_PARAMETER: {
+        code: APIError.Code.INVALID_PARAMETER,
+        msg: 'Parameters are invalid.'
+    },
+    UNKNOWN: {
+        code: APIError.Code.UNKNOWN,
+        msg: 'Unknown error.'
     }
-};
-
+});
 
 /**
  *  Error for failed to parse server response.
@@ -1476,6 +1517,47 @@ APIError.parseFailed = function(xhr) {
 APIError.connectionFailed = function(xhr) {
     return extend(APIError.CONNECTION_FAILED, {
         xhr: xhr
+    });
+};
+
+/**
+ *  エラーを特定する。
+ *  ものすごく地道な実装。
+ *  サーバーは頼むからエラーをコードで返してくれ！
+ */
+APIError.detectError = function(err) {
+    if (isObject(err)) {
+        switch (err.code) {
+            case APIError.Code.PERMISSION_DENIED:
+                return APIError.PERMISSION_DENIED;
+                break;
+
+            case APIError.Code.PARSE_FAILED:
+                return APIError.PARSE_FAILED;
+                break;
+
+            case APIError.Code.CONNECTION_FAILED:
+                return APIError.CONNECTION_FAILED;
+                break;
+
+            default:
+                return extend(APIError.UNKNOWN, {
+                    original: err
+                });
+                break;
+        }
+    }
+
+    if (err === 'ユーザー名は既に使用されています。') {
+        return APIError.USED_NAME;
+    }
+
+    if (err === 'ユーザー名またはパスワードに誤りがあります。') {
+        return APIError.INVALID_PARAMETER;
+    }
+
+    return extend(APIError.UNKNOWN, {
+        original: err
     });
 };
 
@@ -1682,7 +1764,7 @@ API.ajax = function(method, url, headers, body, callback) {
         if (result.success) {
             return callback(null, result.success);
         } else {
-            return callback(result.error, null);
+            return callback(APIError.detectError(result.error), null);
         }
     };
 
@@ -1748,8 +1830,8 @@ var User = function(data) {
     if (!(this instanceof User)) return new User(data);
 
     if (isObject(data)) {
-        if (User.hasInstance(data.id)) {
-            return User.getInstance(data.id).updateWithData(data);
+        if (User.hasInstance(data.name)) {
+            return User.getInstance(data.name).updateWithData(data);
         }
     }
 
@@ -1820,11 +1902,52 @@ User.prototype.schema = {
 };
 
 /**
+ *  Check if the instance is exist.
+ *  @param {string} name user name.
+ *  @return {boolean} If true, the instance is exist.
+ *  @override
+ */
+User.hasInstance = function(name) {
+    return !!this.instances_[name];
+};
+
+/**
+ *  add instance.
+ *  @param {User} instance instance
+ *  @override
+ */
+User.addInstance = function(instance) {
+    this.instances_[instance.name] = instance;
+};
+
+/**
+ *  get instance.
+ *  @param {string} name user name.
+ *  @return {User} the instance.
+ *  @override
+ */
+User.getInstance = function(name) {
+    return this.instances_[name];
+};
+
+/**
  *  Get User data by user name.
  *  @param {string} userName the user name.
  *  @param {Function} callback callback function.
  */
 User.getByName = function(userName, callback) {
+    var instance;
+
+    if (this.hasInstance(userName)) {
+        instance = this.getInstance(userName);
+
+        runAsync(function() {
+            callback(null, instance);
+        });
+
+        return;
+    }
+
     API.get('/user/' + userName, function(err, res) {
         if (err) {
             return callback(err, null);
@@ -1957,6 +2080,57 @@ User.prototype.getComments = function(callback) {
 };
 
 
+/**
+ *  Authentication methods.
+ *
+ *  This API category DOES NOT have any model (as 'Auth'), methods only.
+ *
+ *  @namespace
+ */
+Auth = {};
+
+/**
+ *  Sign in.
+ *  @param {string} userName userName.
+ *  @param {string} password password.
+ *  @param {Function} callback callback.
+ */
+Auth.signIn = function(userName, password, callback) {
+    API.post('/auth', null, {
+        'userName': userName,
+        'password': password
+    }, function(err, res) {
+        if (err) {
+            API.updateToken(null);
+            return callback(err, null);
+        }
+
+        return callback(null, new User(res));
+    });
+};
+
+/**
+ *  Sign up.
+ *  @param {string} userName userName.
+ *  @param {string} password password.
+ *  @param {Function} callback callback.
+ */
+Auth.signUp = function(userName, password, callback) {
+    API.post('/user/' + userName, null, {
+        'password': password
+    }, function(err, res) {
+        if (err) {
+            API.updateToken(null);
+            return callback(err, null);
+        }
+
+        return callback(null, new User(res));
+    });
+};
+
+
+
+
 
 /**
  *  @constructor
@@ -2048,9 +2222,31 @@ Application.prototype.setAuthedUser = function(user) {
 Application.prototype.signIn = function(userName, password, callback) {
     var self = this;
 
-    Auth.signIn(userName, password, function(err, user, token) {
+    Auth.signIn(userName, password, function(err, user) {
 
         if (err) {
+            self.setAuthedUser(null);
+            return callback(err, null);
+        }
+
+        self.setAuthedUser(user);
+        callback(null, user);
+    });
+};
+
+/**
+ *  Sign up.
+ *  @param {string} userName userName.
+ *  @param {string} password password.
+ *  @param {Function} callback callback.
+ */
+Application.prototype.signUp = function(userName, password, callback) {
+    var self = this;
+
+    Auth.signUp(userName, password, function(err, user) {
+
+        if (err) {
+            self.setAuthedUser(null);
             return callback(err, null);
         }
 
@@ -2250,7 +2446,7 @@ var ToolBarView = function() {
 
     this.loadTemplate('ToolBarView');
 
-    app.on('auth.change', this.onChangeAuth = this.onChangeAuth.bind(this));
+    app.on('auth.change', this.onChangeAuth, this);
 
     this.checkAuthState();
 };
@@ -2261,8 +2457,7 @@ extendClass(ToolBarView, View);
  *	Finalize.
  */
 ToolBarView.prototype.finalize = function() {
-    app.off('auth.change', this.onChangeAuth);
-    this.onChangeAuth = null;
+    app.off('auth.change', this.onChangeAuth, this);
 
     View.prototype.finalize.call(this);
 };
@@ -2274,7 +2469,7 @@ ToolBarView.prototype.checkAuthState = function() {
     if (app.isAuthed) {
         this.$.root.classList.add('is-authed');
     } else {
-        this.$.root.classList.remove('is-hide');
+        this.$.root.classList.remove('is-authed');
     }
 
     this.childViews.userInlineView.setUser(app.authedUser);
@@ -2295,35 +2490,6 @@ ToolBarView.prototype.onChangeAuth = function(isAuthed, authedUser) {
 
 
 
-/**
- *  Authentication methods.
- *
- *  This API category DOES NOT have any model (as 'Auth'), methods only.
- *
- *  @namespace
- */
-Auth = {};
-
-/**
- *  Sign in.
- *  @param {string} userName userName.
- *  @param {string} password password.
- *  @param {Function} callback callback.
- */
-Auth.signIn = function(userName, password, callback) {
-    API.post('/auth', null, {
-        'userName': userName,
-        'password': password
-    }, function(err, res) {
-        var token;
-
-        if (err) {
-            return callback(err, null);
-        }
-
-        return callback(null, new User(res));
-    });
-};
 
 
 
@@ -2338,8 +2504,8 @@ var SignInPageView = function() {
     this.loadTemplate('SignInPageView');
 
     this.$.form.addEventListener('submit', this.onSubmit = this.onSubmit.bind(this));
-    app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
-    app.on('auth.change', this.onChangeAuth = this.onChangeAuth.bind(this));
+    app.on('rout.change', this.onChangeRout, this);
+    app.on('auth.change', this.onChangeAuth, this);
 };
 extendClass(SignInPageView, View);
 
@@ -2350,13 +2516,37 @@ SignInPageView.prototype.finalize = function() {
     this.$.form.removeEventListener('submit', this.onSubmit);
     this.onSubmit = null;
 
-    app.off('rout.change', this.onChangeRout);
-    this.onChangeRout = null;
-
-    app.off('auth.change', this.onChangeAuth);
-    this.onChangeAuth = null;
+    app.off('rout.change', this.onChangeRout, this);
+    app.off('auth.change', this.onChangeAuth, this);
 
     View.prototype.finalize.call(this);
+};
+
+SignInPageView.prototype.signIn = function() {
+    var self = this;
+    if (!this.validate()) return;
+
+    this.showErrorMessage(null);
+    app.signIn(this.$.userName.value, this.$.password.value, function(err, user) {
+        self.showErrorMessage(err);
+
+        if (err) {
+            return;
+        }
+
+        app.setHashAsync(user.uri);
+    });
+}
+
+/**
+ *  Show error message corresponding to error type.
+ *  @param {Object} err error object
+ */
+SignInPageView.prototype.showErrorMessage = function(err) {
+    err = err || APIError.SUCCESS;
+
+    this.$.root.classList.toggle('is-error-invalid_parameter', err.code === APIError.Code.INVALID_PARAMETER);
+    this.$.root.classList.toggle('is-error-unknown', err.code === APIError.Code.UNKNOWN);
 };
 
 /**
@@ -2419,8 +2609,8 @@ SignInPageView.prototype.onChangeRout = function(rout) {
         self.$.userName.focus();
     });
 
-    this.userName = '';
-    this.password = '';
+    this.$.userName.value = '';
+    this.$.password.value = '';
 };
 
 /**
@@ -2440,12 +2630,10 @@ SignInPageView.prototype.onSubmit = function(ev) {
     ev.preventDefault();
     ev.stopPropagation();
 
-    if (!this.validate()) return;
-
-    app.signIn(this.$.userName.value, this.$.password.value, function(err, user) {
-        app.setHashAsync(user.uri);
-    });
+    this.signIn();
 };
+
+
 
 
 
@@ -2463,7 +2651,7 @@ var SignUpPageView = function() {
     this.loadTemplate('SignUpPageView');
 
     this.$.form.addEventListener('submit', this.onSubmit = this.onSubmit.bind(this));
-    app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
+    app.on('rout.change', this.onChangeRout, this);
 };
 extendClass(SignUpPageView, View);
 
@@ -2474,8 +2662,7 @@ SignUpPageView.prototype.finalize = function() {
     this.$.form.removeEventListener('submit', this.onSubmit);
     this.onSubmit = null;
 
-    app.off('rout.change', this.onChangeRout);
-    this.onChangeRout = null;
+    app.off('rout.change', this.onChangeRout, this);
 
     View.prototype.finalize.call(this);
 };
@@ -2484,15 +2671,31 @@ SignUpPageView.prototype.finalize = function() {
  *  Sign up.
  */
 SignUpPageView.prototype.signUp = function() {
-    var userName, password;
+    var self = this;
 
     if (!this.validate()) return;
 
-    userName = this.$.userName.value;
-    password = this.$.password.value;
+    this.showErrorMessage(null);
+    app.signUp(this.$.userName.value, this.$.password.value, function(err, user) {
+        self.showErrorMessage(err);
 
-    //@TODO
-    console.log('サインアップ処理(NIY)');
+        if (err) {
+            return;
+        }
+
+        app.setHashAsync(user.uri);
+    });
+};
+
+/**
+ *  Show error message corresponding to error type.
+ *  @param {Object} err error object
+ */
+SignUpPageView.prototype.showErrorMessage = function(err) {
+    err = err || APIError.SUCCESS;
+
+    this.$.root.classList.toggle('is-error-used_name', err.code === APIError.Code.USED_NAME);
+    this.$.root.classList.toggle('is-error-unknown', err.code === APIError.Code.UNKNOWN);
 };
 
 /**
@@ -2532,12 +2735,13 @@ SignUpPageView.prototype.onChangeRout = function(rout) {
     if (rout.mode !== 'signup') return;
 
     self = this;
-    setTimeout(function() {
+    runAsync(function() {
         self.$.userName.focus();
+        self.fire('load');
     });
 
-    this.userName = '';
-    this.password = '';
+    this.$.userName.value = '';
+    this.$.password.value = '';
 };
 
 /**
@@ -2624,6 +2828,10 @@ Comment.prototype.schema = {
         type: String,
         value: ''
     },
+    "html": {
+        type: String,
+        value: ''
+    },
     "created": {
         type: Date,
         value: null
@@ -2643,6 +2851,10 @@ Comment.prototype.schema = {
  */
 Comment.prototype.updateWithData = function(data) {
     Model.prototype.updateWithData.call(this, data);
+
+    this.html = this.text
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
 
     this.created = new Date(data.created);
     return this;
@@ -2691,6 +2903,8 @@ Comment.prototype.update = function(callback) {
  *  @param {Function} callback callback function.
  */
 Comment.prototype.delete = function(callback) {
+    var self = this;
+
     if (!app.isAuthed || app.authedUser.name !== this.owner) {
         return callback(APIError.PERMISSION_DENIED, null);
     }
@@ -2702,7 +2916,8 @@ Comment.prototype.delete = function(callback) {
                 return callback(err, null);
             }
 
-            //@TODO: インスタンスを消す。
+            Comment.deleteInstance(self);
+
             return callback(null, res);
         });
 };
@@ -2900,13 +3115,12 @@ var UserPageView = function() {
      */
     this.isProjectsLoaded = false;
 
-    app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
+    app.on('rout.change', this.onChangeRout, this);
 };
 extendClass(UserPageView, View);
 
 UserPageView.prototype.finalize = function() {
-    app.off('rout.change', this.onChangeRout);
-    this.onChangeRout = null;
+    app.off('rout.change', this.onChangeRout, this);
 
     View.prototype.finalize.call(this);
 };
@@ -3017,13 +3231,12 @@ var ProjectPageView = function() {
 
     this.loadTemplate('ProjectPageView');
 
-    app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
+    app.on('rout.change', this.onChangeRout, this);
 };
 extendClass(ProjectPageView, View);
 
 ProjectPageView.prototype.finalize = function() {
-    app.off('rout.change', this.onChangeRout);
-    this.onChangeRout = null;
+    app.off('rout.change', this.onChangeRout, this);
 
     View.prototype.finalize.call(this);
 };
@@ -3109,8 +3322,24 @@ ListView.prototype.finalize = function() {
 /**
  *  @param {[Model]} items items.
  */
-ListView.prototype.setItems = function(items) {
-    this.items = items
+ListView.prototype.setItems = function(newItems) {
+    var oldItems = this.items,
+        self = this;
+    newItems = newItems || [];
+
+    if (oldItems) {
+        oldItems.forEach(function(item) {
+            item.off('delete', self.onDeleteItem, self);
+        });
+    }
+
+    if (newItems) {
+        newItems.forEach(function(item) {
+            item.on('delete', self.onDeleteItem, self);
+        });
+    }
+
+    this.items = newItems;
     this.update();
 };
 
@@ -3124,37 +3353,56 @@ ListView.prototype.update = function() {
         newIndex = 0,
 
         views = this.itemViews,
+        viewCount = this.itemViews.length,
         view,
 
-        itemViewConstructor = this.itemViewConstructor,
-        max, i;
+        itemViewConstructor = this.itemViewConstructor;
 
     if (!itemViewConstructor) {
         console.warn('ListView#itemViewConstructor must be set.');
         return;
     }
 
-    while (oldIndex < oldItemsCount) {
+    while (newIndex < newItemsCount) {
         if (oldItems[oldIndex] === newItems[newIndex]) {
-            newIndex++;
+            oldIndex++;
 
         } else {
-            views[newIndex].finalize();
-            views.splice(newIndex, 1);
+            view = new itemViewConstructor();
+            view.setModel(newItems[newIndex]);
+
+            if (newIndex < viewCount) {
+                view.insertBefore(views[newIndex]);
+                views.splice(newIndex, 0, view);
+            } else {
+                view.appendTo(this);
+                views.push(view);
+            }
+            viewCount++;
         }
 
-        oldIndex++;
+        newIndex++;
     }
 
-    for (i = newIndex, max = newItemsCount; i < max; i++) {
-        view = new itemViewConstructor();
-        view.setModel(newItems[i]);
-
-        this.appendChild(view);
-        views.push(view);
+    while (viewCount > newItemsCount) {
+        views.pop().finalize();
+        viewCount--;
     }
 
     this.oldItems_ = this.items.slice(0);
+};
+
+ListView.prototype.onDeleteItem = function(item) {
+    var oldItems = this.items,
+        index = oldItems.indexOf(item),
+        newItems;
+
+    if (index === -1) return;
+
+    newItems = oldItems.slice(0);
+    newItems.splice(index, 1);
+
+    this.setItems(newItems);
 };
 
 
@@ -3238,24 +3486,68 @@ var CommentListItemView = function() {
 
     this.comment = null;
 
-    var self = this;
-    this.$.root.classList.add('is-close');
-    setTimeout(function() {
-        self.$.root.classList.remove('is-close');
-    }, 100);
+    this.$.deleteLink.addEventListener('click', this.onDeleteLinkClick = this.onDeleteLinkClick.bind(this));
+    app.on('auth.change', this.onChangeAuth, this);
 };
 extendClass(CommentListItemView, ListItemView);
+
+CommentListItemView.prototype.finalize = function() {
+    this.$.deleteLink.removeEventListener('click', this.onDeleteLinkClick);
+    this.onDeleteLinkClick = null;
+
+    app.off('auth.change', this.onChangeAuth, this);
+
+    ListItemView.prototype.finalize.call(this);
+};
 
 CommentListItemView.prototype.setModel = function(comment) {
     var self = this;
 
     this.comment = comment;
+    this.checkOwner();
 
     if (comment) {
         User.getByName(comment.owner, function(err, user) {
             self.childViews.userInlineView.setUser(user);
         });
     }
+};
+
+CommentListItemView.prototype.checkOwner = function() {
+    var isOwner = (
+        this.comment &&
+        app.isAuthed &&
+        app.authedUser.name === this.comment.owner
+    );
+
+    this.$.root.classList.toggle('is-owner', isOwner);
+};
+
+CommentListItemView.prototype.deleteComment = function() {
+    var comment = this.comment,
+        self;
+
+    if (!comment) return;
+
+    self = this;
+
+    comment.delete(function(err, res) {
+        if (err) {
+            console.log(err);
+            return;
+        }
+    });
+};
+
+CommentListItemView.prototype.onChangeAuth = function() {
+    this.checkOwner();
+};
+
+CommentListItemView.prototype.onDeleteLinkClick = function(ev) {
+    ev.stopPropagation();
+    ev.preventDefault();
+
+    this.deleteComment();
 };
 
 var CommentListView = function() {
@@ -3277,11 +3569,15 @@ var CommentListView = function() {
 
     this.itemViewConstructor = CommentListItemView;
 
+    this.$.text.addEventListener('keydown', this.onKeyDown = this.onKeyDown.bind(this));
     this.$.form.addEventListener('submit', this.onSubmit = this.onSubmit.bind(this));
 };
 extendClass(CommentListView, ListView);
 
 CommentListView.prototype.finalize = function() {
+    this.$.text.addEventListener('keydown', this.onKeyDown)
+    this.onKeyDown = null;
+
     this.$.form.removeEventListener('submit', this.onSubmit);
     this.onSubmit = null;
 
@@ -3340,12 +3636,14 @@ CommentListView.prototype.submit = function() {
 
     self = this;
 
-    this.target.postComment(this.$.text.value, function(err, res) {
+    this.target.postComment(this.$.text.value.trim(), function(err, res) {
         if (err) {
             console.log(err);
             return
         }
 
+        self.$.text.value = '';
+        self.$.text.focus();
         self.loadComments();
     })
 };
@@ -3364,6 +3662,25 @@ CommentListView.prototype.validate = function() {
     }
 
     return isValidate;
+};
+
+CommentListView.prototype.onKeyDown = function(ev) {
+    var KeyCode = {
+        ENTER: 13
+    };
+
+    switch (ev.keyCode) {
+        case KeyCode.ENTER:
+            if (ev.metaKey) {
+                this.$.submit.click();
+                ev.preventDefault();
+                ev.stopPropagation();
+            }
+            break;
+
+        default:
+            break;
+    }
 };
 
 CommentListView.prototype.onSubmit = function(ev) {

@@ -27,14 +27,18 @@ EventDispatcher.prototype.finalize = function() {
  *  @param {Function} listener the event listener to attach.
  *  @return {EventDispatcher} this.
  */
-EventDispatcher.prototype.on = function(type, listener) {
+EventDispatcher.prototype.on = function(type, listener, context) {
     var listeners = this.eventListeners_[type];
+    context = context || this;
 
     if (!listeners) {
         listeners = this.eventListeners_[type] = [];
     }
 
-    listeners.push(listener);
+    listeners.push({
+        listener: listener,
+        context: context
+    });
 
     return this;
 };
@@ -48,14 +52,16 @@ EventDispatcher.prototype.on = function(type, listener) {
  *  @param {Function} listener the event listener to detach.
  *  @return {EventDispatcher} this.
  */
-EventDispatcher.prototype.off = function(type, listener) {
+EventDispatcher.prototype.off = function(type, listener, context) {
     var listeners = this.eventListeners_[type],
         i, max;
+    context = context || this;
 
     if (!listeners) return this;
 
     for (i = 0, max = listeners.length; i < max; i++) {
-        if (listeners[i] == listener) {
+        if (listeners[i].listener === listener &&
+            listeners[i].context === context) {
             listeners.splice(i, 1);
             i--;
             max--;
@@ -65,14 +71,14 @@ EventDispatcher.prototype.off = function(type, listener) {
     return this;
 };
 
-EventDispatcher.prototype.once = function(type, listener) {
+EventDispatcher.prototype.once = function(type, listener, context) {
     var self = this,
         proxy = function() {
-            self.off(type, proxy);
+            self.off(type, proxy, context);
             listener.apply(this, arguments);
         };
 
-    this.on(type, proxy);
+    this.on(type, proxy, context);
 };
 
 /**
@@ -92,7 +98,7 @@ EventDispatcher.prototype.fire = function(type, optArgs) {
     listeners = listeners.slice(0);
 
     for (i = 0, max = listeners.length; i < max; i++) {
-        listeners[i].apply(this, args);
+        listeners[i].listener.apply(listeners[i].context, args);
     }
 
     return this;
