@@ -203,7 +203,7 @@ API.ajax = function(method, url, headers, body, callback) {
         if (result.success) {
             return callback(null, result.success);
         } else {
-            return callback(result.error, null);
+            return callback(APIError.detectError(result.error), null);
         }
     };
 
