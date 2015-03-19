@@ -1,207 +1,91 @@
-<!DOCTYPE html>
 <html>
 
 <head>
-	<link rel="stylesheet" href="./style.css">
-	<meta charset="utf8">
-	<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
-    <title>EngineerSNS</title>
+    <title></title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <link rel="stylesheet" href="./style.css">
 </head>
 
-<body>
-
-<template name="ProgressBarView">
-	<div class="ProgressBarView">
-		<div class="ProgressBarView-inner is-initial" name="inner"></div>
-	</div>
-</template>
-
-<template name="ToolBarView">
-	<div class="ToolBarView">
-		<div class="grid-container">
-			<div class="grid-12">
-				<div class="ToolBarView-left">
-					<span class="ToolBarView-title">EngineerSNS</span>
-				</div>
-
-				<div class="ToolBarView-right">
-					{{ view class=UserInlineView name=userInlineView }}
-					<a class="ToolBarView-signInLink" href="#!/signin">サインイン</a>
-				</div>
-			</div>
-		</div>
-	</div>
-</template>
+<body unresolved layout vertical>
 
 
-<template name="UserInlineView">
-	<div class="UserInlineView">
-		<img class="UserInlineView-icon" src="/img/empty.gif" style="background-image:url({{ user.icon }});">
-		<a href="#!{{ user.uri }}">
-			<span class="UserInlineView-name">{{ user.name }}</span>
-		</a>
-	</div>
-</template>
-<template name="SignInPageView">
-	<div class="SignInPageView grid-container">
-		<div class="grid-6 grid-offset-3">
-			<form class="CardView" name="form">
-				<header class="CardView-header">
-					サインイン
-				</header>
-				<section class="CardView-section CardView-noPadding grid-container">
-					<div class="SignUpPageView-row grid-container grid-12">
-						<p class="SignUpPageView-errorMsg-invalid_parameter grid-12">
-							ユーザー名またはパスワードに誤りがあります。
-						</p>
-						<p class="SignUpPageView-errorMsg-unknown grid-12">
-							現在、何らかの不具合が生じております。<br />
-							しばらくたってから再度サインインしてみてください。
-						</p>
-					</div>
-					<label class="SignInPageView-row grid-container grid-12">
-						<span class="grid-3 Input-label">ユーザー名</span>
-						<span class="grid-9">
-							<input type="text" name="userName" class="SignInPageView-userName Input-block grid-9">
-						</span>
-					</label>
-					<label class="SignInPageView-row grid-container grid-12">
-						<span class="grid-3 Input-label">パスワード</span>
-						<span class="grid-9">
-							<input type="password" name="password"  class="SignInPageView-password Input-block">
-						</span>
-					</label>
-					<div class="SignInPageView-row grid-container grid-12">
-						<p class="grid-12">
-							<input type="submit" name="submit" class="SignInPageView-submit Input-block" value="サインイン">
-						</p>
-					</div>
-					<div class="SignUpPageView-row grid-container grid-12">
-						<p class="SignUpPageView-signInLink grid-12">
-							<a href="#!/signup">アカウントをお持ちでない方はこちら</a>
-						</p>
-					</div>
-				</section>
-			</form>
-			<div class="CardView SignInPageView-authedUser">
-				<header class="CardView-header">
-					サインイン済みのユーザー
-				</header>
-				<section class="CardView-section">
-					{{ view class=UserInlineView name=userInlineView }}
-				</section>
-			</div>
-		</div>
-	</div>
-</template>
 
 
-<template name="SignUpPageView">
-	<div class="SignUpPageView grid-container">
-		<div class="grid-6 grid-offset-3">
-			<form class="CardView" name="form">
-				<header class="CardView-header">
-					サインアップ
-				</header>
-				<section class="CardView-section CardView-noPadding grid-container">
-					<div class="SignUpPageView-row grid-container grid-12">
-						<p class="SignUpPageView-errorMsg-used_name grid-12">
-							そのユーザー名はすでに使用されています。
-						</p>
-						<p class="SignUpPageView-errorMsg-unknown grid-12">
-							現在、何らかの不具合が生じております。<br />
-							しばらくたってから再度サインインしてみてください。
-						</p>
-					</div>
-					<label class="SignUpPageView-row grid-container grid-12">
-						<span class="grid-3 Input-label">ユーザー名</span>
-						<span class="grid-9">
-							<input type="text" name="userName" class="SignUpPageView-userName Input-block grid-9">
-						</span>
-					</label>
-					<label class="SignUpPageView-row grid-container grid-12">
-						<span class="grid-3 Input-label">パスワード</span>
-						<span class="grid-9">
-							<input type="password" name="password"  class="SignUpPageView-password Input-block">
-						</span>
-					</label>
-					<div class="SignUpPageView-row grid-container grid-12">
-						<p class="grid-12">
-							<input type="submit" name="submit" class="SignUpPageView-submit Input-block" value="サインアップ">
-						</p>
-					</div>
-					<div class="SignUpPageView-row grid-container grid-12">
-						<p class="SignUpPageView-signInLink grid-12">
-							<a href="#!/signin">アカウントをすでにお持ちの方はこちら</a>
-						</p>
-					</div>
-				</section>
-			</form>
-		</div>
-	</div>
+<template name="ConfigPageView">
+    <div class="ConfigPageView" fit layout vertical>
+        <header>
+            <p class="ConfigPageView-headerText util-smallOnly">
+                設定
+            </p>
+            <span class="util-largeOnly">
+                ユーザー&nbsp;>>&nbsp;
+                <UserInlineView class="ConfigPageView-userInlineView" name="userInlineView"></UserInlineView>
+                &nbsp;>>&nbsp;設定
+            </span>
+        </header>
+        <div class="ConfigPageView-mainContainer" flex layout horizontal start>
+            <CardView layout vertical class="ConfigPageView-sideMenu">
+                <ul class="ConfigPageView-menu">
+                    メニュー
+                </ul>
+            </CardView>
+
+            <CardView self-stretch flex>
+                <h1 style="padding: 40px;">Configの詳細をここに</h1>
+            </CardView>
+        </div>
+    </div>
 </template>
 
 
 
-<template name="UserView">
-	<div class="UserView CardView">
-		<header class="CardView-header">
-			ユーザー情報
-		</header>
-		<section class="CardView-section">
-			<header class="CardView-sectionHeader">name</header>
-			<span>{{ user.name }}</span>
-		</section>
-		<section class="CardView-section">
-			<header class="CardView-sectionHeader">id</header>
-			<span>{{ user.id }}</span>
-		</section>
-		<section class="CardView-section">
-			<header class="CardView-sectionHeader">uri</header>
-			<a href="#!{{ user.uri }}">
-				<span>{{ user.uri }}</span>
-			</a>
-		</section>
-		<section class="CardView-section">
-			<header class="CardView-sectionHeader">description</header>
-			<span>{{ user.description }}</span>
-		</section>
-	</div>
-</template>
-
-
-<template name="ProjectListItemView">
-	<a href="#!{{ project.uri }}" class="ProjectListItemView CardView-section">
-		<li>
-			{{ project.name }}
-		</li>
-	</a>
-</template>
-<template name="ProjectListView">
-	<div class="ProjectListView CardView">
-		<header class="CardView-header">
-			プロジェクト一覧
-		</header>
-		<ul class="ProjectListView-container" container>
-		</ul>
-	</div>
-</template>
 
 <template name="UserPageView">
-	<div class="UserPageView grid-container">
-		<div class="UserPageView-header grid-12">
-			<img class="UserPageView-icon" src="/img/empty.gif" style="background-image:url({{ user.icon }});" />
-			<h3 class="UserPageView-userName">{{ user.name }}</h3>
-		</div>
+    <div class="UserPageView" fit layout vertical>
+        <header>
+            <p class="UserPageView-headerText util-smallOnly">
+                ユーザー
+            </p>
+            <span class="util-largeOnly">
+                ユーザー&nbsp;>>&nbsp;
+            </span>
+            <UserInlineView class="UserPageView-userInlineView" name="userInlineView"></UserInlineView>
+        </header>
+        <div class="UserPageView-mainContainer" flex layout horizontal start>
+            <!-- <CardView layout vertical class="UserPageView-sideMenu">
+                <ul class="UserPageView-menu">
+                    メニュー
+                </ul>
+            </CardView> -->
 
-		<div class="grid-6">
-			{{ view class=UserView name=userView }}
-		</div>
+            <CardView self-stretch flex class="UserPageView-projectContainer" name="projectContainer">
+            </CardView>
+        </div>
+    </div>
+</template>
 
-		<div class="grid-6">
-			{{ view class=ProjectListView name=projectListView }}
-		</div>
-	</div>
+
+
+
+<template name="ProjectCreatePageView">
+    <div class="ProjectCreatePageView" fit layout vertical>
+        <header>
+            <p class="ProjectCreatePageView-headerText util-smallOnly">
+                新規プロジェクト作成
+            </p>
+            <span class="util-largeOnly">
+                ユーザー&nbsp;>>&nbsp;
+                <UserInlineView class="ProjectCreatePageView-userInlineView" name="userInlineView"></UserInlineView>
+                &nbsp;>>&nbsp;新規プロジェクト作成
+            </span>
+        </header>
+        <div class="ProjectCreatePageView-mainContainer" flex layout horizontal start>
+            <CardView self-stretch flex>
+                <h1 style="padding: 40px;">Projectの詳細をここに</h1>
+            </CardView>
+        </div>
+    </div>
 </template>
 
 
@@ -210,79 +94,177 @@
 
 
 
-<template name="CommentListItemView">
-	<li class="CommentListItemView CardView-section">
-		<p>
-			<span>
-				{{ view class=UserInlineView name=userInlineView }}
-			</span>
-			<span class="CommentListItemView-created">
-				{{ comment.created }}
-			</span>
-			<a class="CommentListItemView-deleteLink" name="deleteLink" href="#">削除</a>
-		</p>
-		<pre>
-			{{ comment.html }}
-		</pre>
-	</li>
+<template name="ProjectInlineView">
+    <div class="ProjectInlineView">
+        <a class="ProjectInlineView-link" name="link">
+            <span class="UserInilneView-projectName" name="projectName"></span>
+        </a>
+    </div>
 </template>
-<template name="CommentListView">
-	<div class="CommentListView CardView">
-		<header class="CardView-header">
-			コメント
-		</header>
-		<form class="CommentListView-postContainer CardView-section grid-container" name="form">
-			<header class="CardView-sectionHeader">新規投稿</header>
-			<div class="grid-12">
-				<textarea rows="5" class="Input-block" name="text"></textarea>
-			</div>
-			<div class="grid-12">
-				<input type="submit" class="Input-block" value="送信" name="submit">
-			</div>
-		</form>
-		<ul class="CommentListView-container" container>
-		</ul>
-	</div>
-</template>
-
-
 <template name="ProjectPageView">
-	<div class="ProjectPageView grid-container">
-		<div class="ProjectPageView-header grid-12">
-			<h3 class="ProjectPageView-projectName">{{ project.name }}</h3>
-			{{ view class=UserInlineView name=userInlineView }}
-		</div>
-		<div class="ProjectPageView-comments grid-6 grid-offset-6">
-			{{ view class=CommentListView name=commentListView }}
-		</div>
-	</div>
+    <div class="ProjectPageView" fit layout vertical>
+        <header>
+            <p class="ProjectPageView-headerText util-smallOnly">
+                プロジェクト
+            </p>
+            <span class="util-largeOnly">
+                ユーザー&nbsp;>>&nbsp;
+                <UserInlineView class="ProjectPageView-userInlineView" name="userInlineView"></UserInlineView>
+                &nbsp;>>&nbsp;プロジェクト&nbsp;>>&nbsp;
+            </span>
+            <ProjectInlineView class="ProjectPageView-projectInlineView" name="projectInlineView"></ProjectInlineView>
+        </header>
+        <div class="ProjectPageView-mainContainer" flex layout horizontal start>
+            <!-- <CardView layout vertical class="ProjectPageView-sideMenu">
+                <ul class="ProjectPageView-menu">
+                    メニュー
+                </ul>
+            </CardView> -->
+
+            <CardView self-stretch flex>
+                <h1 style="padding: 40px;">Projectの詳細をここに</h1>
+            </CardView>
+        </div>
+    </div>
 </template>
 
 
-<template name="Error404PageView">
-	<div class="Error404PageView grid-container">
-		<div class="grid-12">
-			<h1>404 Page Not Found.</h1>
-		</div>
-	</div>
+
+
+
+
+
+<template name="RippleView">
+    <div class="RippleView">
+        <div class="RippleView-main" name="main"></div>
+    </div>
 </template>
 
-<template name="BaseView">
-	<div class="BaseView">
-		{{ view class=ToolBarView name=toolBarView }}
-		
-		<div class="BaseView-body">
-			{{ view class=SignInPageView   name=signInPageView   }}
-			{{ view class=SignUpPageView   name=signUpPageView   }}
-			{{ view class=UserPageView     name=userPageView     }}
-			{{ view class=ProjectPageView  name=projectPageView  }}
-			{{ view class=Error404PageView name=error404pageView }}
-		</div>
-
-		{{ view class=ProgressBarView name=progressBarView }}
-	</div>
+<template name="ButtonView">
+    <button class="ButtonView">
+        <content></content>
+        <RippleView name="ripple"></RippleView>
+    </button>
 </template>
-<script src="./script.js"></script>
+
+<template name="AuthView">
+    <div class="AuthView">
+        <div class="AuthView-headerMsg">
+            Sign In
+            <p class="AuthView-errorMsg">
+                ユーザー名またはパスワードが違います。
+            </p>
+        </div>
+        <form>
+            <p>
+                <label class="AuthView-labelUserName" name="labelUserName">
+                    <span>User Name</span>
+                    <input type="text" class="AuthView-userName" name="userName">
+                </label>
+            </p>
+            <p>
+                <label class="AuthView-labelPassword" name="labelPassword">
+                    <span>Password</span>
+                    <input type="password" class="AuthView-password" name="password">
+                </label>
+            </p>
+            <p>
+                <ButtonView block name="submit" type="submit">Sign In</ButtonView>
+            </p>
+        </form>
+    </div>
+</template>
+
+
+
+
+<template name="CardView">
+    <div class="CardView">
+        <content></content>
+    </div>
+</template>
+<template name="AuthPageView">
+    <div class="AuthPageView" layout vertical center-center>
+        <CardView class="AuthPageView-cardView" name="cardView">
+            <AuthView name="authView"></AuthView>
+        </CardView>
+    </div>
+</template>
+
+
+<template name="View">
+    <div class="View">
+        <content></content>
+    </div>
+</template>
+
+<template name="SwitchView">
+    <div class="SwitchView">
+
+    </div>
+</template>
+
+
+<template name="ContextMenuView">
+    <div class="ContextMenuView" tabindex="-1">
+        <CardView class="ContextMenuView-cardView" name="cardView">
+            <ul class="ContextMenuView-menu" content layout vertical>
+            </ul>
+        </CardView>
+    </div>
+</template>
+
+
+<template name="LazyImageView">
+    <div class="LazyImageView">
+        <img class="LazyImageView-image" name="image"></img>
+    </div>
+</template>
+
+<template name="UserInlineView">
+    <div class="UserInlineView">
+        <a class="UserInlineView-link" name="link">
+            <LazyImageView class="UserInlineView-icon" name="icon" src="/img/empty.gif"></LazyImageView>
+            <span class="UserInilneView-userName" name="userName"></span>
+        </a>
+    </div>
+</template>
+<template name="ToolBarView">
+    <div class="ToolBarView" layout horizontal center>
+        <a href="#!/">
+            <span class="ToolBarView-title">EngineerSNS</span>
+        </a>
+        <div class="ToolBarView-spacer" flex>
+
+        </div>
+        <UserInlineView name="userInlineView"></UserInlineView>
+        <ContextMenuView class="ToolBarView-contextMenuView" name="contextMenuView">
+            <a name="linkCreateProject">プロジェクト作成</a>
+            <a name="linkConfig">設定</a>
+            <a name="linkSignOut">サインアウト</a>
+        </ContextMenuView>
+    </div>
+</template>
+<template name="AppView">
+    <div fit layout vertical class="AppView">
+        <ToolBarView name="toolBarView"></ToolBarView>
+
+        <SwitchView flex name="switchView">
+            <AuthPageView name="authPageView"></AuthPageView>
+            <ProjectPageView name="projectPageView"></ProjectPageView>
+            <ProjectCreatePageView name="projectCreatePageView"></ProjectCreatePageView>
+            <UserPageView name="userPageView"></UserPageView>
+            <ConfigPageView name="configPageView"></ConfigPageView>
+        </SwitchView>
+    </div>
+</template>
+
+    <script src="./script.js"></script>
+    <script type="application/javascript">
+        window.onload = function() {
+            document.body.removeAttribute('unresolved');
+        }
+    </script>
 </body>
 
 </html>

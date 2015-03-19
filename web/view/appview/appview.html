@@ -1,0 +1,21 @@
+<link rel="import" href="../toolbarview/toolbarview.html">
+<link rel="import" href="../switchview/switchview.html">
+<link rel="import" href="../authpageview/authpageview.html">
+<link rel="import" href="../projectpageview/projectpageview.html">
+<link rel="import" href="../projectcreatepageview/projectcreatepageview.html">
+<link rel="import" href="../userpageview/userpageview.html">
+<link rel="import" href="../configpageview/configpageview.html">
+
+<template name="AppView">
+    <div fit layout vertical class="AppView">
+        <ToolBarView name="toolBarView"></ToolBarView>
+
+        <SwitchView flex name="switchView">
+            <AuthPageView name="authPageView"></AuthPageView>
+            <ProjectPageView name="projectPageView"></ProjectPageView>
+            <ProjectCreatePageView name="projectCreatePageView"></ProjectCreatePageView>
+            <UserPageView name="userPageView"></UserPageView>
+            <ConfigPageView name="configPageView"></ConfigPageView>
+        </SwitchView>
+    </div>
+</template>

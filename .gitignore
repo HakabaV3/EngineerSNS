@@ -2,5 +2,5 @@ logs
 *.log
 git
 node_modules
-bower_components
 .module-cache
+bower_components

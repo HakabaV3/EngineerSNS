@@ -1,0 +1,19 @@
+<link rel="import" href="../userinlineview/userinlineview.html">
+<link rel="import" href="../contextmenuview/contextmenuview.html">
+
+<template name="ToolBarView">
+    <div class="ToolBarView" layout horizontal center>
+        <a href="#!/">
+            <span class="ToolBarView-title">EngineerSNS</span>
+        </a>
+        <div class="ToolBarView-spacer" flex>
+
+        </div>
+        <UserInlineView name="userInlineView"></UserInlineView>
+        <ContextMenuView class="ToolBarView-contextMenuView" name="contextMenuView">
+            <a name="linkCreateProject">プロジェクト作成</a>
+            <a name="linkConfig">設定</a>
+            <a name="linkSignOut">サインアウト</a>
+        </ContextMenuView>
+    </div>
+</template>

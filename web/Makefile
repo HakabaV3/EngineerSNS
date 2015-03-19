@@ -7,6 +7,7 @@ default:
 #一括
 watch:
 	$(MAKE) watch-stop
+	$(MAKE) compile
 	$(MAKE) watch-js&
 	$(MAKE) watch-html&
 	$(MAKE) watch-css
@@ -17,15 +18,15 @@ watch-stop:
 
 #js
 watch-js:
-	fswatch-run -r -e \.tmp$$ ./js "make compile-js"
+	fswatch-run -r -i *.js ./ "make compile-js"
 
 #html
 watch-html:
-	fswatch-run -r -e \.tmp$$ ./html "make compile-html"
+	fswatch-run -r -i *.html ./ "make compile-html"
 
 #css
 watch-css:
-	fswatch-run -r -e \.tmp$$ ./css "make compile-css"
+	fswatch-run -r -i *.css ./ "make compile-css"
 
 #---------------------------------------------------------
 # コンパイル
@@ -38,15 +39,16 @@ compile:
 
 #js
 compile-js:
-	packjs js/script.js ../server/public/script.js
+	browserify ./script.js -o ../server/public/script.js
 
 #html
 compile-html:
-	packjs html/index.html ../server/public/index.html
+	browserify-html ./index.html -o ../server/public/index.html
 
 #css
 compile-css:
-	sass --no-cache ./css/style.scss ../server/public/style.css
+	sass --no-cache --sourcemap=none style.scss ../server/public/style.css
+	autoprefixer ../server/public/style.css
 
 #---------------------------------------------------------
 # サーバー

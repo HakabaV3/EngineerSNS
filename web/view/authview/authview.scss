@@ -1,0 +1,69 @@
+.AuthView {
+    display: block;
+    position: relative;
+    color: #324b49;
+    padding: 20px;
+    &.is-error-userName {
+        .AuthView-labelUserName span {
+            color: #f44336;
+        }
+    }
+    &.is-error-password {
+        .AuthView-labelPassword span {
+            color: #f44336;
+        }
+    }
+    &.is-error-invalid {
+        .AuthView-errorMsg {
+            opacity: 1;
+        }
+    }
+    label {
+        display: block;
+        padding: 8px 10px;
+        margin: 0 auto 10px;
+        border-bottom: 1px solid #ccc;
+        span {
+            position: relative;
+            display: inline-block;
+            padding: 0;
+            width: 6em;
+            color: #ccc;
+        }
+    }
+}
+.AuthView-headerMsg {
+    display: block;
+    margin: 0 auto 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
+    text-align: center;
+}
+.AuthView-errorMsg {
+    opacity: 0;
+    color: #f44336;
+    transition: 0.3s ease;
+}
+.AuthView-userName,
+.AuthView-password {
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    border: none;
+    padding: 0;
+    outline: none;
+    transition: 0.3s ease;
+    &[disabled] {
+        color: #ddd;
+    }
+}
+@media (max-width:640px) {
+    label span,
+    .AuthView-userName,
+    .AuthView-password {
+        font-size: 16px;
+        display: block;
+        width: 100%;
+        line-height: 1.5em;
+    }
+}

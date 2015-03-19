@@ -1,0 +1,43 @@
+.ConfigPageView {
+    padding: 15px;
+    box-sizing: border-box;
+    header {
+        margin: 15px;
+    }
+}
+.ConfigPageView-sideMenu {
+    width: 200px;
+}
+.ConfigPageView-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.ConfigPageView-userInlineView {
+    font-size: 16px;
+    font-weight: bold;
+}
+.ConfigPageView-menuItem {
+    padding: 15px 20px;
+    border-bottom: 1px solid #f8f8f8;
+}
+.ConfigPageView-headerText {
+    font-size: 0.8em;
+    margin: 10px 0;
+    color: #aaa;
+}
+@media (max-width: 640px) {
+    .ConfigPageView,
+    .ConfigPageView-mainContainer {
+        display: block !important;
+        padding: 20px;
+        box-sizing: border-box;
+        >.CardView {
+            display: block;
+            width: 100% !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            box-sizing: border-box;
+        }
+    }
+}

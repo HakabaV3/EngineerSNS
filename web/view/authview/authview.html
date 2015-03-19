@@ -1,0 +1,30 @@
+<link rel="import" href="../view/view.html">
+<link rel="import" href="../buttonview/buttonview.html">
+
+<template name="AuthView">
+    <div class="AuthView">
+        <div class="AuthView-headerMsg">
+            Sign In
+            <p class="AuthView-errorMsg">
+                ユーザー名またはパスワードが違います。
+            </p>
+        </div>
+        <form>
+            <p>
+                <label class="AuthView-labelUserName" name="labelUserName">
+                    <span>User Name</span>
+                    <input type="text" class="AuthView-userName" name="userName">
+                </label>
+            </p>
+            <p>
+                <label class="AuthView-labelPassword" name="labelPassword">
+                    <span>Password</span>
+                    <input type="password" class="AuthView-password" name="password">
+                </label>
+            </p>
+            <p>
+                <ButtonView block name="submit" type="submit">Sign In</ButtonView>
+            </p>
+        </form>
+    </div>
+</template>

@@ -1,0 +1,23 @@
+.ToolBarView {
+    position: relative;
+    background: #00bcd4;
+    color: #fff;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, .3);
+    padding: 20px 50px;
+    a {
+        color: #fff;
+        text-decoration: none;
+    }
+}
+.ToolBarView-contextMenuView {
+    position: absolute;
+    right: 30px;
+    top: 100%;
+    a {
+        color: initial;
+        cursor: pointer;
+        &:hover {
+            background: #fcfcfc;
+        }
+    }
+}

@@ -1,0 +1,28 @@
+<link rel="import" href="../view/view.html">
+<link rel="import" href="../userinlineview/userinlineview.html">
+<link rel="import" href="../projectinlineview/projectinlineview.html">
+<link rel="import" href="../cardview/cardview.html">
+
+<template name="UserPageView">
+    <div class="UserPageView" fit layout vertical>
+        <header>
+            <p class="UserPageView-headerText util-smallOnly">
+                ユーザー
+            </p>
+            <span class="util-largeOnly">
+                ユーザー&nbsp;>>&nbsp;
+            </span>
+            <UserInlineView class="UserPageView-userInlineView" name="userInlineView"></UserInlineView>
+        </header>
+        <div class="UserPageView-mainContainer" flex layout horizontal start>
+            <!-- <CardView layout vertical class="UserPageView-sideMenu">
+                <ul class="UserPageView-menu">
+                    メニュー
+                </ul>
+            </CardView> -->
+
+            <CardView self-stretch flex class="UserPageView-projectContainer" name="projectContainer">
+            </CardView>
+        </div>
+    </div>
+</template>
