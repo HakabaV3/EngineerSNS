@@ -1,0 +1,40 @@
+@import "../var/_definitions.scss";
+
+.SignInPageView {
+	&.is-error-invalid_parameter {
+		.SignUpPageView-errorMsg-invalid_parameter {
+			display: block;
+		}
+	}
+	&.is-error-unknown {
+		.SignUpPageView-errorMsg-unknown {
+			display: block;
+		}
+	}
+	&.is-authed {
+		.SignInPageView-authedUser {
+			display: block;
+		}
+	}
+}
+
+.SignInPageView-row {
+	margin-top: 15px;
+
+	&:last-child {
+		margin-bottom: 15px;
+	}
+}
+
+.SignInPageView-authedUser {
+	display: none;
+}
+.SignUpPageView-errorMsg-invalid_parameter,
+.SignUpPageView-errorMsg-unknown {
+	display: none;
+	color: #f00;
+	text-align: center;
+}
+.SignUpPageView-signUpLink {
+	text-align: center;
+}

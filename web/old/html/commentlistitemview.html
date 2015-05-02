@@ -1,0 +1,18 @@
+//@include userinlineview.html
+
+<template name="CommentListItemView">
+	<li class="CommentListItemView CardView-section">
+		<p>
+			<span>
+				{{ view class=UserInlineView name=userInlineView }}
+			</span>
+			<span class="CommentListItemView-created">
+				{{ comment.created }}
+			</span>
+			<a class="CommentListItemView-deleteLink" name="deleteLink" href="#">削除</a>
+		</p>
+		<pre>
+			{{ comment.html }}
+		</pre>
+	</li>
+</template>

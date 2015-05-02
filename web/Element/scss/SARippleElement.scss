@@ -1,0 +1,47 @@
+.sa-ripple {
+    position: absolute;
+    display: block;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    &[ripple-start] {
+        > .sa-ripple-inner {
+            animation: ripple-start 0.8s ease;
+            animation-fill-mode: forwards;
+        }
+    }
+    &[ripple-end] {
+        animation: ripple-end 0.8s ease;
+        animation-fill-mode: forwards;
+    }
+}
+.sa-ripple-inner {
+    display: block;
+    position: relative;
+    width: 30px;
+    height: 30px;
+    margin-top: -15px;
+    margin-left: -15px;
+    border-radius: 15px;
+    background: #000;
+    opacity: 0.8;
+    transform: scale(0);
+}
+@keyframes ripple-start {
+    0% {
+        transform: scale(0);
+    }
+    100% {
+        transform: scale(10);
+    }
+}
+@keyframes ripple-end {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}

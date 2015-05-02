@@ -7,46 +7,48 @@ default:
 #一括
 watch:
 	$(MAKE) watch-stop
-	$(MAKE) watch-js&
+	$(MAKE) compile
 	$(MAKE) watch-html&
+	$(MAKE) watch-js&
 	$(MAKE) watch-css
 
 #監視の終了
 watch-stop:
 	pgrep fswatch-run | xargs -I$$ kill $$
 
-#js
-watch-js:
-	fswatch-run -r -e \.tmp$$ ./js "make compile-js"
-
 #html
 watch-html:
-	fswatch-run -r -e \.tmp$$ ./html "make compile-html"
+	fswatch-run -r index.html "make compile-html"
+
+#js
+watch-js:
+	fswatch-run -r *.js ./ "make compile-js"
 
 #css
 watch-css:
-	fswatch-run -r -e \.tmp$$ ./css "make compile-css"
+	fswatch-run -r *.scss ./ "make compile-css"
 
 #---------------------------------------------------------
 # コンパイル
 
 #一括
 compile:
-	$(MAKE) compile-js
 	$(MAKE) compile-html
+	$(MAKE) compile-js
 	$(MAKE) compile-css
-
-#js
-compile-js:
-	packjs js/script.js ../server/public/script.js
 
 #html
 compile-html:
-	packjs html/index.html ../server/public/index.html
+	cp index.html ../server/public/index.html
+
+#js
+compile-js:
+	browserify ./script.js -o ../server/public/script.js
 
 #css
 compile-css:
-	sass --no-cache ./css/style.scss ../server/public/style.css
+	sass --no-cache --sourcemap=none style.scss ../server/public/style.css
+	autoprefixer ../server/public/style.css
 
 #---------------------------------------------------------
 # サーバー

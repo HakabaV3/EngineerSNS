@@ -1,0 +1,30 @@
+@import "./SAToolBarElement.scss";
+@import "./SASwitcherElement.scss";
+@import "./ESSignInCardElement.scss";
+
+.es-app {
+    min-height: 500px;
+}
+@media (max-width: 640px) {
+    .es-app {
+        display: block !important;
+        overflow: scroll;
+        padding-top: 70px;
+    }
+    .es-app-toolbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        box-sizing: border-box;
+    }
+    .es-app-switcher {
+        display: block !important;
+        > * {
+            display: block;
+            box-sizing: border-box;
+            width: auto;
+        }
+    }
+}

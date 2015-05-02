@@ -1,1320 +1,776 @@
-/**
- *	Libs
- */
-
-// no libs !
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var EventDispatcher = require('../Service/EventDispatcher.js');
 
 /**
- *	Main source
- */
-
-
-var global = this;
-
-/**
- *  extend class.
- *  @param {Function} child child class.
- *  @param {Function} parent super class.
- */
-function extendClass(child, parent) {
-    /**
-     *  copy static members.
-     */
-    extend(child, parent);
-
-    /**
-     *  dummy constructor
-     *  @constructor
-     */
-    var __ = function() {};
-    __.prototype = new parent();
-    child.prototype = new __();
-
-    /**
-     *  set inheritance information.
-     */
-    parent.prototype.constructor = parent;
-    child.prototype.constructor = child;
-}
-
-/**
- *  generate GUID
- *  @return {number} GUID
- */
-var GUID = (function() {
-    var GUID_ = 0;
-    return function() {
-        return ++GUID_;
-    };
-})();
-
-/**
- *  extend object property.
- *  @param {Object} target target object.
- *  @param {...Object} optSrces source objects.
- *  @return {Object} extended target.
- */
-function extend(target, optSrces) {
-    Array.prototype.slice.call(arguments, 1)
-        .forEach(function(src) {
-            if (!src) return;
-            Object.keys(src).forEach(function(key) {
-                target[key] = src[key];
-            });
-        });
-
-    return target;
-}
-
-/**
- *  convert object to array.
- *  @param {{
- *    length: String
- *  }} arrayLike arrayLike object.
- *  @return {Array} converted array.
- */
-function convertToArray(arrayLike) {
-    return Array.prototype.slice.call(arrayLike, 0);
-}
-
-/**
- *  check if expression is object.
- *  @param {*} expression expression to check.
- *  @return {boolean} if true, the expression is Object.
- */
-function isObject(expression) {
-    return !!expression && typeof expression === 'object';
-}
-
-/**
- *  check if expression is function.
- *  @param {*} expression expression to check.
- *  @return {boolean} if true, the expression is Function.
- */
-function isFunction(expression) {
-    return typeof expression === 'function';
-}
-
-/**
- *  check if expression is string.
- *  @param {*} expression expression to check.
- *  @return {boolean} if true, the expression is string.
- */
-function isString(expression) {
-    return typeof expression === 'string';
-}
-
-/**
- *  short-hand
- */
-var forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
-
-/**
- *  no operation function
- */
-function noop() {
-    return undefined;
-}
-
-/**
- *  escape for XSS
- *  @param {string} src source text
- *  @return {string} escaped text
- */
-function escapeForXSS(src) {
-    return text
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-}
-
-
-/** 
- *  run function asynclonously
- *  @param {Function} fn function
- */
-function runAsync(fn) {
-    if (isFunction(requestAnimationFrame)) {
-        requestAnimationFrame(fn);
-    } else {
-        setTimeout(fn);
-    }
-}
-
-
-
-
-
-/**
- *  Event dispatchable object.
- *
  *  @constructor
+ *  @extends {EventDispatcher}
  */
-var EventDispatcher = function EventDispatcher() {
+function Controller() {
+    EventDispatcher.apply(this, arguments);
+}
+inherits(Controller, EventDispatcher);
+
+module.exports = Controller;
+
+},{"../Service/EventDispatcher.js":25}],2:[function(require,module,exports){
+var Controller = require('./Controller.js'),
+    Template = require('../Service/Template.js'),
+    ESSignInCardController = require('./ESSignInCardController.js'),
+    User = require('../Model/User.js');
+
+/**
+ *  @constructor
+ *  @param {Element} [element] base element.
+ *  @extends {Controller}
+ */
+function ESAppController(element) {
+    Controller.apply(this, arguments);
+
+    this.element = element || Template.createElement('es-app');
+
     /**
-     *  The list of all event listeners attached on this.
-     *
-     *  @type {Object<string, Array<Function>>}
-     *  @private
+     *  @type {ESSignInCardController}
      */
-    this.eventListeners_ = {};
+    this.signInCardController = new ESSignInCardController(this.element.$.signInCard);
+
+    this.initEventHandler();
+}
+inherits(ESAppController, Controller);
+
+/**
+ *  Initialize eventhandlers.
+ */
+ESAppController.prototype.initEventHandler = function() {
+    this.signInCardController.on('signin', this.onSignIn, this);
 };
 
 /**
- *  Finalizer.
+ *  callback of ESSignInCardController#signin.
+ *  @param {User} user authorized user.
  */
-EventDispatcher.prototype.finalize = function() {
-    this.eventListeners_ = null;
+ESAppController.prototype.onSignIn = function(user) {
+    console.log(user);
+    this.element.authedUser = user;
+    this.element.$.switcher.switch(1);
+    this.element.$.userPage.user = user;
+};
+
+module.exports = ESAppController;
+
+},{"../Model/User.js":18,"../Service/Template.js":29,"./Controller.js":1,"./ESSignInCardController.js":3}],3:[function(require,module,exports){
+var Controller = require('./Controller.js'),
+    Template = require('../Service/Template.js'),
+    Auth = require('../Model/Auth.js');
+
+/**
+ *  @constructor
+ *  @param {Element} [element] base element.
+ *  @extends {Controller}
+ */
+function ESSignInCardController(element) {
+    Controller.apply(this, arguments);
+
+    this.element = element || Template.createElement('es-signInCard');
+
+    this.element.addEventListener('submit', this.onSubmit = this.onSubmit.bind(this));
+}
+inherits(ESSignInCardController, Controller);
+
+/**
+ *  sign in.
+ */
+ESSignInCardController.prototype.signIn = function(callback) {
+    var self = this,
+        userName = this.element.userName,
+        password = this.element.password;
+
+    this.element.disabled = true;
+    this.element.isError = false;
+
+    Auth.signIn(userName, password, function(err, user) {
+        self.element.disabled = false;
+        if (err) {
+            self.element.isError = true;
+            self.element.$.userName.focus();
+        } else {
+            self.fire('signin', user);
+            self.element.clear();
+        }
+    });
 };
 
 /**
- *  attach an event listener.
- *
- *  @param {string} type event type.
- *  @param {Function} listener the event listener to attach.
- *  @return {EventDispatcher} this.
+ *  callback of element#submit
  */
-EventDispatcher.prototype.on = function(type, listener) {
-    var listeners = this.eventListeners_[type];
+ESSignInCardController.prototype.onSubmit = function(ev) {
+    this.signIn();
+};
 
-    if (!listeners) {
-        listeners = this.eventListeners_[type] = [];
+module.exports = ESSignInCardController;
+
+},{"../Model/Auth.js":14,"../Service/Template.js":29,"./Controller.js":1}],4:[function(require,module,exports){
+var Template = require('../../Service/Template.js');
+
+/**
+ *  CustomElement base class
+ */
+function CustomElement($) {
+    /**
+     *  DOM element map.
+     *  @type {Object}
+     */
+    this.$ = $;
+};
+
+//content's method bridge
+forEach([
+    'appendChild',
+    'removeChild'
+], function(methodName) {
+    CustomElement.prototype[methodName] = function() {
+        if (this.$ && this.$.content && this !== this.$.content) {
+            return this.$.content[methodName].apply(this.$.content, arguments);
+        } else {
+            return Object.getPrototypeOf(this)[methodName].apply(this, arguments);
+        }
+    }
+});
+
+//content's getter bridge
+// forEach([
+//     'innerHTML',
+//     'outerHTML',
+//     'innerText',
+//     'textContent',
+// ], function(getterName) {
+//     CustomElement.prototype.__defineGetter__(getterName, function() {
+//         return this.$.content[getterName];
+//     });
+// });
+
+//content's setter bridge
+// forEach([
+//     'innerHTML',
+//     'outerHTML',
+//     'innerText',
+//     'textContent',
+// ], function(setterName) {
+//     CustomElement.prototype.__defineSetter__(setterName, function(newVal) {
+//         return this.$.content[setterName] = newVal;
+//     });
+// });
+
+/**
+ * Registers the custom element constructor.
+ * @param {Function} constructor.
+ * @param {string} [name] constructor name.
+ *  If this parameter isn't passed, constructor's function's name is used.
+ */
+CustomElement.registerConstructor = function(constructor, name) {
+    Template.registerConstructor(constructor, name);
+};
+
+module.exports = CustomElement;
+
+},{"../../Service/Template.js":29}],5:[function(require,module,exports){
+require('./SAToolBarElement.js');
+require('./ESSignInCardElement.js');
+require('./SASwitcherElement.js');
+
+},{"./ESSignInCardElement.js":6,"./SASwitcherElement.js":12,"./SAToolBarElement.js":13}],6:[function(require,module,exports){
+require('./SAInputElement.js');
+require('./SAButtonElement.js');
+
+var CustomElement = require('./CustomElement.js');
+
+/**
+ *  @constructor
+ *  @extends {CustomElement}
+ */
+function ESSignInCardElement() {
+    CustomElement.apply(this, arguments);
+
+    this.$.form.addEventListener('submit', this.onFormSubmit = this.onFormSubmit.bind(this));
+}
+inherits(ESSignInCardElement, CustomElement);
+
+/**
+ *  clear all value
+ */
+ESSignInCardElement.prototype.clear = function() {
+    this.userName = '';
+    this.password = '';
+    this.blur();
+};
+
+/**
+ *  callback of $.form#submit
+ *  @param {Event} ev event object.
+ */
+ESSignInCardElement.prototype.onFormSubmit = function(ev) {
+    var isInValid = false,
+        userName = this.userName,
+        password = this.password;
+
+    if (!password) {
+        isInValid = true;
+        this.$.password.isError = true;
+        this.$.password.focus();
+    } else {
+        this.$.password.isError = false;
     }
 
-    listeners.push(listener);
+    if (!userName) {
+        isInValid = true;
+        this.$.userName.isError = true;
+        this.$.userName.focus();
+    } else {
+        this.$.userName.isError = false;
+    }
 
-    return this;
+    if (isInValid) {
+        ev.stopImmediatePropagation();
+    }
+
+    ev.preventDefault();
+    return false;
+};
+
+CustomElement.registerConstructor(ESSignInCardElement);
+
+module.exports = ESSignInCardElement;
+
+},{"./CustomElement.js":4,"./SAButtonElement.js":8,"./SAInputElement.js":9}],7:[function(require,module,exports){
+var SALazyImageElement = require('./SALazyImageElement.js');
+
+},{"./SALazyImageElement.js":10}],8:[function(require,module,exports){
+var CustomElement = require('./CustomElement'),
+    SARippleElement = require('./SARippleElement.js');
+
+/**
+ *  Enter key's keycode.
+ *  @const {number}
+ */
+var KEYCODE_ENTER = 13;
+
+/**
+ *  @constructor
+ *  @extends {CustomElement}
+ */
+function SAButtonElement($) {
+    CustomElement.apply(this, arguments);
+
+    this.$.ripple.addEventListener('mousedown', this.onMouseDown = this.onMouseDown.bind(this));
+    this.$.ripple.addEventListener('mouseup', this.onMouseUp = this.onMouseUp.bind(this));
+    this.addEventListener('keypress', this.onKeyPress = this.onKeyPress.bind(this));
+    this.originalClick = HTMLButtonElement.prototype.click;
+}
+inherits(SAButtonElement, CustomElement);
+
+/**
+ *  show ripple-start effect with center position is (x, y);
+ *  @param {number} [x=0] center position x.
+ *  @param {number} [y=0] center position y.
+ */
+SAButtonElement.prototype.pushDown = function(x, y) {
+    if (this.disabled) return;
+
+    this.$.ripple.rippleStart(x || 0, y || 0);
 };
 
 /**
- *  detach the event listener.
- *  if the event listener is detached for more than twice,
- *  this method detach all of them.
- *
- *  @param {string} type event type.
- *  @param {Function} listener the event listener to detach.
- *  @return {EventDispatcher} this.
+ *  show ripple-end effect.
  */
-EventDispatcher.prototype.off = function(type, listener) {
-    var listeners = this.eventListeners_[type],
-        i, max;
+SAButtonElement.prototype.pushUp = function() {
+    this.$.ripple.rippleEnd();
+};
 
-    if (!listeners) return this;
+/**
+ *  click this element
+ *  @override
+ */
+SAButtonElement.prototype.click = function() {
+    if (this.disabled) return;
 
-    for (i = 0, max = listeners.length; i < max; i++) {
-        if (listeners[i] == listener) {
-            listeners.splice(i, 1);
-            i--;
-            max--;
+    var gcr = this.getBoundingClientRect();
+    this.pushDown(gcr.width / 2, gcr.height / 2);
+    this.originalClick.apply(this, arguments);
+    this.pushUp();
+};
+
+/**
+ *  callback of this#mousedown
+ *  @param {Event} ev event object
+ */
+SAButtonElement.prototype.onMouseDown = function(ev) {
+    var gcr = this.getBoundingClientRect();
+    this.pushDown(ev.x - gcr.left, ev.y - gcr.top);
+};
+
+/**
+ *  callback of this#mouseup
+ *  @param {Event} ev event object
+ */
+SAButtonElement.prototype.onMouseUp = function(ev) {
+    this.pushUp();
+};
+
+/**
+ *  callback of this#keypress
+ *  @param {Event} ev event object
+ */
+SAButtonElement.prototype.onKeyPress = function(ev) {
+    if (ev.keyCode === KEYCODE_ENTER) {
+        this.click();
+        ev.stopPropagation();
+        ev.preventDefault();
+    }
+};
+
+CustomElement.registerConstructor(SAButtonElement);
+
+module.exports = SAButtonElement
+
+},{"./CustomElement":4,"./SARippleElement.js":11}],9:[function(require,module,exports){
+var CustomElement = require('./CustomElement.js');
+
+/**
+ *  @constructor
+ *  @extends {CustomElement}
+ */
+function SAInputElement($) {
+    CustomElement.apply(this, arguments);
+
+    $.input.addEventListener('focus', this.onInputFocus = this.onInputFocus.bind(this));
+    $.input.addEventListener('blur', this.onInputBlur = this.onInputBlur.bind(this));
+    $.input.addEventListener('input', this.onInputInput = this.onInputInput.bind(this));
+}
+inherits(SAInputElement, CustomElement);
+
+/**
+ *  updateValueAttr_
+ *  @private
+ */
+SAInputElement.prototype.__defineSetter__('value', function(newVal) {
+    this.$.input.value = newVal;
+});
+
+/**
+ *  set focus
+ *  @override
+ */
+SAInputElement.prototype.focus = function() {
+    return this.$.input.focus();
+};
+
+/**
+ *  updateValueAttr_
+ *  @private
+ */
+SAInputElement.prototype.updateValueAttr_ = function() {
+    this.$.input.setAttribute('value', this.$.input.value);
+};
+
+/**
+ *  callback of $.input#focus
+ *  @param {Event} ev event object
+ */
+SAInputElement.prototype.onInputFocus = function(ev) {
+    this.setAttribute('focus', '');
+};
+
+/**
+ *  callback of $.input#blur
+ *  @param {Event} ev event object
+ */
+SAInputElement.prototype.onInputBlur = function(ev) {
+    this.removeAttribute('focus');
+};
+
+/**
+ *  callback of $.input#blur
+ *  @param {Event} ev event object
+ */
+SAInputElement.prototype.onInputInput = function(ev) {
+    this.updateValueAttr_();
+};
+
+CustomElement.registerConstructor(SAInputElement);
+
+module.exports = SAInputElement;
+
+},{"./CustomElement.js":4}],10:[function(require,module,exports){
+var CustomElement = require('./CustomElement.js');
+
+/**
+ *  @constructor
+ *  @extends {CustomElement}
+ */
+function SALazyImageElement($) {
+    CustomElement.apply(this, arguments);
+
+    this.addEventListener('load', this.onLoad = this.onLoad.bind(this));
+    this.addEventListener('error', this.onError = this.onError.bind(this));
+}
+inherits(SALazyImageElement, CustomElement);
+
+/**
+ *  image source url
+ *  @type {string}
+ */
+SALazyImageElement.prototype.__defineSetter__('src', function(newVal) {
+    this.setAttribute('src', newVal);
+    this.setAttribute('state', 'loading');
+
+    if (this.complete) this.onLoad();
+});
+
+/**
+ *  callback of this#load
+ *  @param {Event} ev event object
+ */
+SALazyImageElement.prototype.onLoad = function(ev) {
+    this.setAttribute('state', 'loaded');
+};
+
+/**
+ *  callback of this#error
+ *  @param {Event} ev event object
+ */
+SALazyImageElement.prototype.onError = function(ev) {
+    this.setAttribute('state', 'error');
+};
+
+CustomElement.registerConstructor(SALazyImageElement);
+
+module.exports = SALazyImageElement;
+
+},{"./CustomElement.js":4}],11:[function(require,module,exports){
+var CustomElement = require('./CustomElement.js');
+
+/**
+ *  @constructor
+ *  @extends {CustomElement}
+ */
+function SARippleElement($) {
+    CustomElement.apply(this, arguments);
+}
+inherits(SARippleElement, CustomElement);
+
+/**
+ *  show ripple-start effect with center position is (x, y);
+ *  @param {number} [x=0] center position x.
+ *  @param {number} [y=0] center position y.
+ */
+SARippleElement.prototype.rippleStart = function(x, y) {
+    var self = this,
+        style = this.$.inner.style,
+        computed = getComputedStyle(this);
+
+    style.left = x + 'px';
+    style.top = y + 'px';
+    style.backgroundColor = computed.color;
+
+    this.removeAttribute('ripple-end');
+    this.removeAttribute('ripple-start');
+
+    requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+            self.setAttribute('ripple-start', '');
+        });
+    });
+};
+
+/**
+ *  show ripple-end effect
+ */
+SARippleElement.prototype.rippleEnd = function() {
+    this.setAttribute('ripple-end', '');
+};
+
+CustomElement.registerConstructor(SARippleElement);
+
+module.exports = SARippleElement;
+
+},{"./CustomElement.js":4}],12:[function(require,module,exports){
+var CustomElement = require('./CustomElement.js');
+
+/**
+ *  @constructor
+ *  @extends {CustomElement}
+ */
+function SASwitcherElement($) {
+    CustomElement.apply(this, arguments);
+}
+inherits(SASwitcherElement, CustomElement);
+
+/**
+ *  show ripple-start effect with center position is (x, y);
+ *  @param {number} [x=0] center position x.
+ *  @param {number} [y=0] center position y.
+ */
+SASwitcherElement.prototype.switch = function(index) {
+
+    var children = this.children,
+        nextPage = this.children[index],
+        i, max, currentPage;
+
+    for (i = 0, max = children.length; i < max; i++) {
+        if (children[i].hasAttribute('visible')) {
+            currentPage = children[i];
+            break;
         }
     }
 
-    return this;
-};
-
-EventDispatcher.prototype.once = function(type, listener) {
-    var self = this,
-        proxy = function() {
-            self.off(type, proxy);
-            listener.apply(this, arguments);
-        };
-
-    this.on(type, proxy);
-};
-
-/**
- *  fire the event.
- *
- *  @param {string} type event type.
- *  @param {...*} optArgs arguments.
- *  @return {EventDispatcher} this.
- */
-EventDispatcher.prototype.fire = function(type, optArgs) {
-    var listeners = this.eventListeners_[type],
-        args = Array.prototype.slice.call(arguments, 1),
-        i, max;
-
-    if (!listeners) return this;
-
-    listeners = listeners.slice(0);
-
-    for (i = 0, max = listeners.length; i < max; i++) {
-        listeners[i].apply(this, args);
+    if (currentPage) {
+        currentPage.removeAttribute('visible');
     }
 
-    return this;
+    if (nextPage) {
+        nextPage.setAttribute('visible', '');
+    }
 };
 
+CustomElement.registerConstructor(SASwitcherElement);
 
+module.exports = SASwitcherElement;
 
-
+},{"./CustomElement.js":4}],13:[function(require,module,exports){
+var CustomElement = require('./CustomElement.js'),
+    ESUserInlineElement = require('./ESUserInlineElement.js');
 
 /**
- *  Template engine.
+ *  @constructor
+ *  @extends {CustomElement}
+ */
+function SAToolBarElement($) {
+    CustomElement.apply(this, arguments);
+}
+inherits(SAToolBarElement, CustomElement);
+
+CustomElement.registerConstructor(SAToolBarElement);
+
+module.exports = SAToolBarElement;
+
+},{"./CustomElement.js":4,"./ESUserInlineElement.js":7}],14:[function(require,module,exports){
+var API = require('../Service/API/API.js'),
+    User = require('./User.js');
+
+/**
+ *  Authentication methods.
+ *
+ *  This API category DOES NOT have any model (as 'Auth'), methods only.
+ *
  *  @namespace
  */
-var Template = {};
-
-
-
-
-
-
-
+Auth = {};
 
 /**
- *	@namespace Template
+ *  Sign in.
+ *  @param {string} userName userName.
+ *  @param {string} password password.
+ *  @param {Function} callback callback.
  */
-Template.QueryPart = function() {
-    EventDispatcher.call(this);
-};
-extendClass(Template.QueryPart, EventDispatcher);
-
-Template.QueryPart.prototype.getValue = function() {
-    console.warn('Template.QueryPart#getValue must be overrided.');
-    return '';
-};
-
-/**
- *	@enum {string}
- */
-Template.QueryPart.Type = {
-    TEXT: 'TEXT',
-    BINDING: 'BINDING',
-    VIEW: 'VIEW'
-};
-
-Template.QueryTextPart = function(text) {
-    if (!(this instanceof Template.QueryTextPart)) return new Template.QueryTextPart(text);
-    Template.QueryPart.call(this);
-
-    /**
-     *  @type {string}
-     */
-    this.text = null;
-    this.setText(text);
-};
-extendClass(Template.QueryTextPart, Template.QueryPart);
-
-Template.QueryTextPart.prototype.setText = function(newText) {
-    var oldText = this.text;
-
-    if (oldText === newText) return;
-
-    this.text = newText;
-
-    this.fire('change');
-};
-
-Template.QueryTextPart.prototype.getValue = function() {
-    return this.text || '';
-};
-
-
-
-
-
-
-
-
-
-
-var Observer = {};
-
-/**
- *	監視対象のマップ
- *	@type {Object<number, Object<string, Observer.ObserveData>>}
- */
-Observer.observeMap = {};
-
-/**
- *	監視に係る情報
- *	@typedef {{
- *		callbacks: [Function],
- *		target: Object,
- *		key: string,
- *		old: Object
- *	}}
- */
-Observer.ObserveData;
-
-/**
- *	ネイティブ実装されているか
- *	@type {boolean}
- */
-Observer.NATIVE_SUPPORT = (typeof Object.observe === 'function');
-
-/**
- *	ポリフィル実装が初期化されているか
- *	@type {boolean}
- */
-Observer.isInitializedPolyfillObserver = false;
-
-/**
- *	ポリフィル実装用のタイマーID
- *	@type {number|null}
- */
-Observer.polyfillObserverID = null;
-
-/**
- *	オブジェクトの特定のキーを監視する
- */
-Observer.observe = function(object, key, fn) {
-    var id = Observer.getID(object),
-        data = Observer.observeMap[id];
-
-    if (data) {
-        if (data[key]) {
-            data[key].callbacks.push(fn);
-            return;
+Auth.signIn = function(userName, password, callback) {
+    API.post('/auth', null, {
+        'userName': userName,
+        'password': password
+    }, function(err, res) {
+        if (err) {
+            API.updateToken(null);
+            return callback(err, null);
         }
-    } else {
-        data = Observer.observeMap[id] = {};
-    }
 
-    data[key] = {
-        callbacks: [fn],
-        target: object,
-        key: key,
-        old: object[key]
-    };
-
-    if (Observer.NATIVE_SUPPORT) {
-        Object.observe(object, Observer.observeCallback);
-    } else if (!Observer.isInitializedPolyfillObserver) {
-        Observer.initPolyfillObserver();
-    }
-};
-
-/**
- *	ポリフィル実装の初期化
- */
-Observer.initPolyfillObserver = function() {
-    if (Observer.isInitializedPolyfillObserver) return;
-    Observer.polyfillObserverID = setInterval(Observer.runPolyfillObserve, 60);
-
-    Observer.isInitializedPolyfillObserver = true;
-};
-
-/**
- *	ポリフィル実装の終了
- */
-Observer.killPolyfillObserver = function() {
-    if (!Observer.isInitializedPolyfillObserver) return;
-    clearInterval(Observer.polyfillObserverID);
-    Observer.polyfillObserverID = null;
-
-    Observer.isInitializedPolyfillObserver = false;
-};
-
-/**
- *	ポリフィル実装本体
- */
-Observer.runPolyfillObserve = function() {
-    Object.keys(Observer.observeMap)
-        .forEach(function(id) {
-            var data = Observer.observeMap[id];
-            if (!data) return;
-
-            Object.keys(data)
-                .forEach(function(key) {
-                    var data2 = data[key],
-                        newVal = data2.target[key],
-                        oldVal = data2.old;
-
-                    if (newVal !== oldVal) {
-                        Observer.observeCallback([{
-                            name: key,
-                            object: data2.target,
-                            oldValue: oldVal,
-                            type: 'update' //@TODO それぞれに対応
-                        }]);
-                    }
-
-                    data2.old = newVal;
-                })
-        });
-};
-
-/**
- *	オブジェクトの特定のキーの監視を解除する
- */
-Observer.unobserve = function(object, key, fn) {
-    var id = Observer.getID(object),
-        data = Observer.observeMap[id],
-        i, max, callbacks;
-
-    if (!data || !data[key]) return;
-
-    callbacks = data[key].callbacks;
-    for (i = 0, max = callbacks.length; i < max; i++) {
-        if (callbacks[i] === fn) {
-            callbacks.splice(i, 1);
-            i--;
-            max--;
-        }
-    }
-
-    if (max === 0) {
-        delete data[key];
-        if (Object.keys(data).length === 0) {
-            Observer.unobserveAll(object);
-        }
-    }
-};
-
-/**
- *	オブジェクトのすべての監視を解除する
- */
-Observer.unobserveAll = function(object) {
-    var id = Observer.getID(object);
-
-    delete Observer.observeMap[id];
-
-    if (Observer.NATIVE_SUPPORT) {
-        Object.unobserve(object, Observer.observeCallback);
-    } else {
-        if (Object.keys(Observer.observeMap).length === 0) {
-            Observer.killPolyfillObserver();
-        }
-    }
-};
-
-/**
- *	オブジェクトの特定のプロパティに対応するIDを取得する
- */
-Observer.getID = function(object, key) {
-    return object.observerGUID_ || (object.observerGUID_ = GUID());
-};
-
-/**
- *	Object.observerのコールバック
- */
-Observer.observeCallback = function(changes) {
-    changes.forEach(function(change) {
-        var object = change.object,
-            key = change.name,
-            id = Observer.getID(object),
-            data = Observer.observeMap[id];
-
-        if (!data || !data[key]) return;
-
-        data[key].callbacks.forEach(function(callback) {
-            callback.call(Observer, change);
-        });
+        return callback(null, new User(res));
     });
 };
 
 /**
- *  オブジェクトの特定のプロパティへのバインドを表すクラス
+ *  Sign out.
+ *  @param {Function} callback callback.
+ */
+Auth.signOut = function(callback) {
+    API.delete('/auth', null, function(err, res) {
+        API.updateToken(null);
+        return callback(null, null);
+    });
+};
+
+/**
+ *  Sign up.
+ *  @param {string} userName userName.
+ *  @param {string} password password.
+ *  @param {Function} callback callback.
+ */
+Auth.signUp = function(userName, password, callback) {
+    API.post('/user/' + userName, null, {
+        'password': password
+    }, function(err, res) {
+        if (err) {
+            API.updateToken(null);
+            return callback(err, null);
+        }
+
+        return callback(null, new User(res));
+    });
+};
+
+module.exports = Auth;
+
+},{"../Service/API/API.js":19,"./User.js":18}],15:[function(require,module,exports){
+var Model = require('./Model.js'),
+    API = require('../Service/API/API.js');
+
+/**
+ *  Comment Model.
  *  @constructor
- *  @param {Object} target
- *  @param {[string]} propNames
- *
- *  @extends {EventDispatcher}
- *  @namespace Template
+ *  @param {Object} data initial data.
+ *  @extends {Model}
  */
-Template.Binding = function(target, propNames) {
-    EventDispatcher.call(this);
+var Comment = function(data) {
+    if (!(this instanceof Comment)) return new Comment(data);
 
-    /**
-     *  バインド対象
-     *  @type {Object}
-     */
-    this.targets = [target];
+    if (isObject(data)) {
+        if (Comment.hasInstance(data.id)) {
+            return Comment.getInstance(data.id).updateWithData(data);
+        }
+    }
 
-    /**
-     *  バインド対象のプロパティ名
-     *  @type {[string]}
-     */
-    this.propNames = propNames;
-
-    this.onChangeHandler = this.onChangeHandler.bind(this);
-
-    this.resetObserve(0);
+    Model.call(this, data);
 };
-extendClass(Template.Binding, EventDispatcher);
+inherits(Comment, Model);
 
-Template.Binding.prototype.finalize = function() {
-    this.resetObserve(0);
-    this.onChangeHandler = null;
-
-    EventDispatcher.prototype.finalize();
-};
+Comment.prototype.hoge = function(name, key) {};
 
 /**
- *  バインディングをコピーする
- */
-Template.Binding.prototype.copy = function(target) {
-    return new Template.Binding(target, this.propNames.slice(0));
-};
-
-Template.Binding.prototype.getValue = function() {
-    var length = this.propNames.length;
-    return isObject(this.targets[length - 1]) ?
-        this.targets[length - 1][this.propNames[length - 1]] :
-        '';
-};
-
-/**
- *  指定階層以下の監視を更新する
- */
-Template.Binding.prototype.resetObserve = function(index) {
-    if (index >= this.propNames.length) return;
-
-    var propName = this.propNames[index],
-        oldTarget = this.targets[index],
-        newTarget;
-
-    //監視の解除
-    if (isObject(oldTarget)) {
-        Observer.unobserve(oldTarget, propName, this.onChangeHandler);
-    }
-
-    if (index !== 0) {
-        this.targets[index] = null;
-    }
-
-    //監視の再設定
-    if (index === 0) {
-        newTarget = this.targets[0];
-    } else if (isObject(this.targets[index - 1]) &&
-        isObject(this.targets[index - 1][this.propNames[index - 1]])) {
-
-        newTarget = this.targets[index - 1][this.propNames[index - 1]];
-    } else {
-        newTarget = null;
-    }
-
-    if (newTarget) {
-        Observer.observe(newTarget, propName, this.onChangeHandler);
-        this.targets[index] = newTarget;
-    }
-
-    this.resetObserve(index + 1);
-};
-
-Template.Binding.prototype.setTarget = function(newTarget) {
-    this.resetObserve(0, newTarget);
-};
-
-/**
- *  変更に対するイベントハンドラ
- */
-Template.Binding.prototype.onChangeHandler = function(change) {
-    var index = this.targets.indexOf(change.object),
-        length = this.propNames.length;
-
-    if (index === -1) {
-        throw new Error('(´・ω・｀)');
-    }
-
-    if (index !== length - 1) {
-        this.resetObserve(index + 1);
-    }
-
-    this.fire('change', this.getValue());
-};
-
-Template.QueryBindingPart = function(binding) {
-    if (!(this instanceof Template.QueryBindingPart)) return new Template.QueryBindingPart(binding);
-    Template.QueryPart.call(this);
-
-    this.onChange = this.onChange.bind(this);
-
-    /**
-     *	@type {Template.Binding}
-     */
-    this.binding = null;
-    this.setBinding(binding);
-};
-extendClass(Template.QueryBindingPart, Template.QueryPart);
-
-Template.QueryBindingPart.prototype.finalize = function() {
-    this.setBinding(null);
-    this.onChange = null;
-
-    Template.QueryPart.prototype.finalize.call(this);
-};
-
-Template.QueryBindingPart.prototype.setBinding = function(newBinding) {
-    var oldBinding = this.binding;
-
-    if (oldBinding) {
-        oldBinding.off('change', this.onChange);
-    }
-
-    this.binding = newBinding;
-
-    if (newBinding) {
-        newBinding.on('change', this.onChange);
-    }
-
-    this.onChange();
-};
-
-Template.QueryBindingPart.prototype.onChange = function() {
-    this.fire('change');
-};
-
-Template.QueryBindingPart.prototype.getValue = function() {
-    return this.binding ? this.binding.getValue() : '';
-};
-
-
-
-
-
-
-
-
-Template.QueryViewPart = function(view) {
-    if (!(this instanceof Template.QueryViewPart)) return new Template.QueryViewPart(binding);
-    Template.QueryPart.call(this);
-
-    /**
-     *  @type {View}
-     */
-    this.view = null;
-    this.setView(view);
-};
-extendClass(Template.QueryViewPart, Template.QueryPart);
-
-Template.QueryViewPart.prototype.finalize = function() {
-    this.setView(null);
-
-    Template.QueryPart.prototype.finalize.call(this);
-};
-
-Template.QueryViewPart.prototype.setView = function(newView) {
-    var oldView = this.view;
-
-    if (oldView === newView) return;
-
-    this.view = newView;
-
-    this.fire('change');
-};
-
-Template.QueryViewPart.prototype.getValue = function() {
-    return this.view || '';
-};
-
-/**
- *  @namespace Template
- */
-Template.Query = function(node, attrName, parts) {
-    if (!(this instanceof Template.Query)) return new Template.Query(node, attrName, parts);
-
-    this.update = this.update.bind(this);
-
-    /**
-     *  @type {Node}
-     */
-    this.node = node || null;
-
-    /**
-     *  @type {string|null}
-     */
-    this.attrName = attrName || null;
-
-    /**
-     *  @type {[QueryParts]}
-     */
-    this.parts = null;
-    this.setParts(parts);
-};
-
-Template.Query.prototype.finalize = function() {
-    this.parts.forEach(function(part) {
-        part.finalize();
-    });
-    this.node = null;
-    this.update = null;
-};
-
-Template.Query.prototype.setParts = function(newParts) {
-    var oldParts = this.parts,
-        self = this;
-
-    if (oldParts) {
-        oldParts.forEach(function(oldPart) {
-            oldPart.off('change', self.update);
-        });
-    }
-
-    this.parts = newParts;
-
-    if (newParts) {
-        newParts.forEach(function(newPart) {
-            newPart.on('change', self.update);
-        });
-    }
-
-    this.update();
-};
-
-Template.Query.prototype.update = function() {
-    var values,
-        parts = this.parts,
-        node = this.node,
-        attrName = this.attrName,
-        flagView = false;
-
-    if (!parts || !node || !attrName) return;
-
-    values = parts.map(function(part) {
-        return part.getValue();
-    });
-
-    switch (attrName) {
-        case 'textContent':
-            var fragment = document.createDocumentFragment();
-            values.forEach(function(value) {
-                if (value instanceof View) {
-                    value.appendTo(fragment);
-                    flagView = true;
-                } else if (isString(value)) {
-                    fragment.appendChild(new Text(value));
-                }
-            });
-
-            if (flagView) {
-                if (node.parentNode) {
-                    node.parentNode.insertBefore(fragment, node);
-                    node.parentNode.removeChild(node);
-                }
-            } else {
-                node[attrName] = values.join('');
-            }
-
-            break;
-
-        default:
-            node.setAttribute(attrName, values.join(''));
-            break;
-    }
-};
-
-
-
-/**
- *  style injection to hide <template> tag.
- *
- *  IE<10 do NOT support <template> tag, and visible this tag,
- *  so must be inject this style.
- */
-(function() {
-    var style = document.createElement('style');
-    style.textContent = 'template{display: none !important;}'
-    var head = document.head;
-    head.insertBefore(style, head.firstChild);
-})();
-
-/**
- *  template caches
+ *  model instances map
  *  @type {Object}
+ *  @private
+ *  @overrides
  */
-Template.templates = {};
+Comment.instances_ = {};
 
 /**
- *  @typedef {
- *      type: Template.QueryPart.Type,
- *      data: *
- *  }
+ *  Schema
+ *
+ *  @type {Object}
+ *  @override
  */
-Template.QueryPartData;
-
-/**
- *  @typedef {{
- *      nodePath: [number],                     //ノードへのパス,
- *      attrName: string,                       //属性の名前,
- *      queryPartDatas: [Template.QueryPartData],   //パース結果の配列
- *  }}
- */
-Template.QueryData;
-
-/**
- *  template object
- *  @typedef {{
- *      node: Node,                 //DOMのルートノード
- *      queryDatas: [Template.QueryData],  //テンプレートクエリの配列
- *  }}
- */
-Template.Template;
-
-/**
- *  Directive keywords.
- *  @enum {string}
- */
-Template.Directive = {
-    VIEW: 'VIEW'
-};
-
-/**
- *  container node for encoding template
- *  @type {Node}
- */
-Template.templateEncoder = document.createElement('div');
-
-/**
- *  DOMを生成する
- */
-Template.create = function(templateId, bindTarget) {
-    var template = Template.getTemplate(templateId),
-        rootNode = template.node.cloneNode(true),
-        childViews = {},
-        queries,
-        result;
-
-    queries = template.queryDatas.map(function(queryData) {
-        return Template.createQuery(queryData, rootNode, bindTarget, childViews);
-    });
-
-    result = {
-        queries: queries,
-        node: rootNode,
-        childViews: childViews
-    };
-
-    return result;
-};
-
-/**
- *  クエリデータを元にクエリを作成する。
- *  @param {Template.Query} query query
- *  @param {Node} rootNode rootNode
- *  @param {Object} bindTarget bindTarget
- *  @param {Object} [childViews] 子ビューのマップ。
- *      これを渡すと、生成された小ビューの一覧をここに保存する。
- *  @return {Query} クエリ
- */
-Template.createQuery = function(queryData, rootNode, bindTarget, childViews) {
-    var queryPartDatas = queryData.queryPartDatas,
-        QueryPartType = Template.QueryPart.Type,
-        node = Template.getNodeFromPath(rootNode, queryData.nodePath),
-        v,
-        queryParts;
-
-    queryParts = queryPartDatas.map(function(queryPartData) {
-        switch (queryPartData.type) {
-            case QueryPartType.TEXT:
-                return new Template.QueryTextPart(queryPartData.data);
-                break;
-
-            case QueryPartType.BINDING:
-                return new Template.QueryBindingPart(queryPartData.data.copy(bindTarget));
-                break;
-
-            case QueryPartType.VIEW:
-                v = new queryPartData.data.viewConstructor();
-                if (isObject(childViews)) childViews[queryPartData.data.name] = v;
-                return new Template.QueryViewPart(v);
-                break;
-        }
-    });
-
-    return new Template.Query(node, queryData.attrName, queryParts);
-};
-
-/**
- *  ノードパスからノードを特定する
- */
-Template.getNodeFromPath = function(rootNode, nodePath) {
-    var node = rootNode;
-
-    nodePath = nodePath.slice(0);
-
-    while (nodePath.length) {
-        node = node.childNodes[nodePath.shift()];
-        if (!node) return null;
+Comment.prototype.schema = {
+    "id": {
+        type: String,
+        value: ''
+    },
+    "uri": {
+        type: String,
+        value: ''
+    },
+    "owner": {
+        type: String,
+        value: ''
+    },
+    "text": {
+        type: String,
+        value: ''
+    },
+    "html": {
+        type: String,
+        value: ''
+    },
+    "created": {
+        type: Date,
+        value: null
+    },
+    "target": {
+        type: String,
+        value: null
+    },
+    "range": {
+        type: Object,
+        value: null
     }
-
-    return node;
 };
 
 /**
- *  Create DOM with template.
- *  @param {string} templateId Template ID.
- *  @return {Template.Template} テンプレート
+ *  @override
  */
-Template.getTemplate = function(templateId) {
-    var template = Template.templates[templateId],
-        encoder = Template.templateEncoder,
-        srcNode, html;
+Comment.prototype.updateWithData = function(data) {
+    Model.prototype.updateWithData.call(this, data);
 
-    if (!template) {
+    this.html = this.text
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
 
-        template = {
-            node: null,
-            queryDatas: null
-        };
-
-        srcNode = document.querySelector('template[name="' + templateId + '"]');
-        if (!srcNode) {
-            throw new Error('Template "' + templateId + '" is not found.');
-        }
-
-        html = srcNode.innerHTML;
-
-        encoder.innerHTML = html;
-        template.node = encoder.firstElementChild;
-
-        template.queryDatas = Template.parseTemplateNodeRecursive(template.node);
-        Template.templates[templateId] = template;
-    }
-
-    return template;
+    this.created = new Date(data.created);
+    return this;
 };
 
 /**
- *  ノード内のテンプレートを再帰的にパースする。
- *  @param {Node} rootNode target node.
- *  @param {[Template.QueryData]} [result=[]] 結果を格納する配列。
- *      再帰呼び出しの場合、結果を一つの配列にまとめたい場合に指定する。
- *  @param {[number]} [nodePath=[]] ノードへのパス。
- *  @return {[Template.QueryData]} パース結果
+ *  Get Comment data by comment ID
+ *  @param {string} commentId the comment id.
+ *  @param {Function} callback callback function.
  */
-Template.parseTemplateNodeRecursive = function(rootNode, result, nodePath) {
-    result = result || [];
-    nodePath = nodePath || [];
-
-    result.push.apply(result, Template.parseTemplateNode(rootNode, nodePath));
-
-    forEach(rootNode.childNodes, function(child, i) {
-        Template.parseTemplateNodeRecursive(child, result, nodePath.concat([i]))
-    });
-
-    return result;
-};
-
-/**
- *  ノード内のテンプレートをパースする。
- *  @param {Node} node target node.
- *  @param {[numer]} nodePath ノードへのパス。
- *  @return {[Template.QueryData]} パース結果
- */
-Template.parseTemplateNode = function(node, nodePath) {
-    var queryDatas = [],
-        attrs = node.attributes,
-        queryPartDatas;
-
-    /**
-     *  属性
-     */
-    if (node instanceof Element) {
-        forEach(attrs, function(attr) {
-            queryPartDatas = Template.parseTemplateQueryText(attr.value, nodePath, attr.name);
-            if (queryPartDatas.length) {
-                queryDatas.push({
-                    nodePath: nodePath,
-                    attrName: attr.name,
-                    queryPartDatas: queryPartDatas
-                });
+Comment.getById = function(commentId, callback) {
+    API.get('/comment/' + commentId,
+        function(err, res) {
+            if (err) {
+                return callback(err, null);
             }
+
+            return callback(null, new Comment(res));
         });
-    }
-
-    /**
-     * textContent
-     */
-    if (node instanceof Text) {
-        queryPartDatas = Template.parseTemplateQueryText(node.textContent, nodePath, 'textContent');
-        if (queryPartDatas.length) {
-            queryDatas.push({
-                nodePath: nodePath,
-                attrName: 'textContent',
-                queryPartDatas: queryPartDatas
-            });
-        }
-    }
-
-    return queryDatas;
 };
 
 /**
- *  テンプレートクエリ文字列をパースする
- *  @param {string} queryText テンプレートタグを含んだ文字列
- *  @return {[Template.QueryPartData]} パース結果
+ *  Update comment data.
+ *  @params {Function} callback callback function.
  */
-Template.parseTemplateQueryText = function(queryText) {
-    var regTag = /\{\{([^\}]*)\}\}/g,
-        datas = [],
-        pivot = 0,
-        regSplitter = /\s+/g,
-        queryTextPart, queryTextPartChunk,
-        directives, binding,
-        ma;
+Comment.prototype.update = function(callback) {
+    if (!app.isAuthed || app.authedUser.name !== this.owner) {
+        return callback(APIError.PERMISSION_DENIED, null);
+    }
 
-    while (ma = regTag.exec(queryText)) {
-        if (pivot !== ma.index) {
-            queryTextPart = queryText.substring(pivot, ma.index).trim();
-            if (queryTextPart.length) {
-                //string
-                datas.push({
-                    type: Template.QueryPart.Type.TEXT,
-                    data: queryTextPart
-                });
+    API.patch(this.uri, {
+            text: this.text
+        },
+
+        function(err, res) {
+            if (err) {
+                return callback(err, null);
             }
-        }
-        pivot = ma.index + ma[0].length;
-        tagText = ma[1].trim();
-        tagTextParts = tagText.split(regSplitter);
 
-        switch (tagTextParts[0].toUpperCase()) {
-            case Template.Directive.VIEW:
-                //view metadata
-                datas.push({
-                    type: Template.QueryPart.Type.VIEW,
-                    data: Template.parseQueryPartsForView(tagTextParts)
-                });
-                break;
-
-            default:
-                //binding
-                datas.push({
-                    type: Template.QueryPart.Type.BINDING,
-                    data: new Template.Binding(null, tagText.split('.'))
-                });
-                break;
-        }
-    };
-    if (pivot !== queryText.length) {
-        queryTextPart = queryText.substring(pivot).trim();
-        if (queryTextPart.length) {
-            //string
-            datas.push({
-                type: Template.QueryPart.Type.TEXT,
-                data: queryTextPart
-            });
-        }
-    }
-
-    return datas;
+            return callback(null, new Comment(res));
+        });
 };
 
 /**
- *  Viewディレクティブのタグをパースする
- *  @param {[string]} tagTextParts タグの文字列をスペースで区切って配列にしたもの
- *  @return Object<string, string> パース結果
+ *  Delete comment data.
+ *  @param {Function} callback callback function.
  */
-Template.parseQueryPartsForView = function(tagTextParts) {
-    tagTextParts = tagTextParts.slice(0);
-    tagTextParts.shift(); //最初の１個は'view'ディレクティブなので捨てる。
-
-    var result = {};
-
-    tagTextParts.forEach(function(queryPart) {
-        var keyAndVal = queryPart.split('=');
-        result[keyAndVal[0]] = keyAndVal[1];
-    });
-
-    if (result['class'] && isFunction(global[result['class']])) {
-        result.viewConstructor = global[result['class']];
-    }
-
-    return result;
-};
-
-
-var View = function() {
+Comment.prototype.delete = function(callback) {
     var self = this;
 
-    EventDispatcher.call(this);
-
-    /**
-     *  DOM reference map
-     *  @type {Object}
-     */
-    this.$ = {
-        root: null,
-        container: null,
-    };
-}
-extendClass(View, EventDispatcher);
-
-/**
- * Finalizer.
- */
-View.prototype.finalize = function() {
-    var self = this,
-        key;
-
-    this.queries.forEach(function(query) {
-        query.finalize();
-    });
-    Object.keys(this.childViews).forEach(function(childViewName) {
-        self.childViews[childViewName].finalize();
-    });
-
-    Observer.unobserveAll(this);
-    this.remove();
-    this.$ = null;
-    EventDispatcher.prototype.finalize.call(this);
-};
-
-/**
- *  Create DOM with template.
- *  @param {string} templateId Template ID.
- */
-View.prototype.loadTemplate = function(templateId) {
-    var created = Template.create(templateId, this),
-        self = this;
-
-    this.$.root = created.node;
-    this.$.container = this.$.root.querySelector('[container]') || this.$.root;
-
-    forEach(this.$.root.querySelectorAll('[name]'), function(node) {
-        self.$[node.getAttribute('name')] = node;
-    });
-
-    this.childViews = created.childViews;
-    this.queries = created.queries;
-};
-
-/**
- *  Append child node to this view.
- *  @param {View|Element} child Child node.
- *  @return this
- */
-View.prototype.appendChild = function(child) {
-    if (child instanceof View) child = child.$.root;
-    this.$.container.appendChild(child);
-
-    return this;
-};
-
-/**
- *  Append this view to the node.
- *  @param {View|Element} parent parent node
- *  @return this
- */
-View.prototype.appendTo = function(parent) {
-    parent.appendChild(this.$.root);
-
-    return this;
-};
-
-/**
- *  Append this view before the node
- *  @param {View|Element} ref the reference node
- *  @return this
- */
-View.prototype.insertBefore = function(ref) {
-    if (ref instanceof View) ref = ref.$.root;
-    var parent = ref.parentNode,
-        root = this.$.root;
-
-    parent.insertBefore(root, ref);
-
-    return this;
-};
-
-/**
- *  Append this view after the node
- *  @param {View|Element} ref the reference node
- *  @return this
- */
-View.prototype.insertAfter = function(ref) {
-    if (ref instanceof View) ref = ref.$.root;
-    var parent = ref.parentNode,
-        root = this.$.root;
-
-    parent.insertBefore(root, ref);
-    parent.insertBefore(ref, root);
-
-    return this;
-};
-
-/**
- *  remove this view
- *  @return this
- */
-View.prototype.remove = function() {
-    this.$.root.parentNode.removeChild(this.$.root);
-
-    return this;
-};
-
-/**
- *  update this view
- */
-View.prototype.update = function() {
-    console.warn('NIP!');
-};
-
-var BaseView = function() {
-    View.call(this);
-
-    this.loadTemplate('BaseView');
-
-    /**
-     *  @type {string}
-     */
-    this.mode = null;
-
-    /**
-     *  @type {View}
-     */
-    this.currentPageView = null;
-
-    app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
-};
-extendClass(BaseView, View);
-
-BaseView.prototype.finalize = function() {
-    app.off('rout.change', this.onChangeRout)
-    this.onChangeRout = null;
-
-    View.prototype.finalize.call(this);
-};
-
-BaseView.prototype.onChangeRout = function(rout) {
-    var self = this,
-        pageView = ({
-            'user': this.childViews.userPageView,
-            'project': this.childViews.projectPageView,
-            'signin': this.childViews.signInPageView,
-            'signup': this.childViews.signUpPageView,
-            'error404': this.childViews.error404PageView
-        })[rout.mode];
-
-    if (pageView) {
-        pageView
-            .once('load', function() {
-                self.showPageView(pageView);
-                self.childViews.progressBarView.setValue(100);
-            });
+    if (!app.isAuthed || app.authedUser.name !== this.owner) {
+        return callback(APIError.PERMISSION_DENIED, null);
     }
 
-    this.childViews.progressBarView.setValue(99);
-    this.mode = rout.mode;
+    API.delete(this.uri,
+
+        function(err, res) {
+            if (err) {
+                return callback(err, null);
+            }
+
+            Comment.deleteInstance(self);
+
+            return callback(null, res);
+        });
 };
 
-BaseView.prototype.showPageView = function(newPageView) {
-    var oldPageView = this.currentPageView;
+module.exports = Comment;
 
-    if (oldPageView === newPageView) return;
-
-    if (oldPageView) {
-        oldPageView.$.root.classList.remove('is-visible');
-    }
-
-    if (newPageView) {
-        newPageView.$.root.classList.add('is-visible');
-    }
-
-    this.currentPageView = newPageView;
-}
-
-
-
-/**
- *  @TODO
- *  API.Userへの依存をなくす
- *  Model#uriを用いて、API_coreだけで対応する。
- */
-
-
+},{"../Service/API/API.js":19,"./Model.js":16}],16:[function(require,module,exports){
+var EventDispatcher = require('../Service/EventDispatcher.js');
 
 /**
  *  Data model base class.
@@ -1332,7 +788,7 @@ var Model = function(data) {
         this.constructor.addInstance(this);
     }
 };
-extendClass(Model, EventDispatcher);
+inherits(Model, EventDispatcher);
 
 /**
  *  model instances map
@@ -1351,7 +807,7 @@ Model.prototype.schema = {};
  *  Finalizer.
  */
 Model.prototype.finalize = function() {
-    EventDispatcher.finalize.call(this);
+    EventDispatcher.prototype.finalize.call(this);
 };
 
 /**
@@ -1378,6 +834,13 @@ Model.addInstance = function(instance) {
  */
 Model.getInstance = function(id) {
     return this.instances_[id];
+};
+
+Model.deleteInstance = function(instance) {
+    instance.fire('delete', instance);
+
+    this.instances_[instance.id] = null;
+    instance.finalize();
 };
 
 /**
@@ -1433,51 +896,470 @@ Model.prototype.dispatchUpdate = function() {
     this.fire('update', this);
 };
 
+module.exports = Model;
 
-
-
+},{"../Service/EventDispatcher.js":25}],17:[function(require,module,exports){
+var Model = require('./Model.js'),
+    Comment = require('./Comment.js'),
+    API = require('../Service/API/API.js');
 
 /**
- *  namespace for definition of API Errors
- *  @namespace
+ *  Project Model.
+ *  @constructor
+ *  @param {Object} data initial data.
+ *  @extends {Model}
  */
-var APIError = {
-    PERMISSION_DENIED: {
-        code: 0,
-        msg: 'Permission denied.',
+var Project = function(data) {
+    if (!(this instanceof Project)) return new Project(data);
+
+    if (isObject(data)) {
+        if (Project.hasInstance(data.id)) {
+            return Project.getInstance(data.id).updateWithData(data);
+        }
+    }
+
+    Model.call(this, data);
+};
+inherits(Project, Model);
+
+/**
+ *  model instances map
+ *  @type {Object}
+ *  @private
+ *  @overrides
+ */
+Project.instances_ = {};
+
+/**
+ *  Schema
+ *
+ *  @type {Object}
+ *  @override
+ */
+Project.prototype.schema = {
+    "id": {
+        type: String,
+        value: ''
     },
-    PARSE_FAILED: {
-        code: 1,
-        msg: 'Failed to parse response.',
+    "uri": {
+        type: String,
+        value: ''
     },
-    CONNECTION_FAILED: {
-        code: 2,
-        msg: 'Failed to connect server.',
+    "name": {
+        type: String,
+        value: 'undefined'
+    },
+    "owner": {
+        type: String,
+        value: ''
+    },
+    "root": {
+        type: null,
+        value: null
     }
 };
 
+/**
+ *  Get Project data by project name.
+ *  @param {string} userName the owner name.
+ *  @param {string} projectName the project name.
+ *  @param {Function} callback callback function.
+ */
+Project.getByName = function(userName, projectName, callback) {
+    API.get('/user/' + userName + '/project/' + projectName,
+        function(err, res) {
+            if (err) {
+                return callback(err, null);
+            }
+
+            return callback(null, new Project(res));
+        });
+};
 
 /**
- *  Error for failed to parse server response.
- *  @param {XMLHttpRequest} xhr failed xhr object.
- *  @return {Object} error object.
+ *  Get all Project data by owner name.
+ *  @param {string} userName the owner name.
+ *  @param {Function} callback callback function.
  */
-APIError.parseFailed = function(xhr) {
-    return extend(APIError.PARSE_FAILED, {
-        xhr: xhr
+Project.getAll = function(userName, callback) {
+    API.get('/user/' + userName + '/project',
+        function(err, res) {
+            if (err) {
+                return callback(err, null);
+            }
+
+            return callback(null, res.map(Project));
+        });
+};
+
+/**
+ *  Create new project.
+ *  @param {string} projectName the proejct name.
+ *  @param {Function} callback callback function.
+ */
+Project.create = function(projectName, callback) {
+    if (!app.isAuthed) {
+        return callback(APIError.PERMISSION_DENIED, null);
+    }
+
+    API.post('/user/' + app.authedUser.name + '/project',
+        function(err, res) {
+            if (err) {
+                return callback(err, null);
+            }
+
+            return callback(null, new Project(res));
+        });
+};
+
+/**
+ *  Update project data.
+ *  @param {Object} params update datas.
+ *  @params {Function} callback callback function.
+ */
+Project.prototype.update = function(callback) {
+    if (!app.isAuthed || app.authedUser.name !== this.owner) {
+        return callback(APIError.PERMISSION_DENIED, null);
+    }
+
+    API.patch(this.uri, {
+        name: this.name
+    }, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, new Project(res));
     });
 };
 
 /**
- *  Error for failed to connection.
- *  @param {XMLHttpRequest} xhr failed xhr object.
- *  @return {Object} error object.
+ *  Delete project data.
+ *  @param {Function} callback callback function.
  */
-APIError.connectionFailed = function(xhr) {
-    return extend(APIError.CONNECTION_FAILED, {
-        xhr: xhr
+Project.prototype.delete = function(callback) {
+    if (!app.isAuthed || app.authedUser.name !== this.owner) {
+        return callback(APIError.PERMISSION_DENIED, null);
+    }
+
+    API.delete(this.uri, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        //@TODO: インスタンスを消す
+        return callback(null, new Project(res));
     });
 };
+
+/**
+ *  Get project comments.
+ *  @param {Function} callback callback function.
+ */
+Project.prototype.getComments = function(callback) {
+    API.get(this.uri + '/comment', function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, res.map(Comment));
+    });
+};
+
+Project.prototype.postComment = function(text, callback) {
+    API.post(this.uri + '/comment', null, {
+        text: text
+    }, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, Comment(res));
+    });
+};
+
+module.exports = Project;
+
+},{"../Service/API/API.js":19,"./Comment.js":15,"./Model.js":16}],18:[function(require,module,exports){
+var Model = require('./Model.js'),
+    Project = require('./Project.js'),
+    API = require('../Service/API/API.js');
+
+/**
+ *  User Model.
+ *  @constructor
+ *  @param {Object} data initial data.
+ *  @extends {Model}
+ */
+var User = function(data) {
+    if (!(this instanceof User)) return new User(data);
+
+    if (isObject(data)) {
+        if (User.hasInstance(data.name)) {
+            return User.getInstance(data.name).updateWithData(data);
+        }
+    }
+
+    Model.call(this, data);
+};
+inherits(User, Model);
+
+/**
+ *  model instances map
+ *  @type {Object}
+ *  @private
+ *  @overrides
+ */
+User.instances_ = {};
+
+/**
+ *  Schema
+ *
+ *  @type {Object}
+ *  @override
+ */
+User.prototype.schema = {
+    "id": {
+        type: String,
+        value: ''
+    },
+    "uri": {
+        type: String,
+        value: ''
+    },
+    "name": {
+        type: String,
+        value: 'undefined'
+    },
+    "description": {
+        type: String,
+        value: ''
+    },
+    "postCount": {
+        type: Number,
+        value: 0
+    },
+    "followingCount": {
+        type: Number,
+        value: 0
+    },
+    "followedCount": {
+        type: Number,
+        value: 0
+    },
+    "reviewCount": {
+        type: Number,
+        value: 0
+    },
+    "reviewingCount": {
+        type: Number,
+        value: 0
+    },
+    "reviewedCount": {
+        type: Number,
+        value: 0
+    },
+    "icon": {
+        type: String,
+        value: ''
+    }
+};
+
+/**
+ *  Check if the instance is exist.
+ *  @param {string} name user name.
+ *  @return {boolean} If true, the instance is exist.
+ *  @override
+ */
+User.hasInstance = function(name) {
+    return !!this.instances_[name];
+};
+
+/**
+ *  add instance.
+ *  @param {User} instance instance
+ *  @override
+ */
+User.addInstance = function(instance) {
+    this.instances_[instance.name] = instance;
+};
+
+/**
+ *  get instance.
+ *  @param {string} name user name.
+ *  @return {User} the instance.
+ *  @override
+ */
+User.getInstance = function(name) {
+    return this.instances_[name];
+};
+
+/**
+ *  Update model data with source object.
+ *  @param {Object} data update source object.
+ *  @return {User} this.
+ *  @override
+ */
+User.prototype.updateWithData = function(data) {
+    Model.prototype.updateWithData.call(this, data);
+
+    this.projects = [];
+    this.projectsUpdated = new Date();
+
+    return this;
+};
+
+/**
+ *  Get User data by user name.
+ *  @param {string} userName the user name.
+ *  @param {Function} callback callback function.
+ */
+User.getByName = function(userName, callback) {
+    var instance;
+
+    if (this.hasInstance(userName)) {
+        instance = this.getInstance(userName);
+
+        callback(null, instance);
+
+        return;
+    }
+
+    API.get('/user/' + userName, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, new User(res));
+    });
+};
+
+/**
+ *  Get authenticated user data.
+ *  @param {Function} callback callback function.
+ */
+User.getMe = function(callback) {
+    API.get('/auth/me', function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, new User(res));
+    });
+};
+
+/**
+ *  Get all projects.
+ *  @param {Function} callback callback function.
+ */
+User.prototype.getAllProjects = function(callback) {
+    API.get(this.uri + '/project', function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, res.map(Project));
+    });
+};
+
+/**
+ *  Create new user.
+ *  @param {string} userName the user name.
+ *  @param {string} password the password.
+ *  @param {Function} callback callback function.
+ */
+User.create = function(userName, password, callback) {
+    API.post('/user/' + userName, {
+        password: password
+    }, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, new User(res));
+    });
+};
+
+/**
+ *  Update user data.
+ *  @param {Object} params update datas.
+ *  @param {Function} callback callback function.
+ */
+User.prototype.update = function(params, callback) {
+    if (!app.isAuthed || this !== app.authedUser) {
+        return callback(APIError.PERMISSION_DENIED, null);
+    };
+
+    API.patch(this.uri, {
+        name: this.name,
+        description: this.description
+    }, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, new User(res));
+    });
+};
+
+/**
+ *  Update user icon image.
+ *  @param {Blob} blob icon image file blob.
+ *  @param {Function} callback callback function.
+ */
+User.prototype.updateIcon = function(blob, callback) {
+    console.warn('User#updateIcon: NIY.');
+
+    if (!app.isAuthed || this !== app.authedUser) {
+        return callback(APIError.PERMISSION_DENIED, null);
+    };
+
+    API.patchB(this.uri + '/icon', blob, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, new User(res));
+    });
+};
+
+/**
+ *  Delete user data.
+ *  @param {Function} callback callback function.
+ */
+User.prototype.delete = function(callback) {
+    if (!app.isAuthed || this !== app.authedUser) {
+        return callback(APIError.PERMISSION_DENIED, null);
+    };
+
+    API.delete(this.uri, function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        //@TODO: インスタンスを消す
+        return callback(null, res);
+    });
+};
+
+/**
+ *  Get user's comments.
+ *  @param {Function} callback callback function.
+ */
+User.prototype.getComments = function(callback) {
+    API.get(this.uri + '/comment', function(err, res) {
+        if (err) {
+            return callback(err, null);
+        }
+
+        return callback(null, res.map(Comment));
+    });
+};
+
+module.exports = User;
+
+},{"../Service/API/API.js":19,"./Model.js":16,"./Project.js":17}],19:[function(require,module,exports){
+var APIError = require('./APIError.js');
 
 /**
  *  namespace for request API
@@ -1489,7 +1371,7 @@ var API = {};
  *  API Entry Point
  *  @const {string}
  */
-API.EntryPoint = 'http://localhost:3000/api/v1';
+API.EntryPoint = '/api/v1';
 
 //@TODO: DEBUG ONLY
 // API.EntryPoint = './testdata';
@@ -1658,6 +1540,7 @@ API.ajax = function(method, url, headers, body, callback) {
         xhr.setRequestHeader('X-Token', API.getToken());
     }
 
+    xhr.setRequestHeader('Content-Type', 'application/json');
     if (headers) {
         Object.keys(headers).forEach(function(key) {
             xhr.setRequestHeader(key, headers[key]);
@@ -1682,7 +1565,7 @@ API.ajax = function(method, url, headers, body, callback) {
         if (result.success) {
             return callback(null, result.success);
         } else {
-            return callback(result.error, null);
+            return callback(APIError.detectError(result.error), null);
         }
     };
 
@@ -1705,7 +1588,7 @@ API.token = null;
  */
 API.KEY_TOKEN = 'token';
 
-/** 
+/**
  *  Update authentication token.
  *  @param {string|null} token token.
  */
@@ -1714,7 +1597,7 @@ API.updateToken = function(token) {
     localStorage.setItem(API.KEY_TOKEN, token || '');
 };
 
-/** 
+/**
  *  Get authentication token.
  *  @return {string|null} token.
  */
@@ -1724,7 +1607,7 @@ API.getToken = function() {
     return API.token = localStorage.getItem(API.KEY_TOKEN);
 };
 
-/** 
+/**
  *  Check if authentication token is exist.
  *  @return {boolean} If true, the token is exist.
  */
@@ -1732,1666 +1615,1777 @@ API.hasToken = function() {
     return API.getToken() !== '';
 };
 
+module.exports = API;
+
+},{"./APIError.js":20}],20:[function(require,module,exports){
 /**
- *  @TODO
- *  API.Userへの依存をなくす
- *  Model#uriを用いて、API_coreだけで対応する。
- */
-
-/**
- *  User Model.
- *  @constructor
- *  @param {Object} data initial data.
- *  @extends {Model}
- */
-var User = function(data) {
-    if (!(this instanceof User)) return new User(data);
-
-    if (isObject(data)) {
-        if (User.hasInstance(data.id)) {
-            return User.getInstance(data.id).updateWithData(data);
-        }
-    }
-
-    Model.call(this, data);
-};
-extendClass(User, Model);
-
-
-/**
- *  model instances map
- *  @type {Object}
- *  @private
- *  @overrides
- */
-User.instances_ = {};
-
-/** 
- *  Schema
- *
- *  @type {Object}
- *  @override
- */
-User.prototype.schema = {
-    "id": {
-        type: String,
-        value: ''
-    },
-    "uri": {
-        type: String,
-        value: ''
-    },
-    "name": {
-        type: String,
-        value: 'undefined'
-    },
-    "description": {
-        type: String,
-        value: ''
-    },
-    "postCount": {
-        type: Number,
-        value: 0
-    },
-    "followingCount": {
-        type: Number,
-        value: 0
-    },
-    "followedCount": {
-        type: Number,
-        value: 0
-    },
-    "reviewCount": {
-        type: Number,
-        value: 0
-    },
-    "reviewingCount": {
-        type: Number,
-        value: 0
-    },
-    "reviewedCount": {
-        type: Number,
-        value: 0
-    },
-    "icon": {
-        type: String,
-        value: ''
-    }
-};
-
-/**
- *  Get User data by user name.
- *  @param {string} userName the user name.
- *  @param {Function} callback callback function.
- */
-User.getByName = function(userName, callback) {
-    API.get('/user/' + userName, function(err, res) {
-        if (err) {
-            return callback(err, null);
-        }
-
-        return callback(null, new User(res));
-    });
-};
-
-/**
- *  Get authenticated user data.
- *  @param {Function} callback callback function.
- */
-User.getMe = function(callback) {
-    API.get('/auth/me', function(err, res) {
-        if (err) {
-            return callback(err, null);
-        }
-
-        return callback(null, new User(res));
-    });
-};
-
-/**
- *  Get all projects.
- *  @param {Function} callback callback function.
- */
-User.prototype.getAllProjects = function(callback) {
-    API.get(this.uri + '/project', function(err, res) {
-        if (err) {
-            return callback(err, null);
-        }
-
-        return callback(null, res.map(Project));
-    });
-};
-
-/**
- *  Create new user.
- *  @param {string} userName the user name.
- *  @param {string} password the password.
- *  @param {Function} callback callback function.
- */
-User.create = function(userName, password, callback) {
-    API.post('/user/' + userName, {
-        password: password
-    }, function(err, res) {
-        if (err) {
-            return callback(err, null);
-        }
-
-        return callback(null, new User(res));
-    });
-};
-
-/**
- *  Update user data.
- *  @param {Object} params update datas.
- *  @param {Function} callback callback function.
- */
-User.prototype.update = function(params, callback) {
-    if (!app.isAuthed || this !== app.authedUser) {
-        return callback(APIError.PERMISSION_DENIED, null);
-    };
-
-    API.patch(this.uri, {
-        name: this.name,
-        description: this.description
-    }, function(err, res) {
-        if (err) {
-            return callback(err, null);
-        }
-
-        return callback(null, new User(res));
-    });
-};
-
-/**
- *  Update user icon image.
- *  @param {Blob} blob icon image file blob.
- *  @param {Function} callback callback function.
- */
-User.prototype.updateIcon = function(blob, callback) {
-    console.warn('User#updateIcon: NIY.');
-
-    if (!app.isAuthed || this !== app.authedUser) {
-        return callback(APIError.PERMISSION_DENIED, null);
-    };
-
-    API.patchB(this.uri + '/icon', blob, function(err, res) {
-        if (err) {
-            return callback(err, null);
-        }
-
-        return callback(null, new User(res));
-    });
-};
-
-/**
- *  Delete user data.
- *  @param {Function} callback callback function.
- */
-User.prototype.delete = function(callback) {
-    if (!app.isAuthed || this !== app.authedUser) {
-        return callback(APIError.PERMISSION_DENIED, null);
-    };
-
-    API.delete(this.uri, function(err, res) {
-        if (err) {
-            return callback(err, null);
-        }
-
-        //@TODO: インスタンスを消す
-        return callback(null, res);
-    });
-};
-
-/**
- *  Get user's comments.
- *  @param {Function} callback callback function.
- */
-User.prototype.getComments = function(callback) {
-    API.get(this.uri + '/comment', function(err, res) {
-        if (err) {
-            return callback(err, null);
-        }
-
-        return callback(null, res.map(Comment));
-    });
-};
-
-
-
-/**
- *  @constructor
- */
-var Application = function() {};
-extendClass(Application, EventDispatcher);
-
-Application.prototype.init = function() {
-    var self = this;
-
-    /**
-     *  @NOTE singleton
-     */
-    if (Application.instance) return Application.instance;
-    Application.instance = this;
-
-    EventDispatcher.call(this);
-
-    /**
-     *  The result of url routing.
-     *  @type {Object}
-     */
-    this.rout = this.routing();
-
-    /**
-     *  Authentication state.
-     *  @type {boolean}
-     */
-    this.isAuthed = false;
-
-    /**
-     *  Authenticated user.
-     *  @type {User}
-     */
-    this.authedUser = null;
-
-    this.baseView = new BaseView();
-    this.baseView.appendTo(document.body);
-
-    window.addEventListener('hashchange', this.onHashChange.bind(this));
-
-    this.updateAuthState(function() {
-        self.onHashChange();
-    })
-};
-
-/**
- *  check authentication state
- */
-Application.prototype.updateAuthState = function(callback) {
-    var self = this;
-
-    /**
-     *  @TODO LocalStorageからtoken取り出す
-     */
-
-    User.getMe(function(err, me) {
-        if (err) {
-            self.setAuthedUser(null);
-            callback(err, null);
-            return;
-        }
-
-        self.setAuthedUser(new User(me));
-        callback(null, me);
-    });
-};
-
-Application.prototype.setAuthedUser = function(user) {
-    if (this.authedUser === user) return;
-
-    if (user) {
-        this.isAuthed = true;
-        this.authedUser = user;
-    } else {
-        this.isAuthed = false;
-        this.authedUser = null;
-    }
-
-    this.fire('auth.change',
-        this.isAuthed,
-        this.authedUser
-    );
-};
-
-/**
- *  Sign in.
- */
-Application.prototype.signIn = function(userName, password, callback) {
-    var self = this;
-
-    Auth.signIn(userName, password, function(err, user, token) {
-
-        if (err) {
-            return callback(err, null);
-        }
-
-        self.setAuthedUser(user);
-        callback(null, user);
-    });
-};
-
-/**
- *  Change url asyncrounously.
- *  @param {string} url url.
- */
-Application.prototype.setURLAsync = function(url) {
-    setTimeout(function() {
-        document.location.href = url;
-    }, 0);
-};
-
-/**
- *  Change url hash asyncrounously.
- *  @param {string} hash hash.
- */
-Application.prototype.setHashAsync = function(hash) {
-    setTimeout(function() {
-        document.location.hash = '#!' + hash;
-    }, 0);
-};
-
-/** 
- *  check rout
- *  @param {string} [url] URL if elipsis, it is 'document.localtion.href'.
- *  @return {Object} parameters of rout
- */
-Application.prototype.routing = function(url) {
-    var controller,
-        params = null,
-        ma;
-
-    url = url || window.location.hash.substr(2);
-
-    if (url === '') {
-        if (this.isAuthed) {
-            params = {
-                mode: 'user',
-                userName: this.authedUser.name
-            };
-        } else {
-            params = {
-                mode: 'signin'
-            };
-        }
-
-    } else if (url === '/signup') {
-        params = {
-            mode: 'signup'
-        };
-
-    } else if (url === '/signin') {
-        // /signin
-        params = {
-            mode: 'signin'
-        };
-
-    } else if (ma = url.match(/^\/user\/([^\/]+)$/)) {
-        // /user/:userName
-        params = {
-            mode: 'user',
-            userName: ma[1]
-        };
-
-    } else if (ma = url.match(/^\/user\/([^\/]+)\/project\/([^\/]+)$/)) {
-        // /user/:userName/project/:projectName
-        params = {
-            mode: 'project',
-            userName: ma[1],
-            projectName: ma[2]
-        };
-
-    } else {
-        //  no match.
-        params = {
-            mode: 'error404'
-        }
-    }
-
-    return params;
-};
-
-Application.prototype.onHashChange = function() {
-    this.rout = this.routing()
-    this.fire('rout.change', this.rout);
-};
-
-
-
-
-
-
-
-
-/**
- *	ProgressBarView
- *	@constructor
- *	@extend {View}
- */
-function ProgressBarView() {
-    View.call(this);
-
-    this.loadTemplate('ProgressBarView');
-
-    /**
-     *	@type {ProgressBarView.State}
-     */
-    this.state = ProgressBarView.State.INITIAL;
-
-    this.setComplete = this.setComplete.bind(this);
-    this.setInitial = this.setInitial.bind(this);
-};
-extendClass(ProgressBarView, View);
-
-/**
- *	@enum {number}
- */
-ProgressBarView.State = {
-    INITIAL: 0,
-    PROCESSING: 1,
-    COMPLETE: 2
-};
-
-/**
- *	Animation duration time (ms)
- *	@const {number}
- */
-ProgressBarView.ANIMATION_DURATION = 800;
-
-ProgressBarView.prototype.finalize = function() {
-    this.setComplete = null;
-    this.setInitial = null;
-
-    View.prototype.finalize.call(this);
-};
-
-ProgressBarView.prototype.setComplete = function() {
-    var inner = this.$.inner;
-
-    if (this.state !== ProgressBarView.State.PROCESSING) return;
-    this.state = ProgressBarView.State.COMPLETE;
-
-    setTimeout(this.setInitial, ProgressBarView.ANIMATION_DURATION);
-
-    inner.classList.add('is-complete');
-    inner.style.width = '';
-};
-
-ProgressBarView.prototype.setInitial = function() {
-    var inner = this.$.inner;
-
-    if (this.state !== ProgressBarView.State.COMPLETE) return;
-    this.state = ProgressBarView.State.INITIAL;
-
-    inner.classList.remove('is-complete');
-    inner.classList.add('is-initial');
-};
-
-/**
- *	@param {number} value value.
- */
-ProgressBarView.prototype.setValue = function(value) {
-    var inner = this.$.inner;
-
-    if (this.state === ProgressBarView.State.COMPLETE) return;
-    this.state = ProgressBarView.State.PROCESSING;
-
-    if (value >= 100) {
-        value = 100;
-        setTimeout(this.setComplete, ProgressBarView.ANIMATION_DURATION);
-    }
-
-    inner.classList.remove('is-initial');
-    inner.style.width = value + '%';
-};
-
-
-
-
-
-
-
-
-/**
- *	ToolBarView
- *	@constructor
- *	@extend {View}
- */
-var ToolBarView = function() {
-    View.call(this);
-
-    this.loadTemplate('ToolBarView');
-
-    app.on('auth.change', this.onChangeAuth = this.onChangeAuth.bind(this));
-
-    this.checkAuthState();
-};
-
-extendClass(ToolBarView, View);
-
-/**
- *	Finalize.
- */
-ToolBarView.prototype.finalize = function() {
-    app.off('auth.change', this.onChangeAuth);
-    this.onChangeAuth = null;
-
-    View.prototype.finalize.call(this);
-};
-
-/**
- *	Check authentication state.
- */
-ToolBarView.prototype.checkAuthState = function() {
-    if (app.isAuthed) {
-        this.$.root.classList.add('is-authed');
-    } else {
-        this.$.root.classList.remove('is-hide');
-    }
-
-    this.childViews.userInlineView.setUser(app.authedUser);
-};
-
-/**
- *	EventListener: Application#on('auth.change')
- *	@param {boolean} isAuthed isAuthed.
- *	@param {User} authedUser authedUser.
- */
-ToolBarView.prototype.onChangeAuth = function(isAuthed, authedUser) {
-    this.checkAuthState();
-};
-
-
-
-
-
-
-
-/**
- *  Authentication methods.
- *
- *  This API category DOES NOT have any model (as 'Auth'), methods only.
- *
+ *  namespace for definition of API Errors
  *  @namespace
  */
-Auth = {};
+var APIError = {};
+
+APIError.Code = {
+    SUCCESS: 0,
+    PERMISSION_DENIED: 1,
+    PARSE_FAILED: 2,
+    CONNECTION_FAILED: 3,
+    USED_NAME: 4,
+    INVALID_PARAMETER: 5,
+    UNKNOWN: 999
+};
+
+extend(APIError, {
+    SUCCESS: {
+        code: APIError.Code.SUCCESS,
+        msg: 'success'
+    },
+    PERMISSION_DENIED: {
+        code: APIError.Code.PERMISSION_DENIED,
+        msg: 'Permission denied.',
+    },
+    PARSE_FAILED: {
+        code: APIError.Code.PARSE_FAILED,
+        msg: 'Failed to parse response.',
+    },
+    CONNECTION_FAILED: {
+        code: APIError.Code.CONNECTION_FAILED,
+        msg: 'Failed to connect server.',
+    },
+    USED_NAME: {
+        code: APIError.Code.USED_NAME,
+        msg: 'This user name is already used.'
+    },
+    INVALID_PARAMETER: {
+        code: APIError.Code.INVALID_PARAMETER,
+        msg: 'Parameters are invalid.'
+    },
+    UNKNOWN: {
+        code: APIError.Code.UNKNOWN,
+        msg: 'Unknown error.'
+    }
+});
 
 /**
- *  Sign in.
- *  @param {string} userName userName.
- *  @param {string} password password.
- *  @param {Function} callback callback.
+ *  Error for failed to parse server response.
+ *  @param {XMLHttpRequest} xhr failed xhr object.
+ *  @return {Object} error object.
  */
-Auth.signIn = function(userName, password, callback) {
-    API.post('/auth', null, {
-        'userName': userName,
-        'password': password
-    }, function(err, res) {
-        var token;
-
-        if (err) {
-            return callback(err, null);
-        }
-
-        return callback(null, new User(res));
+APIError.parseFailed = function(xhr) {
+    return extend(APIError.PARSE_FAILED, {
+        xhr: xhr
     });
 };
 
-
-
 /**
- *  SignInPageView
- *  @constructor
- *  @extend {View}
+ *  Error for failed to connection.
+ *  @param {XMLHttpRequest} xhr failed xhr object.
+ *  @return {Object} error object.
  */
-var SignInPageView = function() {
-    View.call(this);
-
-    this.loadTemplate('SignInPageView');
-
-    this.$.form.addEventListener('submit', this.onSubmit = this.onSubmit.bind(this));
-    app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
-    app.on('auth.change', this.onChangeAuth = this.onChangeAuth.bind(this));
-};
-extendClass(SignInPageView, View);
-
-/**
- *  Finalize.
- */
-SignInPageView.prototype.finalize = function() {
-    this.$.form.removeEventListener('submit', this.onSubmit);
-    this.onSubmit = null;
-
-    app.off('rout.change', this.onChangeRout);
-    this.onChangeRout = null;
-
-    app.off('auth.change', this.onChangeAuth);
-    this.onChangeAuth = null;
-
-    View.prototype.finalize.call(this);
-};
-
-/**
- *  Check if all input forms are validate.
- */
-SignInPageView.prototype.validate = function() {
-    var userName = this.$.userName.value,
-        password = this.$.password.value,
-        isValidate = true;
-
-    if (!password) {
-        isValidate = false;
-        this.$.password.classList.add('is-error');
-        this.$.password.focus();
-    } else {
-        this.$.password.classList.remove('is-error');
-    }
-
-    if (!userName) {
-        isValidate = false;
-        this.$.userName.classList.add('is-error');
-        this.$.userName.focus();
-    } else {
-        this.$.userName.classList.remove('is-error');
-    }
-
-    return isValidate;
-};
-
-/**
- *  Check authentication state.
- */
-SignInPageView.prototype.checkAuthState = function() {
-    var self = this;
-
-    if (app.isAuthed) {
-        this.$.root.classList.add('is-authed');
-        this.childViews.userInlineView.setUser(app.authedUser);
-    } else {
-        this.$.root.classList.remove('is-authed');
-        this.childViews.userInlineView.setUser(null);
-    }
-
-};
-
-/**
- *  EventListener: Application#on("rout.change")
- *  @param {Object} rout routing data.
- */
-SignInPageView.prototype.onChangeRout = function(rout) {
-    var self;
-
-    if (rout.mode !== 'signin') return;
-
-    this.checkAuthState();
-
-    self = this;
-    runAsync(function() {
-        self.fire('load');
-        self.$.userName.focus();
-    });
-
-    this.userName = '';
-    this.password = '';
-};
-
-/**
- *  EventListener: Application#on("auth.change")
- *  @param {boolean} isAuthed isAuthed.
- *  @param {User} authedUser authedUser
- */
-SignInPageView.prototype.onChangeAuth = function(isAuthed, authedUser) {
-    this.checkAuthState();
-};
-
-/**
- *  EventListener: HTMLFormElement#on("submit")
- *  @param {Event} ev event object.
- */
-SignInPageView.prototype.onSubmit = function(ev) {
-    ev.preventDefault();
-    ev.stopPropagation();
-
-    if (!this.validate()) return;
-
-    app.signIn(this.$.userName.value, this.$.password.value, function(err, user) {
-        app.setHashAsync(user.uri);
+APIError.connectionFailed = function(xhr) {
+    return extend(APIError.CONNECTION_FAILED, {
+        xhr: xhr
     });
 };
 
-
-
-
-
-
 /**
- *  SignUpPageView
- *  @constructor
- *  @extend {View}
+ *  エラーを特定する。
+ *  ものすごく地道な実装。
+ *  サーバーは頼むからエラーをコードで返してくれ！
  */
-var SignUpPageView = function() {
-    View.call(this);
+APIError.detectError = function(err) {
+    if (isObject(err)) {
+        switch (err.code) {
+            case APIError.Code.PERMISSION_DENIED:
+                return APIError.PERMISSION_DENIED;
+                break;
 
-    this.loadTemplate('SignUpPageView');
+            case APIError.Code.PARSE_FAILED:
+                return APIError.PARSE_FAILED;
+                break;
 
-    this.$.form.addEventListener('submit', this.onSubmit = this.onSubmit.bind(this));
-    app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
-};
-extendClass(SignUpPageView, View);
+            case APIError.Code.CONNECTION_FAILED:
+                return APIError.CONNECTION_FAILED;
+                break;
 
-/**
- *  Finalize.
- */
-SignUpPageView.prototype.finalize = function() {
-    this.$.form.removeEventListener('submit', this.onSubmit);
-    this.onSubmit = null;
-
-    app.off('rout.change', this.onChangeRout);
-    this.onChangeRout = null;
-
-    View.prototype.finalize.call(this);
-};
-
-/**
- *  Sign up.
- */
-SignUpPageView.prototype.signUp = function() {
-    var userName, password;
-
-    if (!this.validate()) return;
-
-    userName = this.$.userName.value;
-    password = this.$.password.value;
-
-    //@TODO
-    console.log('サインアップ処理(NIY)');
-};
-
-/**
- *  Check if all input forms are validate.
- */
-SignUpPageView.prototype.validate = function() {
-    var userName = this.$.userName.value,
-        password = this.$.password.value,
-        isValidate = true;
-
-    if (!password) {
-        isValidate = false;
-        this.$.password.classList.add('is-error');
-        this.$.password.focus();
-    } else {
-        this.$.password.classList.remove('is-error');
-    }
-
-    if (!userName) {
-        isValidate = false;
-        this.$.userName.classList.add('is-error');
-        this.$.userName.focus();
-    } else {
-        this.$.userName.classList.remove('is-error');
-    }
-
-    return isValidate;
-};
-
-/**
- *  EventListener: Application#on('rout.change')
- *  @param {Object} rout routing data.
- */
-SignUpPageView.prototype.onChangeRout = function(rout) {
-    var self;
-
-    if (rout.mode !== 'signup') return;
-
-    self = this;
-    setTimeout(function() {
-        self.$.userName.focus();
-    });
-
-    this.userName = '';
-    this.password = '';
-};
-
-/**
- *  EventListener: HTMLFormElement#on('submit')
- *  @param {Event} rout routing data.
- */
-SignUpPageView.prototype.onSubmit = function(ev) {
-    ev.preventDefault();
-    ev.stopPropagation();
-
-    this.signUp();
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/**
- *  @TODO
- *  API.Userへの依存をなくす
- *  Model#uriを用いて、API_coreだけで対応する。
- */
-
-/**
- *  Comment Model.
- *  @constructor
- *  @param {Object} data initial data.
- *  @extends {Model}
- */
-var Comment = function(data) {
-    if (!(this instanceof Comment)) return new Comment(data);
-
-    if (isObject(data)) {
-        if (Comment.hasInstance(data.id)) {
-            return Comment.getInstance(data.id).updateWithData(data);
+            default:
+                return extend(APIError.UNKNOWN, {
+                    original: err
+                });
+                break;
         }
     }
 
-    Model.call(this, data);
-};
-extendClass(Comment, Model);
+    if (err === 'ユーザー名は既に使用されています。') {
+        return APIError.USED_NAME;
+    }
 
-Comment.prototype.hoge = function(name, key) {};
+    if (err === 'ユーザー名またはパスワードに誤りがあります。') {
+        return APIError.INVALID_PARAMETER;
+    }
+
+    return extend(APIError.UNKNOWN, {
+        original: err
+    });
+};
+
+module.exports = APIError;
+
+},{}],21:[function(require,module,exports){
+var Observing = require('./Observing.js'),
+    Map = require('../Map.js');
 
 /**
- *  model instances map
- *  @type {Object}
- *  @private
- *  @overrides
- */
-Comment.instances_ = {};
-
-/** 
- *  Schema
+ *  AttributeObserving
  *
- *  @type {Object}
- *  @override
+ *  This class presents an observing state for node's attribute.
+ *
+ *  @constructor
+ *  @param {Element} target target element.
+ *  @param {string} key target attribute name.
+ *  @extends {Observing}
  */
-Comment.prototype.schema = {
-    "id": {
-        type: String,
-        value: ''
-    },
-    "uri": {
-        type: String,
-        value: ''
-    },
-    "owner": {
-        type: String,
-        value: ''
-    },
-    "text": {
-        type: String,
-        value: ''
-    },
-    "created": {
-        type: Date,
-        value: null
-    },
-    "target": {
-        type: String,
-        value: null
-    },
-    "range": {
-        type: Object,
-        value: null
+function AttributeObserving(target, key) {
+    Observing.apply(this, arguments);
+}
+inherits(AttributeObserving, Observing);
+
+/**
+ *  callback for MutationObserver.
+ *  @param {Array<Object>} mutations mutations
+ */
+AttributeObserving.onChange = function(mutations) {
+    forEach(mutations, function(mutation) {
+        var listeners = this.listenersMap_.get(mutation.target);
+        forEach(listeners, function(listener) {
+            if (listener.key !== mutation.attributeName) return;
+
+            listener.fire('change', listener, mutation.oldValue, listener.getValue());
+        });
+    }, AttributeObserving);
+};
+
+/**
+ *  @type {MutationObserver}
+ */
+AttributeObserving.centralObserver_ = new MutationObserver(AttributeObserving.onChange);
+
+/**
+ *  @type {Map}
+ */
+AttributeObserving.listenersMap_ = new Map();
+
+AttributeObserving.prototype.finalize = function() {
+    //@TODO
+
+    Observing.prototype.finalize.apply(this, arguments);
+};
+
+AttributeObserving.prototype.setup = function() {
+    var target = this.target,
+        key = this.key,
+        listeners = AttributeObserving.listenersMap_.get(target);
+
+    if (!listeners) {
+        listeners = [];
+        AttributeObserving.listenersMap_.set(target, listeners);
+
+        AttributeObserving.centralObserver_.observe(target, {
+            childList: false,
+            attributes: true,
+            characterData: false,
+            subtree: false,
+            attributeOldValue: true,
+            characterDataOldValue: false
+        });
+
+        //@TODO
+        // tune up with attributeFilter option.
+    }
+
+    listeners.push(this);
+};
+
+AttributeObserving.prototype.getValue = function() {
+    var value = this.target.getAttribute(this.key);
+
+    return value || '';
+};
+
+AttributeObserving.prototype.setValue = function(newValue) {
+    var key, listeners;
+
+    if (isObject(newValue)) {
+        key = this.key;
+        listeners = AttributeObserving.listenersMap_.get(this.target);
+        forEach(listeners, function(listener) {
+            if (listener === this ||
+                listener.key !== key) return;
+            listener.fire('change', listener, listener.getValue(), newValue);
+        }, this);
+    } else {
+        if (!newValue && newValue !== 0) {
+            this.target.removeAttribute(this.key);
+        } else {
+            this.target.setAttribute(this.key, newValue);
+        }
+    }
+};
+
+module.exports = AttributeObserving;
+
+},{"../Map.js":26,"./Observing.js":23}],22:[function(require,module,exports){
+var AttributeObserving = require('./AttributeObserving.js'),
+    PropertyObserving = require('./PropertyObserving.js');
+
+/**
+ *  @NOTE
+ *  <template name="Tag1" huga={{hoge}}>
+ *      {{hoge}}
+ *  <template>
+ *
+ *  --> Tag1.hoge === Tag1@huga === Tag1.textContent
+ *
+ *  <template name="Tag2" huga={{hoge}}>
+ *      {{hoge}}
+ *  <template>
+ *
+ *  --> Tag2.hoge === Tag2@huga === Tag2.textContent
+ *
+ */
+
+/**
+ *  @NOTE
+ *  <template name="Tag1" huga={{value1}}>
+ *      {{value1}}
+ *  <template>
+ *
+ *  --> Tag1.value1 === Tag1.textContent === Tag1@huga
+ *
+ *  <template name="Tag2" hoge={{value2}}>
+ *      {{value2}}
+ *  <template>
+ *
+ *  --> Tag2.value2 === Tag2.textContent === Tag2@hoge
+ *
+ *  <template name="Tag3" value="{{value3}}">
+ *      <Tag1 huga="{{value3}}"></Tag1>
+ *      <Tag2 huga="{{value3}}"></Tag2>
+ *  <template>
+ *
+ *  --> Tag3@value === Tag3.value3 === Tag1@huge === Tag2@huga
+ *
+ */
+
+function Binding() {
+    /**
+     *  observings
+     *  @type {Array<Observing>}
+     */
+    this.observings = [];
+
+    /**
+     *  @type {*}
+     *  @private
+     */
+    this.oldValue_;
+};
+
+/**
+ *  Add element attribute value into binding target
+ *  @param {Element} element element
+ *  @param {string} attributeName attribute name
+ */
+Binding.prototype.addAttributeTarget = function(element, attributeName) {
+    var observing = new AttributeObserving(element, attributeName);
+    observing.on('change', this.onChange, this);
+    this.observings.push(observing);
+};
+
+/**
+ *  Remove element attribute value from binding target
+ */
+Binding.prototype.removeAttributeTarget = function() {
+    throw new Error('Binding#removeAttributeTarget: Not Implemented Yet.');
+};
+
+/**
+ *  Add object property value into binding target
+ *  @param {Object} object object
+ *  @param {string} propertyPath property path
+ */
+Binding.prototype.addPropertyTarget = function(object, propertyPath) {
+    var observing = new PropertyObserving(object, propertyPath);
+    observing.on('change', this.onChange, this);
+    this.observings.push(observing);
+};
+
+/**
+ *  Remove object property value from binding target
+ */
+Binding.prototype.removePropertyTarget = function(object, property) {
+    throw new Error('Binding#removePropertyTarget: Not Implemented Yet.');
+};
+
+/**
+ *  callback of Observing#change.
+ *  @param {Observing} sourceObserving source observing.
+ *  @param {*} oldValue old value.
+ *  @param {*} newValue new value.
+ */
+Binding.prototype.onChange = function(sourceObserving, oldValue, newValue) {
+    oldValue = this.oldValue_;
+
+    if (oldValue === newValue) {
+        return;
+    }
+
+    forEach(this.observings, function(observing) {
+        if (observing === sourceObserving) return;
+        observing.setValue(newValue);
+    });
+    this.oldValue_ = newValue;
+};
+
+
+module.exports = Binding;
+
+},{"./AttributeObserving.js":21,"./PropertyObserving.js":24}],23:[function(require,module,exports){
+var EventDispatcher = require('../EventDispatcher.js');
+
+/**
+ *  Observing
+ *
+ *  This class presents an obsrving state for many situations like below.
+ *  - Object property.
+ *  - Node attribute.
+ *
+ *  This is abstract class, so please use extended class like below.
+ *  - PropertyObserving <--- for object property.
+ *  - AttributeObserving <--- for node attribute.
+ *
+ *  @constructor
+ *  @param {Object} target target object.
+ *  @param {string} key target key
+ *  @extends {EventDispatcher}
+ */
+function Observing(target, key) {
+    EventDispatcher.apply(this, arguments);
+
+    if (!isObject(target)) {
+        throw new Error('Observing target must be object.');
+    }
+
+    if (!isString(key) || key === '') {
+        throw new Error('\'' + key + '\' is invalid for Observing key.');
+    }
+
+    /**
+     *  @type {Object}
+     */
+    this.target = target;
+
+    /**
+     *  @type {string}
+     */
+    this.key = key;
+
+    this.setup();
+}
+inherits(Observing, EventDispatcher);
+
+Observing.prototype.finalize = function() {
+    EventDispatcher.prototype.finalize.apply(this, arguments);
+};
+
+Observing.prototype.setup = function() {
+    throw new Error('Observing#setup must be overrided.');
+};
+
+Observing.prototype.setValue = function(newValue) {
+    throw new Error('Observing#setValue must be overrided.');
+};
+
+module.exports = Observing;
+
+},{"../EventDispatcher.js":25}],24:[function(require,module,exports){
+var Observing = require('./Observing.js'),
+    CustomObserver = require('../Observer/CustomObserver.js');
+
+/**
+ *  PropertyObserving
+ *
+ *  This class presents an observing state for object's property.
+ *
+ *  @constructor
+ *  @param {Object} target target object.
+ *  @param {string} key target property path like 'deep.property.name'
+ *  @extends {Observing}
+ */
+function PropertyObserving(target, key) {
+    Observing.apply(this, arguments);
+}
+inherits(PropertyObserving, Observing);
+
+PropertyObserving.prototype.finalize = function() {
+    CustomObserver.unobserve(target, key, this.onChange, this);
+
+    Observing.prototype.finalize.apply(this, arguments);
+};
+
+PropertyObserving.prototype.setup = function() {
+    var target = this.target,
+        key = this.key;
+
+    CustomObserver.observe(target, key, this.onChange, this);
+};
+
+PropertyObserving.prototype.getValue = function(newValue) {
+    var deep = getObjectForPath(this.target, this.key);
+
+    return deep ? deep.object[deep.key] : null;
+};
+
+PropertyObserving.prototype.setValue = function(newValue) {
+    var deep = getObjectForPath(this.target, this.key),
+        oldValue,
+        object,
+        key;
+
+    if (!isObject(deep)) return;
+
+    object = deep.object;
+    key = deep.key;
+    listenerName = 'on' + key.charAt(0).toUpperCase() + key.substr(1);
+    oldValue = object[key];
+
+    object[key] = newValue;
+
+    if (isFunction(object[listenerName])) {
+        object[listenerName](oldValue, newValue);
     }
 };
 
 /**
- *  @override
+ *  オブジェクトのプロパティをたどって、最下層のオブジェクトを返す
+ *
+ *  @example
+ *      path='foo.bar.buz.piyo'の場合、
+ *      {
+ *          object: object.foo.bar.buz,
+ *          key: 'piyo'
+ *      }
+ *      を返す。
+ *
+ *  @param {Object} object object
+ *  @param {string} path path
+ *  @return {{
+ *      object: Object,
+ *      key: string
+ *  }} result object.
  */
-Comment.prototype.updateWithData = function(data) {
-    Model.prototype.updateWithData.call(this, data);
+function getObjectForPath(object, path) {
+    var parts = path.split('.'),
+        part;
 
-    this.created = new Date(data.created);
+    if (!isObject(object)) return null;
+
+    while (parts.length > 1) {
+        part = parts.shift();
+        object = object[part];
+        if (!isObject(object)) return null;
+    }
+
+    return {
+        object: object,
+        key: parts[0]
+    };
+}
+
+PropertyObserving.prototype.onChange = function(changes) {
+    forEach(changes, function(change) {
+        var newVal = change.newValue,
+            oldVal = change.oldValue;
+
+        this.fire('change', this, oldVal, newVal);
+    }, this);
+};
+
+module.exports = PropertyObserving;
+
+},{"../Observer/CustomObserver.js":27,"./Observing.js":23}],25:[function(require,module,exports){
+/**
+ *  Event dispatchable object.
+ *
+ *  @constructor
+ */
+var EventDispatcher = function EventDispatcher() {
+    /**
+     *  The list of all event listeners attached on this.
+     *
+     *  @type {Object<string, Array<Function>>}
+     *  @private
+     */
+    this.eventListeners_ = {};
+};
+
+/**
+ *  Finalizer.
+ */
+EventDispatcher.prototype.finalize = function() {
+    this.eventListeners_ = null;
+};
+
+/**
+ *  attach an event listener.
+ *
+ *  @param {string} type event type.
+ *  @param {Function} listener the event listener to attach.
+ *  @return {EventDispatcher} this.
+ */
+EventDispatcher.prototype.on = function(type, listener, context) {
+    var listeners = this.eventListeners_[type];
+    context = context || this;
+
+    if (!listeners) {
+        listeners = this.eventListeners_[type] = [];
+    }
+
+    listeners.push({
+        listener: listener,
+        context: context
+    });
+
     return this;
 };
 
 /**
- *  Get Comment data by comment ID
- *  @param {string} commentId the comment id.
- *  @param {Function} callback callback function.
- */
-Comment.getById = function(commentId, callback) {
-    API.get('/comment/' + commentId,
-        function(err, res) {
-            if (err) {
-                return callback(err, null);
-            }
-
-            return callback(null, new Comment(res));
-        });
-};
-
-/**
- *  Update comment data.
- *  @params {Function} callback callback function.
- */
-Comment.prototype.update = function(callback) {
-    if (!app.isAuthed || app.authedUser.name !== this.owner) {
-        return callback(APIError.PERMISSION_DENIED, null);
-    }
-
-    API.patch(this.uri, {
-            text: this.text
-        },
-
-        function(err, res) {
-            if (err) {
-                return callback(err, null);
-            }
-
-            return callback(null, new Comment(res));
-        });
-};
-
-/**
- *  Delete comment data.
- *  @param {Function} callback callback function.
- */
-Comment.prototype.delete = function(callback) {
-    if (!app.isAuthed || app.authedUser.name !== this.owner) {
-        return callback(APIError.PERMISSION_DENIED, null);
-    }
-
-    API.delete(this.uri,
-
-        function(err, res) {
-            if (err) {
-                return callback(err, null);
-            }
-
-            //@TODO: インスタンスを消す。
-            return callback(null, res);
-        });
-};
-
-
-
-
-
-/**
- *  Project Model.
- *  @constructor
- *  @param {Object} data initial data.
- *  @extends {Model}
- */
-var Project = function(data) {
-    if (!(this instanceof Project)) return new Project(data);
-
-    if (isObject(data)) {
-        if (Project.hasInstance(data.id)) {
-            return Project.getInstance(data.id).updateWithData(data);
-        }
-    }
-
-    Model.call(this, data);
-};
-extendClass(Project, Model);
-
-/**
- *  model instances map
- *  @type {Object}
- *  @private
- *  @overrides
- */
-Project.instances_ = {};
-
-/** 
- *  Schema
+ *  detach the event listener.
+ *  if the event listener is detached for more than twice,
+ *  this method detach all of them.
  *
- *  @type {Object}
- *  @override
+ *  @param {string} type event type.
+ *  @param {Function} listener the event listener to detach.
+ *  @return {EventDispatcher} this.
  */
-Project.prototype.schema = {
-    "id": {
-        type: String,
-        value: ''
-    },
-    "uri": {
-        type: String,
-        value: ''
-    },
-    "name": {
-        type: String,
-        value: 'undefined'
-    },
-    "owner": {
-        type: String,
-        value: ''
-    },
-    "root": {
-        type: null,
-        value: null
+EventDispatcher.prototype.off = function(type, listener, context) {
+    var listeners = this.eventListeners_[type],
+        i, max;
+    context = context || this;
+
+    if (!listeners) return this;
+
+    for (i = 0, max = listeners.length; i < max; i++) {
+        if (listeners[i].listener === listener &&
+            listeners[i].context === context) {
+            listeners.splice(i, 1);
+            i--;
+            max--;
+        }
     }
+
+    return this;
+};
+
+EventDispatcher.prototype.once = function(type, listener, context) {
+    var self = this,
+        proxy = function() {
+            self.off(type, proxy, context);
+            listener.apply(this, arguments);
+        };
+
+    this.on(type, proxy, context);
 };
 
 /**
- *  Get Project data by project name.
- *  @param {string} userName the owner name.
- *  @param {string} projectName the project name.
- *  @param {Function} callback callback function.
+ *  fire the event.
+ *
+ *  @param {string} type event type.
+ *  @param {...*} optArgs arguments.
+ *  @return {EventDispatcher} this.
  */
-Project.getByName = function(userName, projectName, callback) {
-    API.get('/user/' + userName + '/project/' + projectName,
-        function(err, res) {
-            if (err) {
-                return callback(err, null);
+EventDispatcher.prototype.fire = function(type, optArgs) {
+    var listeners = this.eventListeners_[type],
+        args = Array.prototype.slice.call(arguments, 1),
+        i, max;
+
+    if (!listeners) return this;
+
+    listeners = listeners.slice(0);
+
+    for (i = 0, max = listeners.length; i < max; i++) {
+        listeners[i].listener.apply(listeners[i].context, args);
+    }
+
+    return this;
+};
+
+module.exports = EventDispatcher;
+
+},{}],26:[function(require,module,exports){
+(function (global){
+var Map = global.Map;
+
+if (typeof Map !== 'function') {
+
+    /**
+     * Map
+     *
+     * @constructor
+     * @param {Array<Array<*>>} [iterable] iterable object.
+     */
+    Map = function(iterable) {
+        var i, max, iterable;
+
+        /**
+         * It's 0, constant.
+         * https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Map
+         * @type {number}
+         */
+        this.length = 0;
+
+        /**
+         * keys
+         * @type {Array}
+         * @private
+         */
+        this.keys_ = [];
+
+        /**
+         * number
+         * @type {Array}
+         * @private
+         */
+        this.values_ = [];
+
+        if (iterable) {
+            for (i = 0, max = iterable.length; i < max; i++) {
+                item = iterable[i];
+                this.keys_.push(item[0]);
+                this.values_.push(item[0]);
             }
-
-            return callback(null, new Project(res));
-        });
-};
-
-/**
- *  Get all Project data by owner name.
- *  @param {string} userName the owner name.
- *  @param {Function} callback callback function.
- */
-Project.getAll = function(userName, callback) {
-    API.get('/user/' + userName + '/project',
-        function(err, res) {
-            if (err) {
-                return callback(err, null);
-            }
-
-            return callback(null, res.map(Project));
-        });
-};
-
-/**
- *  Create new project.
- *  @param {string} projectName the proejct name.
- *  @param {Function} callback callback function.
- */
-Project.create = function(projectName, callback) {
-    if (!app.isAuthed) {
-        return callback(APIError.PERMISSION_DENIED, null);
+        }
     }
 
-    API.post('/user/' + app.authedUser.name + '/project',
-        function(err, res) {
-            if (err) {
-                return callback(err, null);
-            }
+    /**
+     *  Returns the number of key/value pairs in the Map object.
+     *  @type {number}
+     */
+    Map.prototype.size;
+    Map.prototype.__defineGetter__('size', function() {
+        return this.keys_.length;
+    });
 
-            return callback(null, new Project(res));
-        });
-};
+    /**
+     *  Removes all key/value pairs from the Map object.
+     */
+    Map.prototype.clear = function() {
+        this.keys_ = [];
+        this.values_ = [];
+    };
 
-/**
- *  Update project data.
- *  @param {Object} params update datas.
- *  @params {Function} callback callback function.
- */
-Project.prototype.update = function(callback) {
-    if (!app.isAuthed || app.authedUser.name !== this.owner) {
-        return callback(APIError.PERMISSION_DENIED, null);
+    /**
+     * Removes any value associated to the key and
+     * returns the value that Map.prototype.has(value) would have previously returned.
+     * Map.prototype.has(key) will return false afterwards.
+     *
+     * @param {string} key key
+     * @return {boolean} if true, map has contianed the key.
+     */
+    Map.prototype.delete = function(key) {
+        if (!this.has(key)) {
+            return false;
+        }
+
+        var index = this.keys_.indexOf(key);
+        this.keys_.splice(index, 1);
+        this.values_.splice(index, 1);
+
+        return true;
+    };
+
+    Map.prototype.entries = function() {
+        throw new Error('Map.prototype.entries: NIY.');
+    };
+
+    /**
+     * Executes a provided function once per each key/value pair
+     * in the Map object, in insertion order.
+     *
+     * @param {Function} callback callback,
+     * @param {*} [thisArg] callback context.
+     *                      If it's not provided, the context is global object (maybe, it is window).
+     *                      (In original definition, the context is undefined.);
+     */
+    Map.prototype.forEach = function(callback, thisArg) {
+        this.values_.forEach(callback, thisArg);
     }
 
-    API.patch(this.uri, {
-        name: this.name
-    }, function(err, res) {
-        if (err) {
-            return callback(err, null);
+    /**
+     * Returns a specified element from a Map object.
+     * @param {string} key the key.
+     * @return If the specified key is exists, the value is returned, otherwise undefined.
+     */
+    Map.prototype.get = function(key) {
+        var index = this.keys_.indexOf(key);
+
+        return index === -1 ? undefined : this.values_[index];
+    };
+
+    /**
+     * Returns a boolean indicating whether an element with the specified key exists or not.
+     * @param {string} key the key.
+     * @return {boolean} true if an element with the specified key exists in the Map object, otherwise false.
+     */
+    Map.prototype.has = function(key) {
+        return this.keys_.indexOf(key) !== -1;
+    };
+
+    Map.prototype.keys = function(key) {
+        throw new Error('Map.prototype.keys: NIY.');
+    };
+
+    /**
+     * Adds a new element with a specified key and value to a Map object.
+     * @param {*} key the key.
+     * @param {*} value the value.
+     * @return {Map} this map object.
+     */
+    Map.prototype.set = function(key, value) {
+        var index = this.keys_.indexOf(key);
+
+        if (index === -1) {
+            this.keys_.push(key);
+            this.values_.push(value);
+        } else {
+            this.values_[index] = value;
         }
 
-        return callback(null, new Project(res));
-    });
-};
+        return this;
+    };
+}
+
+module.exports = Map;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],27:[function(require,module,exports){
+(function (global){
+var Map = require('../Map.js'),
+    ObjectObserver = require('./ObjectObserver.js');
 
 /**
- *  Delete project data.
- *  @param {Function} callback callback function.
+ *  @constructor
+ *  @param {Object} target
+ *  @param {string} propName
  */
-Project.prototype.delete = function(callback) {
-    if (!app.isAuthed || app.authedUser.name !== this.owner) {
-        return callback(APIError.PERMISSION_DENIED, null);
-    }
-
-    API.delete(this.uri, function(err, res) {
-        if (err) {
-            return callback(err, null);
-        }
-
-        //@TODO: インスタンスを消す
-        return callback(null, new Project(res));
-    });
-};
-
-/**
- *  Get project comments.
- *  @param {Function} callback callback function.
- */
-Project.prototype.getComments = function(callback) {
-    API.get(this.uri + '/comment', function(err, res) {
-        if (err) {
-            return callback(err, null);
-        }
-
-        return callback(null, res.map(Comment));
-    });
-};
-
-Project.prototype.postComment = function(text, callback) {
-    API.post(this.uri + '/comment', null, {
-        text: text
-    }, function(err, res) {
-        if (err) {
-            return callback(err, null);
-        }
-
-        return callback(null, Comment(res));
-    });
-};
-
-
-
-var UserPageView = function() {
-    View.call(this);
-
-    this.loadTemplate('UserPageView');
-
-    this.user = null;
+function CustomObserver(target, propName) {
+    this.onChangeHandler_ = this.onChangeHandler_.bind(this);
 
     /**
-     *  @type {boolean}
-     */
-    this.isProjectsLoaded = false;
-
-    app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
-};
-extendClass(UserPageView, View);
-
-UserPageView.prototype.finalize = function() {
-    app.off('rout.change', this.onChangeRout);
-    this.onChangeRout = null;
-
-    View.prototype.finalize.call(this);
-};
-
-UserPageView.prototype.loadUserWithRout = function(rout) {
-    if (rout.mode !== 'user') return;
-
-    var self = this;
-
-    User.getByName(rout.userName, function(err, user) {
-        self.setUser(user);
-        self.fire('load');
-    });
-};
-
-UserPageView.prototype.loadUserProjects = function() {
-    var user = this.user,
-        self = this;
-
-    if (!user) {
-        return;
-    }
-
-    user.getAllProjects(function(err, projects) {
-        if (err) {
-            self.childViews.projectListView.setItems([]);
-            return;
-        }
-
-        self.childViews.projectListView.setItems(projects);
-    });
-};
-
-UserPageView.prototype.setUser = function(user) {
-    if (this.user === user) return;
-
-    this.user = user;
-    this.childViews.userView.setUser(user);
-    this.loadUserProjects();
-};
-
-UserPageView.prototype.onChangeRout = function(rout) {
-    this.loadUserWithRout(rout);
-};
-
-
-
-
-
-
-
-
-var UserView = function() {
-    View.call(this);
-
-    this.loadTemplate('UserView');
-
-    this.user = null;
-};
-extendClass(UserView, View);
-
-UserView.prototype.finalize = function() {
-    View.prototype.finalize.call(this);
-};
-
-UserView.prototype.setUser = function(user) {
-    this.user = user;
-};
-
-
-
-
-
-
-
-
-var UserInlineView = function() {
-    View.call(this);
-
-    this.loadTemplate('UserInlineView');
-
-    this.user = null;
-};
-extendClass(UserInlineView, View);
-
-UserInlineView.prototype.finalize = function() {
-    View.prototype.finalize.call(this);
-};
-
-UserInlineView.prototype.setUser = function(user) {
-    this.user = user;
-};
-
-
-
-
-
-
-
-
-var ProjectPageView = function() {
-    View.call(this);
-
-    /**
-     *  @type {Project}
-     */
-    this.project = null;
-
-    this.loadTemplate('ProjectPageView');
-
-    app.on('rout.change', this.onChangeRout = this.onChangeRout.bind(this));
-};
-extendClass(ProjectPageView, View);
-
-ProjectPageView.prototype.finalize = function() {
-    app.off('rout.change', this.onChangeRout);
-    this.onChangeRout = null;
-
-    View.prototype.finalize.call(this);
-};
-
-ProjectPageView.prototype.loadProjectWithRout = function(rout) {
-    if (rout.mode !== 'project') return;
-
-    var self = this;
-
-    Project.getByName(rout.userName, rout.projectName, function(err, project) {
-        self.setProject(project);
-        self.fire('load');
-    });
-
-    User.getByName(rout.userName, function(err, user) {
-        self.childViews.userInlineView.setUser(user);
-    });
-};
-
-ProjectPageView.prototype.onChangeRout = function(rout) {
-    this.loadProjectWithRout(rout);
-};
-
-ProjectPageView.prototype.setProject = function(project) {
-    if (this.project === project) return;
-
-    this.project = project;
-    this.childViews.commentListView.setTarget(project);
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-/**
- *  リスト表示用の抽象クラス。
- *  使用する際は、継承先で
- *  - View#loadTemplateを呼び出す。
- *  - List#setItemsを用いてデータを設定する。
- *  - ListView#itemViewConstructorにリストアイテムビューのコンストラクタを設定する。
- *  の2点を行うこと。
- */
-var ListView = function() {
-    View.call(this);
-
-    /**
-     *  @type {Function}
-     */
-    this.itemViewConstructor = null;
-
-    /**
-     *  @type {[Model]}
-     */
-    this.items = [];
-
-    /**
-     *  @type {[View]}
-     */
-    this.itemViews = [];
-
-    /**
-     *  @type {[Model]}
+     *  target
+     *  @type {Object}
      *  @private
      */
-    this.oldItems_ = [];
-};
-extendClass(ListView, View);
-
-ListView.prototype.finalize = function() {
-    this.setItems([]);
-
-    View.prototype.finalize.call(this);
-};
-
-/**
- *  @param {[Model]} items items.
- */
-ListView.prototype.setItems = function(items) {
-    this.items = items
-    this.update();
-};
-
-ListView.prototype.update = function() {
-    var oldItems = this.oldItems_,
-        oldItemsCount = oldItems.length,
-        oldIndex = 0,
-
-        newItems = this.items,
-        newItemsCount = newItems.length,
-        newIndex = 0,
-
-        views = this.itemViews,
-        view,
-
-        itemViewConstructor = this.itemViewConstructor,
-        max, i;
-
-    if (!itemViewConstructor) {
-        console.warn('ListView#itemViewConstructor must be set.');
-        return;
-    }
-
-    while (oldIndex < oldItemsCount) {
-        if (oldItems[oldIndex] === newItems[newIndex]) {
-            newIndex++;
-
-        } else {
-            views[newIndex].finalize();
-            views.splice(newIndex, 1);
-        }
-
-        oldIndex++;
-    }
-
-    for (i = newIndex, max = newItemsCount; i < max; i++) {
-        view = new itemViewConstructor();
-        view.setModel(newItems[i]);
-
-        this.appendChild(view);
-        views.push(view);
-    }
-
-    this.oldItems_ = this.items.slice(0);
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-/**
- *  リストのアイテム用の抽象クラス。
- *  使用する際は、継承先で
- *  - ListItemView#setModelをオーバーライドする。
- *  を行うこと。
- */
-var ListItemView = function() {
-    View.call(this);
-};
-extendClass(ListItemView, View);
-
-/**
- *  @param {Model} model model.
- */
-ListItemView.prototype.setModel = function(model) {
-    console.warn('ListItemView#setModel must be overrided.');
-};
-
-var ProjectListItemView = function() {
-    ListItemView.call(this);
-
-    this.loadTemplate('ProjectListItemView');
-
-    this.project = null;
-};
-extendClass(ProjectListItemView, ListItemView);
-
-ProjectListItemView.prototype.setModel = function(project) {
-    this.project = project;
-};
-
-var ProjectListView = function() {
-    ListView.call(this);
-
-    this.loadTemplate('ProjectListView');
-    this.itemViewConstructor = ProjectListItemView;
-
-    this.projects = [];
-    this.listItems = [];
-};
-extendClass(ProjectListView, ListView);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-var CommentListItemView = function() {
-    ListItemView.call(this);
-
-    this.loadTemplate('CommentListItemView');
-
-    this.comment = null;
-
-    var self = this;
-    this.$.root.classList.add('is-close');
-    setTimeout(function() {
-        self.$.root.classList.remove('is-close');
-    }, 100);
-};
-extendClass(CommentListItemView, ListItemView);
-
-CommentListItemView.prototype.setModel = function(comment) {
-    var self = this;
-
-    this.comment = comment;
-
-    if (comment) {
-        User.getByName(comment.owner, function(err, user) {
-            self.childViews.userInlineView.setUser(user);
-        });
-    }
-};
-
-var CommentListView = function() {
-    ListView.call(this);
-
-    this.loadTemplate('CommentListView');
+    this.targets_ = [target];
 
     /**
-     * 表示対象のオブジェクト
-     * @type {(Project|Item)}
+     *  @type {string}
+     *  @private
      */
-    this.target = null;
+    this.propName_ = propName;
 
     /**
-     *  @type {boolean}
+     *  @type {[string]}
+     *  @private
      */
-    this.isLoading;
-    this.setLoadingState(true);
+    this.propNameTokens_ = propName.split('.');
 
-    this.itemViewConstructor = CommentListItemView;
+    /**
+     *  callbacks
+     *  @type {[Function]}
+     *  @private
+     */
+    this.callbacks_ = [];
 
-    this.$.form.addEventListener('submit', this.onSubmit = this.onSubmit.bind(this));
+    /**
+     * @type {*}
+     * @private
+     */
+    this.oldValue_ = null;
+
+    this.resetObserve_(0);
+    this.oldValue_ = this.getValue();
+}
+
+/**
+ * instance map
+ */
+CustomObserver.instances_ = new Map();
+
+
+/**
+ * returns instance
+ * @param  {Object}   object   object
+ * @param  {string}   propName string
+ * @return {CustomObserver} if exists, instance, otherwise null.
+ * @private
+ */
+CustomObserver.getInstance_ = function(object, propName) {
+    var subMap = this.instances_.get(object);
+
+    if (!subMap) return;
+
+    return subMap.get(propName) || null;
 };
-extendClass(CommentListView, ListView);
 
-CommentListView.prototype.finalize = function() {
-    this.$.form.removeEventListener('submit', this.onSubmit);
-    this.onSubmit = null;
+/**
+ * add instance
+ * @param  {Object}   object   object
+ * @param  {string}   propName string
+ * @return {CustomObserver} instance.
+ * @private
+ */
+CustomObserver.addInstance_ = function(object, propName) {
+    var subMap = this.instances_.get(object),
+        instance = new CustomObserver(object, propName);
 
-    ListView.prototype.finalize.call(this);
+    if (!subMap) {
+        subMap = new Map();
+        this.instances_.set(object, subMap);
+    }
+
+    subMap.set(propName, instance);
+
+    return instance;
 };
 
-CommentListView.prototype.setItems = function(items) {
-    items = items.slice(0).sort(function(a, b) {
-        return a.created > b.created ? -1 :
-            a.created < b.created ? 1 : 0;
-    });
+/**
+ * remove instance
+ * @param {CustomObserver} instance instance
+ * @private
+ */
+CustomObserver.removeInstance_ = function(instance) {
+    var object = isntance.targets_[0],
+        instances_ = this.instances_,
+        subMap = instances_.get(instance.targets_[0]);
 
-    return ListView.prototype.setItems.call(this, items);
+    instance.targets_[0] = null;
+    instance.resetObserve_(0);
+    instance.onChangeHandler_ = null;
+
+    if (!subMap) return;
+
+    subMap.delete(instance.propName_);
+
+    if (subMap.size !== 0) return;
+
+    instances_.delete(object);
 };
 
-CommentListView.prototype.loadComments = function() {
-    var target = this.target,
-        self = this;
+/**
+ * observe
+ * @param  {Object}   object   object
+ * @param  {string}   propName string
+ * @param  {Function} callback callback
+ */
+CustomObserver.observe = function(object, propName, callback, context) {
+    var instance = this.getInstance_(object, propName);
 
-    if (!target) return;
+    if (!instance) {
+        instance = this.addInstance_(object, propName);
+    }
 
-    target.getComments(function(err, comments) {
-        if (err) {
-            self.setItems([]);
-            self.setLoadingState(false);
+    instance.addCallback_(callback, context);
+};
+
+/**
+ * unobserve
+ * @param  {Object}   object   object
+ * @param  {string}   propName string
+ * @param  {Function} callback callback
+ */
+CustomObserver.unobserve = function(object, propName, callback, context) {
+    var instance = this.getInstance(object, propName);
+
+    if (!instance) return;
+
+    instance.removeCallback_(callback, context);
+};
+
+CustomObserver.prototype.addCallback_ = function(callback, context) {
+    var callbacks = this.callbacks_,
+        i, max;
+
+    context = context || global;
+
+    for (i = 0, max = callbacks.length; i < max; i++) {
+        if (callbacks[i].callback === callback &&
+            callbacks[i].context === context) {
             return;
         }
+    }
 
-        self.setItems(comments);
-        self.setLoadingState(false);
+    callbacks.push({
+        callback: callback,
+        context: context
     });
 };
 
-CommentListView.prototype.setLoadingState = function(state) {
-    if (state === this.isLoading) return;
+CustomObserver.prototype.removeCallback_ = function(callback, context) {
+    var callbacks = this.callbacks_,
+        i, max;
 
-    if (state) {
-        this.$.root.classList.add('is-loading');
+    context = context || global;
 
-    } else {
-        this.$.root.classList.remove('is-loading');
-    }
-}
-CommentListView.prototype.setTarget = function(target) {
-    if (this.target === target) return;
-
-    this.target = target;
-    this.setItems([]);
-    this.loadComments();
-};
-
-CommentListView.prototype.submit = function() {
-    var self;
-
-    if (!this.validate()) return;
-
-    self = this;
-
-    this.target.postComment(this.$.text.value, function(err, res) {
-        if (err) {
-            console.log(err);
-            return
+    for (i = 0, max = callbacks.length; i < max; i++) {
+        if (callbacks[i].callback === callback &&
+            callbacks[i].context === context) {
+            callbacks.splice(i, 1);
+            i--;
+            max--;
         }
-
-        self.loadComments();
-    })
-};
-
-CommentListView.prototype.validate = function() {
-    var text = this.$.text.value,
-        isValidate = true;
-
-    //@TODO: debug only
-    // if (!app.isAuthed) {
-    //     isValidate = false;
-    // }
-
-    if (!text) {
-        isValidate = false;
     }
 
-    return isValidate;
+    if (max === 0) {
+        CustomObserver.removeInstance_(this);
+    }
 };
-
-CommentListView.prototype.onSubmit = function(ev) {
-    ev.stopPropagation();
-    ev.preventDefault();
-
-    this.submit();
-};
-
-
-
-
-
-
-
-
-var Error404PageView = function() {
-    View.call(this);
-
-    this.loadTemplate('Error404PageView');
-};
-extendClass(Error404PageView, View);
 
 /**
- *	bootstrap
+ * get value
  */
-app = new Application();
+CustomObserver.prototype.getValue = function() {
+    var length = this.propNameTokens_.length;
+
+    return isObject(this.targets_[length - 1]) ?
+        this.targets_[length - 1][this.propNameTokens_[length - 1]] :
+        null;
+};
+
+/**
+ * reset observe
+ * @param {number} index reset observe depth
+ * @private
+ */
+CustomObserver.prototype.resetObserve_ = function(index) {
+    if (index >= this.propNameTokens_.length) return;
+
+    var targets = this.targets_,
+        propName = this.propNameTokens_[index],
+        oldTarget = targets[index],
+        newTarget;
+
+    //unobserve
+    if (isObject(oldTarget) && index !== 0) {
+        Object.unobserve(oldTarget, this.onChangeHandler_);
+    }
+
+    if (index !== 0) {
+        targets[index] = null;
+    }
+
+    //observe
+    if (index === 0) {
+        newTarget = targets[0];
+    } else if (isObject(targets[index - 1]) &&
+        isObject(targets[index - 1][this.propNameTokens_[index - 1]])) {
+
+        newTarget = targets[index - 1][this.propNameTokens_[index - 1]];
+    } else {
+        newTarget = null;
+    }
+
+    if (newTarget) {
+        Object.observe(newTarget, this.onChangeHandler_);
+    }
+    targets[index] = newTarget;
+
+    this.resetObserve_(index + 1);
+};
+
+/**
+ * observe callback
+ * @param {[Object]} changes changes
+ * @private
+ */
+CustomObserver.prototype.onChangeHandler_ = function(changes) {
+    var newValue,
+        oldValue = this.oldValue_,
+        targets = this.targets_;
+
+    changes.forEach(function(change) {
+        var index = targets.indexOf(change.object);
+
+        if (index !== -1) {
+            this.resetObserve_(index);
+        }
+    }, this);
+
+    newValue = this.getValue();
+
+    if (newValue !== oldValue) {
+        changes = [{
+            type: 'update',
+            name: this.propName_,
+            object: this.targets_[0],
+            oldValue: oldValue,
+            newValue: newValue
+        }];
+
+        this.callbacks_.forEach(function(callback) {
+            callback.callback.call(callback.context, changes);
+        }, this);
+
+        this.oldValue_ = newValue;
+    }
+};
+
+module.exports = CustomObserver;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"../Map.js":26,"./ObjectObserver.js":28}],28:[function(require,module,exports){
+var Map = require('../Map.js');
+
+if (typeof Object.observe !== 'function') {
+
+    /**
+     * ObjectObserver
+     *
+     * @constructor
+     */
+    function ObjectObserver(object) {
+        /**
+         * observe target
+         * @type {Object}
+         * @private
+         */
+        this.object_ = object;
+
+        /**
+         * listeners
+         * @type {[Function]}
+         * @private
+         */
+        this.listeners_ = [];
+
+        /**
+         * last copy of the target.
+         * @type {Object}
+         * @private;
+         */
+        this.last_ = {};
+        this.compare_();
+
+        ObjectObserver.addInstance_(this);
+    }
+
+    /**
+     * Main loop timer
+     * @type {number|null}
+     * @private
+     */
+    ObjectObserver.timerID_ = null;
+
+    /**
+     * Main loop interval (ms)
+     * @const {number}
+     * @private
+     */
+    ObjectObserver.LOOP_INTERVAL_ = 60;
+
+    /**
+     * ObjectObserver instance map.
+     * @type {Map}
+     * @private
+     */
+    ObjectObserver.instances_ = new Map();
+
+    /**
+     *	cahnge type
+     *	@enum {string}
+     */
+    ObjectObserver.ChangeType = {
+        ADD: 'add',
+        UPDATE: 'update',
+        DELETE: 'delete'
+    };
+
+    /**
+     * Add ObjectObserver isntance.
+     * @param {ObjectObserver} observer observer instance.
+     * @private
+     */
+    ObjectObserver.addInstance_ = function(observer) {
+        this.instances_.set(observer.object_, observer);
+
+        if (this.timerID_ === null) {
+            this.timerID_ = setInterval(this.mainLoop, ObjectObserver.LOOP_INTERVAL_);
+        }
+    };
+
+    /**
+     * Get ObjectObserver isntance.
+     * @param {Object} object observe target object.
+     * @return {ObjectObserver} observer instance.
+     * @private
+     */
+    ObjectObserver.getInstance_ = function(object) {
+        return this.instances_.get(object);
+    };
+
+    /**
+     * remove ObjectObserver isntance.
+     * @param {ObjectObserver} observer observer instance.
+     * @private
+     */
+    ObjectObserver.removeInstance_ = function(observer) {
+        this.instances_.delete(observer.object_);
+
+        if (this.instances_.size === 0) {
+            clearInterval(this.timerID_);
+            this.timerID_ = null;
+        }
+    };
+
+    /**
+     * Add change callback.
+     * If the callback is added already, do nothing.
+     *
+     * @param {Function} callback [description]
+     * @private
+     */
+    ObjectObserver.prototype.addListener_ = function(callback) {
+        var listeners = this.listeners_,
+            index = listeners.indexOf(callback);
+
+        if (index !== -1) return;
+
+        listeners.push(callback);
+    };
+
+    ObjectObserver.mainLoop = function() {
+        this.instances_.forEach(function(instance) {
+            instance.compare_();
+        });
+    };
+    ObjectObserver.mainLoop = ObjectObserver.mainLoop.bind(ObjectObserver);
+
+    /**
+     * compare change diffs.
+     * @private
+     * @TODO tuneup
+     */
+    ObjectObserver.prototype.compare_ = function() {
+        var oldObj = this.last_,
+            newObj = this.object_,
+            changes = [],
+            newKeys = Object.getOwnPropertyNames(newObj),
+            oldKeys = Object.getOwnPropertyNames(oldObj),
+            i, max, key;
+
+        for (i = 0, max = newKeys.length; i < max; i++) {
+            key = newKeys[i];
+            if (oldObj.hasOwnProperty(key)) {
+                if (oldObj[key] !== newObj[key]) {
+                    changes.push({
+                        type: ObjectObserver.ChangeType.UPDATE,
+                        object: newObj,
+                        oldValue: oldObj[key],
+                        name: key
+                    });
+                    oldObj[key] = newObj[key];
+                }
+            } else {
+                changes.push({
+                    type: ObjectObserver.ChangeType.ADD,
+                    object: newObj,
+                    name: key
+                });
+                oldObj[key] = newObj[key];
+            }
+        }
+
+        for (i = 0, max = oldKeys.length; i < max; i++) {
+            key = oldKeys[i];
+            if (newKeys.indexOf(key) === -1) {
+                changes.push({
+                    type: ObjectObserver.ChangeType.DELETE,
+                    object: newObj,
+                    name: key,
+                    oldValue: oldObj[key]
+                });
+
+                delete oldObj[key];
+            }
+        }
+
+        if (changes.length === 0) return;
+        this.publishChanges(changes);
+    };
+
+    /**
+     * publish change event.
+     * @param {Array} changes changes.
+     */
+    ObjectObserver.prototype.publishChanges = function(changes) {
+        this.listeners_.forEach(function(listener) {
+            listener(changes);
+        });
+    };
+
+    /**
+     * Remove change callback.
+     * After removing, if callbacks is nothing no more,
+     * this ObjectObserver instance is deleted.
+     *
+     * @param {Function} callback [description]
+     */
+    ObjectObserver.prototype.removeListener_ = function(callback) {
+        var listeners = this.listeners_,
+            index = listeners.indexOf(callback);
+
+        if (index === -1) return;
+
+        listeners.splice(index, 1);
+
+        if (listeners.length === 0) {
+            ObjectObserver.removeInstance_(observer);
+        }
+    };
+
+    /**
+     *	Observe object.
+     *	@param {Object} object observe target object.
+     *	@param {Function} callback callback.
+     */
+    Object.observe = function(object, callback) {
+        var observer = ObjectObserver.getInstance_(object);
+
+        if (!observer) {
+            observer = new ObjectObserver(object);
+        }
+
+        observer.addListener_(callback);
+    };
+
+    /**
+     *	Unobserve object.
+     *	@param {Object} object observe target object.
+     *	@param {Function} callback callback.
+     */
+    Object.unobserve = function(object, callback) {
+        var observer = ObjectObserver.getInstance_(object);
+
+        if (!observer) return;
+
+        observer.removeListener_(callback);
+    };
+
+    module.exports = ObjectObserver;
+}
+
+},{"../Map.js":26}],29:[function(require,module,exports){
+var Map = require('./Map.js'),
+    Binding = require('./Binding/Binding.js');
+
+/**
+ * @constructor
+ */
+function Template() {
+    /**
+     * custom element's name
+     * @type {string}
+     */
+    this.tagName;
+
+    /**
+     * DOM Map
+     * @type {object}
+     */
+    this.$;
+
+    /**
+     * Regular expression object for matching className
+     * @type {RegExp}
+     */
+    this.regClassName;
+
+    /**
+     *  custom element's constructor
+     *  @type {Function}
+     */
+    this.elementConstructor;
+};
+
+/**
+ * Template map
+ * @type {Map}
+ * @private
+ */
+Template.templates_ = new Map();
+
+/**
+ * Custom Element constructors
+ * @type {Map}
+ * @private
+ */
+Template.constructors_ = new Map();
+
+/**
+ * Create DOM from template for specified name.
+ * @param {string} templateName template name.
+ * @param {NamedNodeMap} [attributes] attribute map
+ * @return {Object} result.
+ */
+Template.createElement = function(templateName, attributes) {
+    var template = Template.getTemplate_(templateName);
+
+    if (!template) {
+        throw new Error('Template "' + templateName + '" is not found.');
+    }
+
+    return template.createElement(attributes);
+};
+
+/**
+ * Returns the custom element constructor for specified name.
+ * @param {string} constructorName constructor name.
+ * @return {Function} constructor.
+ * @private
+ */
+Template.getConstructor_ = function(constructorName) {
+    return Template.constructors_.get(constructorName.toUpperCase());
+};
+
+/**
+ * Registers the custom element constructor.
+ * @param {Function} constructor.
+ * @param {string} [name] constructor name.
+ *  If this parameter isn't passed, constructor's function's name is used.
+ */
+Template.registerConstructor = function(constructor, name) {
+    name = name || constructor.name;
+    Template.constructors_.set(name.toUpperCase(), constructor);
+};
+
+/**
+ * Checks if  the custom element constructor for specified name is exist.
+ * @param {string} constructorName constructor name.
+ * @return {boolean} If true, the constructor with specified name is exist, otherwise false.
+ * @private
+ */
+Template.hasConstructor_ = function(constructorName) {
+    return Template.constructors_.has(constructorName.toUpperCase());
+};
+
+/**
+ * Returns the template for specified name.
+ * @param {string} templateName template name.
+ * @return {Template} template.
+ * @private
+ */
+Template.getTemplate_ = function(templateName) {
+    return Template.templates_.get(templateName.toUpperCase());
+};
+
+/**
+ * Registers the template from specified template DOM.
+ * If templateDOM doesn't have the 'name' attribute, it's skipped.
+ * @param {Element} templateDOM template DOM.
+ * @private
+ */
+Template.registerTemplate_ = function(templateDOM) {
+    var name = templateDOM.getAttribute('name'),
+        template, $, constructorName,
+        extendTagName;
+
+    if (!name) return;
+
+    template = new Template();
+
+    /**
+     * 1. set tagName
+     */
+    template.tagName = name;
+
+    /**
+     * 2. set className regular expression template
+     *
+     * @NOTE
+     * If we scan dom mapping on this time(not on template#create),
+     * It may be not need to save RegExp instance for cache.
+     *
+     * ->
+     * we should scan dom mapping on template#create, because
+     * we should scane CLONED dom tree.
+     *
+     */
+    template.regClassName = new RegExp(name + '-(\\w+)');
+
+    /**
+     *  3.create root DOM instance, and clone dom tree
+     */
+    template.$ = $ = {};
+    extendTagName = templateDOM.getAttribute('extend') || template.tagName;
+    if (Template.hasTemplate_(extendTagName)) {
+        $.root = Template.createElement(extendTagName);
+    } else {
+        $.root = document.createElement(extendTagName);
+    }
+    $.root.innerHTML = templateDOM.innerHTML;
+
+    /**
+     *  4. copy template attribute to cloned root DOM
+     */
+    Template.copyAttribute($.root, templateDOM);
+    ['extend', 'name', 'constructor'].forEach(function(directiveAttributeName) {
+        $.root.removeAttribute(directiveAttributeName);
+    });
+
+    /**
+     * 5. attach element constructor
+     */
+    constructorName = templateDOM.getAttribute('constructor') || template.tagName;
+    if (Template.hasConstructor_(constructorName)) {
+        template.elementConstructor = Template.getConstructor_(constructorName);
+    } else {
+        template.elementConstructor = noop;
+    }
+
+    Template.templates_.set(name.toUpperCase(), template);
+};
+
+/**
+ * Checks if the template with specified name is exist.
+ * @param {string} templateName template name.
+ * @return {boolean} If true, the template with specified name is exist, otherwise false.
+ * @private
+ */
+Template.hasTemplate_ = function(templateName) {
+    return Template.templates_.has(templateName.toUpperCase());
+};
+
+/**
+ * Replaces from HTMLUnknownElement to CustomElement if need.
+ * @param {Element} element elemnt.
+ * @param {Object} $ DOM map. If need, DOM map is updated.
+ * @param {boolean} [flagRecursive=false] If true, this method applied for child elements recursivly.
+ */
+Template.prototype.replaceHTMLUnknownElement = function(element, $, flagRecursive) {
+    var children = slice(element.children, 0),
+        childNodes = slice(element.childNodes, 0),
+        customElement, parent, ma, attributes;
+
+    flagRecursive = flagRecursive || false;
+
+    if (Template.hasTemplate_(element.tagName)) {
+
+        //1. create CustomElement.
+        customElement = Template.createElement(element.tagName, element.attributes);
+
+        //2. move chilNodes.
+        childNodes.forEach(function(childNode) {
+            customElement.appendChild(childNode);
+        });
+
+        //3. replace from HTMLUnknownElement to custom element.
+        parent = element.parentNode;
+        parent.insertBefore(customElement, element);
+        parent.removeChild(element);
+
+        //4. If need, replace DOM map.
+        if (ma = element.className.match(this.regClassName)) {
+            $[ma[1]] = customElement;
+        }
+    }
+
+    if (flagRecursive) {
+        forEach(children, function(child) {
+            this.replaceHTMLUnknownElement(child, $, true);
+        }, this);
+    }
+};
+
+/**
+ * Create DOM from this template.
+ * @param {NamedNodeMap} [attributes] attribute map
+ * @return {Object} DOM map.
+ */
+Template.prototype.createElement = function(attributes) {
+    /**
+     * 1. Clone node
+     */
+    var $ = {},
+        root = this.$.root.cloneNode(true),
+        ma,
+        regClassName = this.regClassName;
+
+    $.root = root;
+    root.$ = $;
+    forEach(root.querySelectorAll('[class]'), function(node) {
+        if (ma = node.className.match(regClassName)) {
+            $[ma[1]] = node;
+        }
+    });
+    $.content = root.querySelector('content, [content]') || root;
+
+    /**
+     * 2. Convert HTMLUnknownElement -> CustomElement
+     *
+     * @TODO
+     * On current version, if root element is the instance of HTMLUnknownElement,
+     * it won't work.
+     *
+     * example:
+     * ExampleView's root element is <CustomElement> (HTMLUnknownElement), and
+     * this view can't work.
+     *
+     * <template name="ExampleView">
+     *   <CustomElement>
+     *     <span>ExampleView won't work.</span>
+     *   </CustomElement>
+     * </template>
+     */
+    forEach(root.children, function(child) {
+        this.replaceHTMLUnknownElement(child, $, true);
+    }, this);
+
+    /**
+     * 3. setup data binding
+     */
+    this.parseBindingQuery_(root);
+
+    /**
+     * 4. Copy attributes
+     */
+    if (attributes) {
+        Template.copyAttribute(root, attributes);
+    }
+
+    /**
+     * 5. mixin custom class properties and run constructor.
+     */
+    this.injectCustomClassPrototype($);
+    this.elementConstructor.call(root, $);
+
+    return root;
+};
+
+Template.prototype.injectCustomClassPrototype = function($) {
+    var root = $.root,
+        source = this.elementConstructor.prototype,
+        key, descriptor;
+
+    while (source) {
+        Object.keys(source).forEach(function(key) {
+            descriptor = Object.getOwnPropertyDescriptor(source, key);
+            Object.defineProperty(root, key, descriptor);
+        });
+
+        source = Object.getPrototypeOf(source);
+    }
+};
+
+/**
+ * copy element attributes
+ * @param {Element} target copy target element.
+ * @param {Element|NamedNodeMap} source copy source element, or attribute map.
+ */
+Template.copyAttribute = function(target, source) {
+    if (source instanceof Element) {
+        source = source.attributes;
+    }
+
+    forEach(source, function(attr) {
+        switch (attr.name) {
+            case 'class':
+                target.classList.add.apply(target.classList, attr.value.split(' '));
+                break;
+
+            default:
+                target.setAttribute(attr.name, attr.value);
+                break;
+        }
+    });
+};
+
+/**
+ *  parse template binding query
+ *  @private
+ */
+Template.prototype.parseBindingQuery_ = function(root) {
+    Template.parseBindingQuery_(root, root);
+};
+
+/**
+ *  parse template bindin query
+ *  @param {Node} node node
+ */
+Template.parseBindingQuery_ = function(node, context) {
+    var regBinding = /\{\{([^\}]+)\}\}/,
+        map = context.__bindingMap__ || (context.__bindingMap__ = new Map());
+
+    if (node instanceof Element) {
+        forEach(slice(node.attributes, 0), function(attr) {
+            var ma = attr.value.match(regBinding),
+                key, binding;
+
+            if (!ma) return;
+
+            key = ma[1].trim();
+            binding = map.get(key);
+
+            if (!binding) {
+                binding = new Binding();
+                map.set(key, binding);
+                binding.addPropertyTarget(context, key);
+                context.key = '';
+            }
+
+            binding.addAttributeTarget(node, attr.name);
+
+            //@TODO ただ消すだけではダメ！
+            node.removeAttribute(attr.name);
+        });
+    } else if (node instanceof Text) {
+        var ma = node.textContent.match(regBinding),
+            key, binding;
+        if (!ma) return;
+
+        key = ma[1].trim();
+        binding = map.get(key);
+
+        if (!binding) {
+            binding = new Binding();
+            map.set(key, binding);
+            binding.addPropertyTarget(context, key);
+            context.key = '';
+        }
+
+        binding.addPropertyTarget(node, 'textContent');
+
+        //@TODO ただ消すだけではダメ！
+        node.textContent = '';
+    }
+
+    forEach(node.childNodes, function(child) {
+        Template.parseBindingQuery_(child, context);
+    });
+};
+
+/**
+ *  bootstrap
+ */
+window.addEventListener('DOMContentLoaded', function() {
+    forEach(document.querySelectorAll('template[name]'), function(templateDOM) {
+        Template.registerTemplate_(templateDOM);
+        templateDOM.parentNode.removeChild(templateDOM);
+    }, Template);
+});
+
+module.exports = Template;
+
+},{"./Binding/Binding.js":22,"./Map.js":26}],30:[function(require,module,exports){
+var Template = require('./Service/Template.js'),
+    ESAppController = require('./Controller/ESAppController.js');
 
 window.onload = function() {
-    app.init();
+    var app = new ESAppController();
+
+    document.body.appendChild(app.element);
+    document.body.removeAttribute('unresolved');
 };
+
+module.exports = noop;
+
+},{"./Controller/ESAppController.js":2,"./Service/Template.js":29}],31:[function(require,module,exports){
+require('./util.js');
+
+require('./Element/js/ESAppElement.js');
+
+require('./bootstrap.js');
+
+},{"./Element/js/ESAppElement.js":5,"./bootstrap.js":30,"./util.js":32}],32:[function(require,module,exports){
+(function (global){
+/**
+ * extended from Array.slice
+ * @type {Function<Array, number>:Array}
+ */
+global.slice = Array.prototype.slice.call.bind(Array.prototype.slice);
+
+/**
+ * extended from Array.forEach
+ * @type {Function<Array, Function, Object|null>}
+ */
+global.forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
+
+/**
+ * If an expression is string, return true, otherwise false.
+ * @param {*} exp expression
+ * @return {boolean} If true, the expression is a string.
+ */
+global.isString = function(exp) {
+    return typeof exp === 'string';
+};
+
+/**
+ * If an expression is object, return true, otherwise false.
+ * When expression is undefined, 'typeof undeifned' returns 'object',
+ * but this method return false.
+ *
+ * @param {*} exp expression
+ * @return {boolean} If true, the expression is a object.
+ */
+global.isObject = function(exp) {
+    return exp && typeof exp === 'object';
+};
+
+/**
+ * If an expression is function, return true, otherwise false.
+ * @param {*} exp expression
+ * @return {boolean} If true, the expression is a function.
+ */
+global.isFunction = function(exp) {
+    return typeof exp === 'function';
+};
+
+/**
+ * no-operation
+ */
+global.noop = function() {};
+
+/**
+ * inherit class
+ * @param {Function} child child class
+ * @param {Function} parent parent class.
+ */
+global.inherits = function(child, parent) {
+    /**
+     * dummy constructor
+     *	@constructor
+     */
+    var __ = function() {};
+    __.prototype = parent.prototype;
+    child.prototype = new __();
+    child.prototype.constructor = child;
+};
+
+/**
+ * extend object
+ * @param {Object} target target will be extended.
+ * @param {...Object} [sources] source object.
+ * @return {Object} extended target.
+ */
+global.extend = function(target, sources) {
+    slice(arguments, 1)
+        .forEach(function(source) {
+            if (!isObject(source)) return target;
+            Object.keys(source).forEach(function(key) {
+                target[key] = source[key];
+            });
+        });
+
+    return target;
+};
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}]},{},[31]);

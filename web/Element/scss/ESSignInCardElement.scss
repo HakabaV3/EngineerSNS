@@ -1,0 +1,18 @@
+@import "./SACardElement.scss";
+@import "./SAInputElement.scss";
+@import "./SAButtonElement.scss";
+
+.es-signInCard {
+    min-width: 300px;
+    &[error] {
+        .es-signInCard-errMsg {
+            opacity: 1;
+        }
+    }
+}
+.es-signInCard-errMsg {
+    margin: 0;
+    color: #f00;
+    opacity: 0;
+    transition: 0.5s ease;
+}

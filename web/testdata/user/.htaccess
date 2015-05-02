@@ -1,4 +1,0 @@
-RewriteEngine on
-
-RewriteRule (.+)\/project$ 	project/$1_all	[L]
-RewriteRule (.+)\/project\/(.+) project/$2	[L]

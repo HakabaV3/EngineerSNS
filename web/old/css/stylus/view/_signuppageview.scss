@@ -1,0 +1,30 @@
+@import "../var/_definitions.scss";
+
+.SignUpPageView {
+	&.is-error-used_name {
+		.SignUpPageView-errorMsg-used_name {
+			display: block;
+		}
+	}
+	&.is-error-unknown {
+		.SignUpPageView-errorMsg-unknown {
+			display: block;
+		}
+	}
+}
+.SignUpPageView-row {
+	margin-top: 15px;
+
+	&:last-child {
+		margin-bottom: 15px;
+	}
+}
+.SignUpPageView-errorMsg-used_name,
+.SignUpPageView-errorMsg-unknown {
+	display: none;
+	color: #f00;
+	text-align: center;
+}
+.SignUpPageView-signInLink {
+	text-align: center;
+}
