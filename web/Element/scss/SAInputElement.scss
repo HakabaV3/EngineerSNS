@@ -1,0 +1,49 @@
+.sa-input {
+    display: block;
+    position: relative;
+    width: 100%;
+    border-bottom: 1px solid #aaa;
+    margin: 1.5em 0 5px;
+    padding: 5px 10px;
+    background: transparent;
+    cursor: text;
+    box-sizing: border-box;
+    &[focus],
+    &[value] {
+        .sa-input-placeholder {
+            transform-origin: 0 100%;
+            transform: translateY(-100%) scale(0.8);
+            color: #00838f;
+        }
+    }
+    &[disabled] {
+        cursor: default;
+        
+        .sa-input-placeholder {
+            color: #aaa;
+        }
+        .sa-input-input {
+            color: #888;
+        }
+    }
+    &[error] {
+        .sa-input-placeholder {
+            color: #f00;
+        }
+    }
+}
+.sa-input-placeholder {
+    user-select: none;
+    position: absolute;
+    border: none;
+    color: #aaa;
+    cursor: inherit;
+    transition: 0.2s ease-out;
+}
+.sa-input-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    font: inherit;
+    cursor: inherit;
+}

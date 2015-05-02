@@ -1,5 +1,3 @@
-var util = require('../../service/util.js');
-
 /**
  *  namespace for definition of API Errors
  *  @namespace
@@ -16,7 +14,7 @@ APIError.Code = {
     UNKNOWN: 999
 };
 
-util.extend(APIError, {
+extend(APIError, {
     SUCCESS: {
         code: APIError.Code.SUCCESS,
         msg: 'success'
@@ -53,7 +51,7 @@ util.extend(APIError, {
  *  @return {Object} error object.
  */
 APIError.parseFailed = function(xhr) {
-    return util.extend(APIError.PARSE_FAILED, {
+    return extend(APIError.PARSE_FAILED, {
         xhr: xhr
     });
 };
@@ -64,7 +62,7 @@ APIError.parseFailed = function(xhr) {
  *  @return {Object} error object.
  */
 APIError.connectionFailed = function(xhr) {
-    return util.extend(APIError.CONNECTION_FAILED, {
+    return extend(APIError.CONNECTION_FAILED, {
         xhr: xhr
     });
 };
@@ -75,7 +73,7 @@ APIError.connectionFailed = function(xhr) {
  *  サーバーは頼むからエラーをコードで返してくれ！
  */
 APIError.detectError = function(err) {
-    if (util.isObject(err)) {
+    if (isObject(err)) {
         switch (err.code) {
             case APIError.Code.PERMISSION_DENIED:
                 return APIError.PERMISSION_DENIED;
@@ -90,7 +88,7 @@ APIError.detectError = function(err) {
                 break;
 
             default:
-                return util.extend(APIError.UNKNOWN, {
+                return extend(APIError.UNKNOWN, {
                     original: err
                 });
                 break;
@@ -105,7 +103,7 @@ APIError.detectError = function(err) {
         return APIError.INVALID_PARAMETER;
     }
 
-    return util.extend(APIError.UNKNOWN, {
+    return extend(APIError.UNKNOWN, {
         original: err
     });
 };

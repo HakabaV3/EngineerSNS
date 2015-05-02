@@ -1,270 +1,134 @@
 <html>
 
 <head>
-    <title></title>
+    <title>sample</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
     <link rel="stylesheet" href="./style.css">
+    <style>
+        .es-app {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
 </head>
 
-<body unresolved layout vertical>
+<body unresolved>
+    <template name="sa-input" constructor="SAInputElement" extend="label" class="sa-input" error="{{isError}}" placeholder="{{placeholder}}" value="{{value}}" disabled="{{disabled}}" type="{{type}}">
+        <span class="sa-input-placeholder">{{placeholder}}</span>
+        <input class="sa-input-input" type="{{type}}" value="{{value}}" disabled="{{disabled}}">
+    </template>
 
+    <template name="sa-card" class="sa-card" extend="div" content>
+    </template>
 
-
-
-<template name="ConfigPageView">
-    <div class="ConfigPageView" fit layout vertical>
-        <header>
-            <p class="ConfigPageView-headerText util-smallOnly">
-                設定
-            </p>
-            <span class="util-largeOnly">
-                ユーザー&nbsp;>>&nbsp;
-                <UserInlineView class="ConfigPageView-userInlineView" name="userInlineView"></UserInlineView>
-                &nbsp;>>&nbsp;設定
-            </span>
-        </header>
-        <div class="ConfigPageView-mainContainer" flex layout horizontal start>
-            <CardView layout vertical class="ConfigPageView-sideMenu">
-                <ul class="ConfigPageView-menu">
-                    メニュー
-                </ul>
-            </CardView>
-
-            <CardView self-stretch flex>
-                <h1 style="padding: 40px;">Configの詳細をここに</h1>
-            </CardView>
+    <template name="sa-toolbar" constructor="SAToolBarElement" extend="div" class="sa-toolbar" layout horizontal center-center>
+        <div class="sa-toolbar-inner" flex layout horizontal center content>
         </div>
-    </div>
-</template>
+    </template>
 
+    <template name="sa-lazyimage" constructor="SALazyImageElement" extend="img" class="sa-lazyimage" state="sleep">
+    </template>
 
+    <template name="sa-ripple" constructor="SARippleElement" extend="i" class="sa-ripple">
+        <div class="sa-ripple-inner" content>
 
-
-<template name="UserPageView">
-    <div class="UserPageView" fit layout vertical>
-        <header>
-            <p class="UserPageView-headerText util-smallOnly">
-                ユーザー
-            </p>
-            <span class="util-largeOnly">
-                ユーザー&nbsp;>>&nbsp;
-            </span>
-            <UserInlineView class="UserPageView-userInlineView" name="userInlineView"></UserInlineView>
-        </header>
-        <div class="UserPageView-mainContainer" flex layout horizontal start>
-            <!-- <CardView layout vertical class="UserPageView-sideMenu">
-                <ul class="UserPageView-menu">
-                    メニュー
-                </ul>
-            </CardView> -->
-
-            <CardView self-stretch flex class="UserPageView-projectContainer" name="projectContainer">
-            </CardView>
         </div>
-    </div>
-</template>
+    </template>
 
-
-
-
-<template name="ProjectCreatePageView">
-    <div class="ProjectCreatePageView" fit layout vertical>
-        <header>
-            <p class="ProjectCreatePageView-headerText util-smallOnly">
-                新規プロジェクト作成
-            </p>
-            <span class="util-largeOnly">
-                ユーザー&nbsp;>>&nbsp;
-                <UserInlineView class="ProjectCreatePageView-userInlineView" name="userInlineView"></UserInlineView>
-                &nbsp;>>&nbsp;新規プロジェクト作成
-            </span>
-        </header>
-        <div class="ProjectCreatePageView-mainContainer" flex layout horizontal start>
-            <CardView self-stretch flex>
-                <h1 style="padding: 40px;">Projectの詳細をここに</h1>
-            </CardView>
-        </div>
-    </div>
-</template>
-
-
-
-
-
-
-
-<template name="ProjectInlineView">
-    <div class="ProjectInlineView">
-        <a class="ProjectInlineView-link" name="link">
-            <span class="UserInilneView-projectName" name="projectName"></span>
-        </a>
-    </div>
-</template>
-<template name="ProjectPageView">
-    <div class="ProjectPageView" fit layout vertical>
-        <header>
-            <p class="ProjectPageView-headerText util-smallOnly">
-                プロジェクト
-            </p>
-            <span class="util-largeOnly">
-                ユーザー&nbsp;>>&nbsp;
-                <UserInlineView class="ProjectPageView-userInlineView" name="userInlineView"></UserInlineView>
-                &nbsp;>>&nbsp;プロジェクト&nbsp;>>&nbsp;
-            </span>
-            <ProjectInlineView class="ProjectPageView-projectInlineView" name="projectInlineView"></ProjectInlineView>
-        </header>
-        <div class="ProjectPageView-mainContainer" flex layout horizontal start>
-            <!-- <CardView layout vertical class="ProjectPageView-sideMenu">
-                <ul class="ProjectPageView-menu">
-                    メニュー
-                </ul>
-            </CardView> -->
-
-            <CardView self-stretch flex>
-                <h1 style="padding: 40px;">Projectの詳細をここに</h1>
-            </CardView>
-        </div>
-    </div>
-</template>
-
-
-
-
-
-
-
-<template name="RippleView">
-    <div class="RippleView">
-        <div class="RippleView-main" name="main"></div>
-    </div>
-</template>
-
-<template name="ButtonView">
-    <button class="ButtonView">
+    <template name="sa-button" constructor="SAButtonElement" extend="button" class="sa-button" disabled="{{disabled}}">
+        <sa-ripple class="sa-button-ripple"></sa-ripple>
         <content></content>
-        <RippleView name="ripple"></RippleView>
-    </button>
-</template>
+    </template>
 
-<template name="AuthView">
-    <div class="AuthView">
-        <div class="AuthView-headerMsg">
-            Sign In
-            <p class="AuthView-errorMsg">
-                ユーザー名またはパスワードが違います。
-            </p>
+    <template name="sa-switcher" constructor="SASwitcherElement" extend="div" class="sa-switcher" content>
+    </template>
+
+    <template name="es-userInline" constructor="ESUserInlineElement" extend="a" class="es-userInline" user="{{user}}" href="{{user.uri}}">
+        <sa-lazyimage class="es-userInline-icon" src="{{user.icon}}"></sa-lazyimage>
+        <span class="es-userInline-userName">{{user.name}}</span>
+    </template>
+
+    <template name="es-app" class="es-app" extend="div" fit layout vertical>
+        <sa-toolbar class="es-app-toolbar">
+            <span>Engineer-SNS</span>
+            <div class="es-app-spacer" flex></div>
+            <es-userInline user="{{authedUser}}"></es-userInline>
+        </sa-toolbar>
+        <sa-switcher class="es-app-switcher" flex>
+            <div visible>
+                <div layout vertical center-center>
+                    <es-signInCard class="es-app-signInCard"></es-signInCard>
+                </div>
+            </div>
+            <es-userPage class="es-app-userPage"></es-userPage>
+        </sa-switcher>
+    </template>
+
+    <template name="es-userPage" constructor="ESUserInlineElement" extend="div" class="es-userPage" user="{{user}}" flex layout vertical>
+        <header>
+            ユーザーページ >>
+            <es-userInline user="{{user}}"></es-userInline>
+        </header>
+        <div flex layout horizontal>
+            <div layout vertical>
+                <sa-card flex>
+                    <header class="sa-card-header">メニュー</header>
+                </sa-card>
+            </div>
+            <sa-card flex>
+                <header class="sa-card-header">プロジェクト一覧</header>
+                <div layout horizontal center-center>
+                    <span>プロジェクトがありません</span>
+                </div>
+            </sa-card>
         </div>
-        <form>
+    </template>
+
+    <template name="es-signInCard" constructor="ESSignInCardElement" extend="div" class="es-signInCard sa-card" layout vertical error="{{isError}}" disabled="{{disabled}}" userName="{{userName}}" password="{{password}}">
+        <header class="sa-card-header">
+            <span>サインイン</span>
+            <p class="es-signInCard-errMsg">
+                ユーザー名またはパスワードが違います
+            </p>
+        </header>
+        <form class="es-signInCard-form">
             <p>
-                <label class="AuthView-labelUserName" name="labelUserName">
-                    <span>User Name</span>
-                    <input type="text" class="AuthView-userName" name="userName">
-                </label>
+                <sa-input placeholder="ユーザー名" class="es-signInCard-userName" value="{{userName}}" disabled="{{disabled}}" type="text" />
             </p>
             <p>
-                <label class="AuthView-labelPassword" name="labelPassword">
-                    <span>Password</span>
-                    <input type="password" class="AuthView-password" name="password">
-                </label>
+                <sa-input placeholder="パスワード" class="es-signInCard-password" value="{{password}}" disabled="{{disabled}}" type="password" />
             </p>
             <p>
-                <ButtonView block name="submit" type="submit">Sign In</ButtonView>
+                <sa-button class="es-signInCard-submit sa-button-block sa-button-primary" disabled="{{disabled}}" type="submit">サインイン</sa-button>
             </p>
         </form>
-    </div>
-</template>
+    </template>
 
-
-
-
-<template name="CardView">
-    <div class="CardView">
-        <content></content>
-    </div>
-</template>
-<template name="AuthPageView">
-    <div class="AuthPageView" layout vertical center-center>
-        <CardView class="AuthPageView-cardView" name="cardView">
-            <AuthView name="authView"></AuthView>
-        </CardView>
-    </div>
-</template>
-
-
-<template name="View">
-    <div class="View">
-        <content></content>
-    </div>
-</template>
-
-<template name="SwitchView">
-    <div class="SwitchView">
-
-    </div>
-</template>
-
-
-<template name="ContextMenuView">
-    <div class="ContextMenuView" tabindex="-1">
-        <CardView class="ContextMenuView-cardView" name="cardView">
-            <ul class="ContextMenuView-menu" content layout vertical>
-            </ul>
-        </CardView>
-    </div>
-</template>
-
-
-<template name="LazyImageView">
-    <div class="LazyImageView">
-        <img class="LazyImageView-image" name="image"></img>
-    </div>
-</template>
-
-<template name="UserInlineView">
-    <div class="UserInlineView">
-        <a class="UserInlineView-link" name="link">
-            <LazyImageView class="UserInlineView-icon" name="icon" src="/img/empty.gif"></LazyImageView>
-            <span class="UserInilneView-userName" name="userName"></span>
-        </a>
-    </div>
-</template>
-<template name="ToolBarView">
-    <div class="ToolBarView" layout horizontal center>
-        <a href="#!/">
-            <span class="ToolBarView-title">EngineerSNS</span>
-        </a>
-        <div class="ToolBarView-spacer" flex>
-
-        </div>
-        <UserInlineView name="userInlineView"></UserInlineView>
-        <ContextMenuView class="ToolBarView-contextMenuView" name="contextMenuView">
-            <a name="linkCreateProject">プロジェクト作成</a>
-            <a name="linkConfig">設定</a>
-            <a name="linkSignOut">サインアウト</a>
-        </ContextMenuView>
-    </div>
-</template>
-<template name="AppView">
-    <div fit layout vertical class="AppView">
-        <ToolBarView name="toolBarView"></ToolBarView>
-
-        <SwitchView flex name="switchView">
-            <AuthPageView name="authPageView"></AuthPageView>
-            <ProjectPageView name="projectPageView"></ProjectPageView>
-            <ProjectCreatePageView name="projectCreatePageView"></ProjectCreatePageView>
-            <UserPageView name="userPageView"></UserPageView>
-            <ConfigPageView name="configPageView"></ConfigPageView>
-        </SwitchView>
-    </div>
-</template>
+    <template name="es-signUpCard" constructor="ESSignUpCardElement" extend="div" class="es-ESSignUpCardElement sa-card" layout vertical error="{{isError}}" disabled="{{disabled}}" userName="{{userName}}" password="{{password}}">
+        <header class="sa-card-header">
+            <span>サインアップ</span>
+        </header>
+        <form class="es-ESSignUpCardElement-form">
+            <p>
+                <sa-input placeholder="ユーザー名" class="es-ESSignUpCardElement-userName" value="{{userName}}" disabled="{{disabled}}" type="text" />
+            </p>
+            <p>
+                <sa-input placeholder="パスワード" class="es-ESSignUpCardElement-password" value="{{password}}" disabled="{{disabled}}" type="password" />
+            </p>
+            <p>
+                <sa-input placeholder="パスワード(確認)" class="es-ESSignUpCardElement-password2" value="{{password2}}" disabled="{{disabled}}" type="password" />
+            </p>
+            <p>
+                <sa-button class="es-ESSignUpCardElement-submit sa-button-block sa-button-primary" disabled="{{disabled}}" type="submit">サインアップ</sa-button>
+            </p>
+        </form>
+    </template>
 
     <script src="./script.js"></script>
-    <script type="application/javascript">
-        window.onload = function() {
-            document.body.removeAttribute('unresolved');
-        }
-    </script>
 </body>
 
 </html>

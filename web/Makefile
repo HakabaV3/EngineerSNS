@@ -8,42 +8,42 @@ default:
 watch:
 	$(MAKE) watch-stop
 	$(MAKE) compile
-	$(MAKE) watch-js&
 	$(MAKE) watch-html&
+	$(MAKE) watch-js&
 	$(MAKE) watch-css
 
 #監視の終了
 watch-stop:
 	pgrep fswatch-run | xargs -I$$ kill $$
 
-#js
-watch-js:
-	fswatch-run -r -i *.js ./ "make compile-js"
-
 #html
 watch-html:
-	fswatch-run -r -i *.html ./ "make compile-html"
+	fswatch-run -r index.html "make compile-html"
+
+#js
+watch-js:
+	fswatch-run -r *.js ./ "make compile-js"
 
 #css
 watch-css:
-	fswatch-run -r -i *.css ./ "make compile-css"
+	fswatch-run -r *.scss ./ "make compile-css"
 
 #---------------------------------------------------------
 # コンパイル
 
 #一括
 compile:
-	$(MAKE) compile-js
 	$(MAKE) compile-html
+	$(MAKE) compile-js
 	$(MAKE) compile-css
+
+#html
+compile-html:
+	cp index.html ../server/public/index.html
 
 #js
 compile-js:
 	browserify ./script.js -o ../server/public/script.js
-
-#html
-compile-html:
-	browserify-html ./index.html -o ../server/public/index.html
 
 #css
 compile-css:

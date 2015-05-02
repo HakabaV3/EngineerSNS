@@ -1,6 +1,5 @@
-var util = require('../util.js'),
-    Map = require('../map.js'),
-    ObjectObserver = require('./objectobserver.js');
+var Map = require('../Map.js'),
+    ObjectObserver = require('./ObjectObserver.js');
 
 /**
  *  @constructor
@@ -117,14 +116,14 @@ CustomObserver.removeInstance_ = function(instance) {
  * @param  {string}   propName string
  * @param  {Function} callback callback
  */
-CustomObserver.observe = function(object, propName, callback) {
+CustomObserver.observe = function(object, propName, callback, context) {
     var instance = this.getInstance_(object, propName);
 
     if (!instance) {
         instance = this.addInstance_(object, propName);
     }
 
-    instance.addCallback_(callback);
+    instance.addCallback_(callback, context);
 };
 
 /**
@@ -133,32 +132,49 @@ CustomObserver.observe = function(object, propName, callback) {
  * @param  {string}   propName string
  * @param  {Function} callback callback
  */
-CustomObserver.unobserve = function(object, propName, callback) {
+CustomObserver.unobserve = function(object, propName, callback, context) {
     var instance = this.getInstance(object, propName);
 
     if (!instance) return;
 
-    instance.removeCallback_(callback);
+    instance.removeCallback_(callback, context);
 };
 
-CustomObserver.prototype.addCallback_ = function(callback) {
+CustomObserver.prototype.addCallback_ = function(callback, context) {
     var callbacks = this.callbacks_,
-        index = callbacks.indexOf(callback);
+        i, max;
 
-    if (index !== -1) return;
+    context = context || global;
 
-    callbacks.push(callback);
+    for (i = 0, max = callbacks.length; i < max; i++) {
+        if (callbacks[i].callback === callback &&
+            callbacks[i].context === context) {
+            return;
+        }
+    }
+
+    callbacks.push({
+        callback: callback,
+        context: context
+    });
 };
 
-CustomObserver.prototype.removeCallback_ = function(callback) {
+CustomObserver.prototype.removeCallback_ = function(callback, context) {
     var callbacks = this.callbacks_,
-        index = callbacks.indexOf(callback);
+        i, max;
 
-    if (index === -1) return;
+    context = context || global;
 
-    callbacks.splice(index, 1);
+    for (i = 0, max = callbacks.length; i < max; i++) {
+        if (callbacks[i].callback === callback &&
+            callbacks[i].context === context) {
+            callbacks.splice(i, 1);
+            i--;
+            max--;
+        }
+    }
 
-    if (callbacks.length === 0) {
+    if (max === 0) {
         CustomObserver.removeInstance_(this);
     }
 };
@@ -169,7 +185,7 @@ CustomObserver.prototype.removeCallback_ = function(callback) {
 CustomObserver.prototype.getValue = function() {
     var length = this.propNameTokens_.length;
 
-    return util.isObject(this.targets_[length - 1]) ?
+    return isObject(this.targets_[length - 1]) ?
         this.targets_[length - 1][this.propNameTokens_[length - 1]] :
         null;
 };
@@ -188,7 +204,7 @@ CustomObserver.prototype.resetObserve_ = function(index) {
         newTarget;
 
     //unobserve
-    if (util.isObject(oldTarget)) {
+    if (isObject(oldTarget) && index !== 0) {
         Object.unobserve(oldTarget, this.onChangeHandler_);
     }
 
@@ -199,8 +215,8 @@ CustomObserver.prototype.resetObserve_ = function(index) {
     //observe
     if (index === 0) {
         newTarget = targets[0];
-    } else if (util.isObject(targets[index - 1]) &&
-        util.isObject(targets[index - 1][this.propNameTokens_[index - 1]])) {
+    } else if (isObject(targets[index - 1]) &&
+        isObject(targets[index - 1][this.propNameTokens_[index - 1]])) {
 
         newTarget = targets[index - 1][this.propNameTokens_[index - 1]];
     } else {
@@ -221,9 +237,19 @@ CustomObserver.prototype.resetObserve_ = function(index) {
  * @private
  */
 CustomObserver.prototype.onChangeHandler_ = function(changes) {
-    var newValue = this.getValue(),
+    var newValue,
         oldValue = this.oldValue_,
         targets = this.targets_;
+
+    changes.forEach(function(change) {
+        var index = targets.indexOf(change.object);
+
+        if (index !== -1) {
+            this.resetObserve_(index);
+        }
+    }, this);
+
+    newValue = this.getValue();
 
     if (newValue !== oldValue) {
         changes = [{
@@ -235,23 +261,11 @@ CustomObserver.prototype.onChangeHandler_ = function(changes) {
         }];
 
         this.callbacks_.forEach(function(callback) {
-            if (util.isFunction(callback)) {
-                callback(changes);
-            } else if (util.isObject(callback) && util.isFunction(callback.handleEvent)) {
-                callback.handleEvent(changes);
-            }
+            callback.callback.call(callback.context, changes);
         }, this);
 
         this.oldValue_ = newValue;
     }
-
-    changes.forEach(function(change) {
-        var index = targets.indexOf(change.object);
-
-        if (index !== -1) {
-            this.resetObserve_(index);
-        }
-    }, this);
 };
 
 module.exports = CustomObserver;

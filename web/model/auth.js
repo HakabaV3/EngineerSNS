@@ -1,5 +1,5 @@
-var API = require('../service/api/api.js'),
-    User = require('./user.js');
+var API = require('../Service/API/API.js'),
+    User = require('./User.js');
 
 /**
  *  Authentication methods.

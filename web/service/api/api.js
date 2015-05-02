@@ -1,5 +1,4 @@
-var util = require('../../service/util.js'),
-    APIError = require('./apierror.js');
+var APIError = require('./APIError.js');
 
 /**
  *  namespace for request API
@@ -11,7 +10,7 @@ var API = {};
  *  API Entry Point
  *  @const {string}
  */
-API.EntryPoint = 'http://localhost:3000/api/v1';
+API.EntryPoint = '/api/v1';
 
 //@TODO: DEBUG ONLY
 // API.EntryPoint = './testdata';
@@ -47,7 +46,7 @@ API.get = function(url, params, callback) {
         params = undefined;
     }
 
-    if (util.isObject(params)) {
+    if (isObject(params)) {
         url += '?' + API.encodeURLParams(params);
     }
 
@@ -67,7 +66,7 @@ API.post = function(url, params, body, callback) {
         params = undefined;
     }
 
-    if (util.isObject(params)) {
+    if (isObject(params)) {
         url += '?' + API.encodeURLParams(params);
     }
 
@@ -99,7 +98,7 @@ API.put = function(url, params, body, callback) {
         params = undefined;
     }
 
-    if (util.isObject(params)) {
+    if (isObject(params)) {
         url += '?' + API.encodeURLParams(params);
     }
 
@@ -131,7 +130,7 @@ API.patch = function(url, params, body, callback) {
         params = undefined;
     }
 
-    if (util.isObject(params)) {
+    if (isObject(params)) {
         url += '?' + API.encodeURLParams(params);
     }
 
@@ -162,7 +161,7 @@ API.delete = function(url, params, callback) {
         params = undefined;
     }
 
-    if (util.isObject(params)) {
+    if (isObject(params)) {
         url += '?' + API.encodeURLParams(params);
     }
 

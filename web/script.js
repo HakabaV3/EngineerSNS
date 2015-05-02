@@ -1,6 +1,5 @@
-var AppView = require('./view/appview/appview.js');
+require('./util.js');
 
-window.addEventListener('DOMContentLoaded', function() {
-    var appView = new AppView();
-    document.body.appendChild(appView.$.root);
-});
+require('./Element/js/ESAppElement.js');
+
+require('./bootstrap.js');

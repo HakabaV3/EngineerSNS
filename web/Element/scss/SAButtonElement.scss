@@ -1,0 +1,42 @@
+@import "./SARippleElement.scss";
+
+.sa-button {
+    position: relative;
+    display: block;
+    padding: 15px 20px;
+    width: 100%;
+    border: none;
+    background: #e0e0e0;
+    font-size: 14px;
+    user-select: none;
+    cursor: pointer;
+    outline: none;
+    transition: 0.2s ease;
+    border-radius: 2px;
+    box-sizing: border-box;
+    > .sa-button-ripple {
+        color: #fff;
+    }
+    &:hover,
+    &:focus {
+        background: #d0d0d0;
+    }
+    &[disabled] {
+        cursor: default;
+        background: #9e9e9e;
+        color: #fafafa;
+    }
+    &.sa-button-primary {
+        background: #00bcd4;
+        color: #fafafa;
+        &:hover,
+        &:focus {
+            background: #00acc1;
+        }
+        &[disabled] {
+            cursor: default;
+            background: #9e9e9e;
+            color: #fafafa;
+        }
+    }
+}

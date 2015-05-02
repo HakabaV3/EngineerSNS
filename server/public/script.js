@@ -1,6 +1,560 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var API = require('../service/api/api.js'),
-    User = require('./user.js');
+var EventDispatcher = require('../Service/EventDispatcher.js');
+
+/**
+ *  @constructor
+ *  @extends {EventDispatcher}
+ */
+function Controller() {
+    EventDispatcher.apply(this, arguments);
+}
+inherits(Controller, EventDispatcher);
+
+module.exports = Controller;
+
+},{"../Service/EventDispatcher.js":25}],2:[function(require,module,exports){
+var Controller = require('./Controller.js'),
+    Template = require('../Service/Template.js'),
+    ESSignInCardController = require('./ESSignInCardController.js'),
+    User = require('../Model/User.js');
+
+/**
+ *  @constructor
+ *  @param {Element} [element] base element.
+ *  @extends {Controller}
+ */
+function ESAppController(element) {
+    Controller.apply(this, arguments);
+
+    this.element = element || Template.createElement('es-app');
+
+    /**
+     *  @type {ESSignInCardController}
+     */
+    this.signInCardController = new ESSignInCardController(this.element.$.signInCard);
+
+    this.initEventHandler();
+}
+inherits(ESAppController, Controller);
+
+/**
+ *  Initialize eventhandlers.
+ */
+ESAppController.prototype.initEventHandler = function() {
+    this.signInCardController.on('signin', this.onSignIn, this);
+};
+
+/**
+ *  callback of ESSignInCardController#signin.
+ *  @param {User} user authorized user.
+ */
+ESAppController.prototype.onSignIn = function(user) {
+    console.log(user);
+    this.element.authedUser = user;
+    this.element.$.switcher.switch(1);
+    this.element.$.userPage.user = user;
+};
+
+module.exports = ESAppController;
+
+},{"../Model/User.js":18,"../Service/Template.js":29,"./Controller.js":1,"./ESSignInCardController.js":3}],3:[function(require,module,exports){
+var Controller = require('./Controller.js'),
+    Template = require('../Service/Template.js'),
+    Auth = require('../Model/Auth.js');
+
+/**
+ *  @constructor
+ *  @param {Element} [element] base element.
+ *  @extends {Controller}
+ */
+function ESSignInCardController(element) {
+    Controller.apply(this, arguments);
+
+    this.element = element || Template.createElement('es-signInCard');
+
+    this.element.addEventListener('submit', this.onSubmit = this.onSubmit.bind(this));
+}
+inherits(ESSignInCardController, Controller);
+
+/**
+ *  sign in.
+ */
+ESSignInCardController.prototype.signIn = function(callback) {
+    var self = this,
+        userName = this.element.userName,
+        password = this.element.password;
+
+    this.element.disabled = true;
+    this.element.isError = false;
+
+    Auth.signIn(userName, password, function(err, user) {
+        self.element.disabled = false;
+        if (err) {
+            self.element.isError = true;
+            self.element.$.userName.focus();
+        } else {
+            self.fire('signin', user);
+            self.element.clear();
+        }
+    });
+};
+
+/**
+ *  callback of element#submit
+ */
+ESSignInCardController.prototype.onSubmit = function(ev) {
+    this.signIn();
+};
+
+module.exports = ESSignInCardController;
+
+},{"../Model/Auth.js":14,"../Service/Template.js":29,"./Controller.js":1}],4:[function(require,module,exports){
+var Template = require('../../Service/Template.js');
+
+/**
+ *  CustomElement base class
+ */
+function CustomElement($) {
+    /**
+     *  DOM element map.
+     *  @type {Object}
+     */
+    this.$ = $;
+};
+
+//content's method bridge
+forEach([
+    'appendChild',
+    'removeChild'
+], function(methodName) {
+    CustomElement.prototype[methodName] = function() {
+        if (this.$ && this.$.content && this !== this.$.content) {
+            return this.$.content[methodName].apply(this.$.content, arguments);
+        } else {
+            return Object.getPrototypeOf(this)[methodName].apply(this, arguments);
+        }
+    }
+});
+
+//content's getter bridge
+// forEach([
+//     'innerHTML',
+//     'outerHTML',
+//     'innerText',
+//     'textContent',
+// ], function(getterName) {
+//     CustomElement.prototype.__defineGetter__(getterName, function() {
+//         return this.$.content[getterName];
+//     });
+// });
+
+//content's setter bridge
+// forEach([
+//     'innerHTML',
+//     'outerHTML',
+//     'innerText',
+//     'textContent',
+// ], function(setterName) {
+//     CustomElement.prototype.__defineSetter__(setterName, function(newVal) {
+//         return this.$.content[setterName] = newVal;
+//     });
+// });
+
+/**
+ * Registers the custom element constructor.
+ * @param {Function} constructor.
+ * @param {string} [name] constructor name.
+ *  If this parameter isn't passed, constructor's function's name is used.
+ */
+CustomElement.registerConstructor = function(constructor, name) {
+    Template.registerConstructor(constructor, name);
+};
+
+module.exports = CustomElement;
+
+},{"../../Service/Template.js":29}],5:[function(require,module,exports){
+require('./SAToolBarElement.js');
+require('./ESSignInCardElement.js');
+require('./SASwitcherElement.js');
+
+},{"./ESSignInCardElement.js":6,"./SASwitcherElement.js":12,"./SAToolBarElement.js":13}],6:[function(require,module,exports){
+require('./SAInputElement.js');
+require('./SAButtonElement.js');
+
+var CustomElement = require('./CustomElement.js');
+
+/**
+ *  @constructor
+ *  @extends {CustomElement}
+ */
+function ESSignInCardElement() {
+    CustomElement.apply(this, arguments);
+
+    this.$.form.addEventListener('submit', this.onFormSubmit = this.onFormSubmit.bind(this));
+}
+inherits(ESSignInCardElement, CustomElement);
+
+/**
+ *  clear all value
+ */
+ESSignInCardElement.prototype.clear = function() {
+    this.userName = '';
+    this.password = '';
+    this.blur();
+};
+
+/**
+ *  callback of $.form#submit
+ *  @param {Event} ev event object.
+ */
+ESSignInCardElement.prototype.onFormSubmit = function(ev) {
+    var isInValid = false,
+        userName = this.userName,
+        password = this.password;
+
+    if (!password) {
+        isInValid = true;
+        this.$.password.isError = true;
+        this.$.password.focus();
+    } else {
+        this.$.password.isError = false;
+    }
+
+    if (!userName) {
+        isInValid = true;
+        this.$.userName.isError = true;
+        this.$.userName.focus();
+    } else {
+        this.$.userName.isError = false;
+    }
+
+    if (isInValid) {
+        ev.stopImmediatePropagation();
+    }
+
+    ev.preventDefault();
+    return false;
+};
+
+CustomElement.registerConstructor(ESSignInCardElement);
+
+module.exports = ESSignInCardElement;
+
+},{"./CustomElement.js":4,"./SAButtonElement.js":8,"./SAInputElement.js":9}],7:[function(require,module,exports){
+var SALazyImageElement = require('./SALazyImageElement.js');
+
+},{"./SALazyImageElement.js":10}],8:[function(require,module,exports){
+var CustomElement = require('./CustomElement'),
+    SARippleElement = require('./SARippleElement.js');
+
+/**
+ *  Enter key's keycode.
+ *  @const {number}
+ */
+var KEYCODE_ENTER = 13;
+
+/**
+ *  @constructor
+ *  @extends {CustomElement}
+ */
+function SAButtonElement($) {
+    CustomElement.apply(this, arguments);
+
+    this.$.ripple.addEventListener('mousedown', this.onMouseDown = this.onMouseDown.bind(this));
+    this.$.ripple.addEventListener('mouseup', this.onMouseUp = this.onMouseUp.bind(this));
+    this.addEventListener('keypress', this.onKeyPress = this.onKeyPress.bind(this));
+    this.originalClick = HTMLButtonElement.prototype.click;
+}
+inherits(SAButtonElement, CustomElement);
+
+/**
+ *  show ripple-start effect with center position is (x, y);
+ *  @param {number} [x=0] center position x.
+ *  @param {number} [y=0] center position y.
+ */
+SAButtonElement.prototype.pushDown = function(x, y) {
+    if (this.disabled) return;
+
+    this.$.ripple.rippleStart(x || 0, y || 0);
+};
+
+/**
+ *  show ripple-end effect.
+ */
+SAButtonElement.prototype.pushUp = function() {
+    this.$.ripple.rippleEnd();
+};
+
+/**
+ *  click this element
+ *  @override
+ */
+SAButtonElement.prototype.click = function() {
+    if (this.disabled) return;
+
+    var gcr = this.getBoundingClientRect();
+    this.pushDown(gcr.width / 2, gcr.height / 2);
+    this.originalClick.apply(this, arguments);
+    this.pushUp();
+};
+
+/**
+ *  callback of this#mousedown
+ *  @param {Event} ev event object
+ */
+SAButtonElement.prototype.onMouseDown = function(ev) {
+    var gcr = this.getBoundingClientRect();
+    this.pushDown(ev.x - gcr.left, ev.y - gcr.top);
+};
+
+/**
+ *  callback of this#mouseup
+ *  @param {Event} ev event object
+ */
+SAButtonElement.prototype.onMouseUp = function(ev) {
+    this.pushUp();
+};
+
+/**
+ *  callback of this#keypress
+ *  @param {Event} ev event object
+ */
+SAButtonElement.prototype.onKeyPress = function(ev) {
+    if (ev.keyCode === KEYCODE_ENTER) {
+        this.click();
+        ev.stopPropagation();
+        ev.preventDefault();
+    }
+};
+
+CustomElement.registerConstructor(SAButtonElement);
+
+module.exports = SAButtonElement
+
+},{"./CustomElement":4,"./SARippleElement.js":11}],9:[function(require,module,exports){
+var CustomElement = require('./CustomElement.js');
+
+/**
+ *  @constructor
+ *  @extends {CustomElement}
+ */
+function SAInputElement($) {
+    CustomElement.apply(this, arguments);
+
+    $.input.addEventListener('focus', this.onInputFocus = this.onInputFocus.bind(this));
+    $.input.addEventListener('blur', this.onInputBlur = this.onInputBlur.bind(this));
+    $.input.addEventListener('input', this.onInputInput = this.onInputInput.bind(this));
+}
+inherits(SAInputElement, CustomElement);
+
+/**
+ *  updateValueAttr_
+ *  @private
+ */
+SAInputElement.prototype.__defineSetter__('value', function(newVal) {
+    this.$.input.value = newVal;
+});
+
+/**
+ *  set focus
+ *  @override
+ */
+SAInputElement.prototype.focus = function() {
+    return this.$.input.focus();
+};
+
+/**
+ *  updateValueAttr_
+ *  @private
+ */
+SAInputElement.prototype.updateValueAttr_ = function() {
+    this.$.input.setAttribute('value', this.$.input.value);
+};
+
+/**
+ *  callback of $.input#focus
+ *  @param {Event} ev event object
+ */
+SAInputElement.prototype.onInputFocus = function(ev) {
+    this.setAttribute('focus', '');
+};
+
+/**
+ *  callback of $.input#blur
+ *  @param {Event} ev event object
+ */
+SAInputElement.prototype.onInputBlur = function(ev) {
+    this.removeAttribute('focus');
+};
+
+/**
+ *  callback of $.input#blur
+ *  @param {Event} ev event object
+ */
+SAInputElement.prototype.onInputInput = function(ev) {
+    this.updateValueAttr_();
+};
+
+CustomElement.registerConstructor(SAInputElement);
+
+module.exports = SAInputElement;
+
+},{"./CustomElement.js":4}],10:[function(require,module,exports){
+var CustomElement = require('./CustomElement.js');
+
+/**
+ *  @constructor
+ *  @extends {CustomElement}
+ */
+function SALazyImageElement($) {
+    CustomElement.apply(this, arguments);
+
+    this.addEventListener('load', this.onLoad = this.onLoad.bind(this));
+    this.addEventListener('error', this.onError = this.onError.bind(this));
+}
+inherits(SALazyImageElement, CustomElement);
+
+/**
+ *  image source url
+ *  @type {string}
+ */
+SALazyImageElement.prototype.__defineSetter__('src', function(newVal) {
+    this.setAttribute('src', newVal);
+    this.setAttribute('state', 'loading');
+
+    if (this.complete) this.onLoad();
+});
+
+/**
+ *  callback of this#load
+ *  @param {Event} ev event object
+ */
+SALazyImageElement.prototype.onLoad = function(ev) {
+    this.setAttribute('state', 'loaded');
+};
+
+/**
+ *  callback of this#error
+ *  @param {Event} ev event object
+ */
+SALazyImageElement.prototype.onError = function(ev) {
+    this.setAttribute('state', 'error');
+};
+
+CustomElement.registerConstructor(SALazyImageElement);
+
+module.exports = SALazyImageElement;
+
+},{"./CustomElement.js":4}],11:[function(require,module,exports){
+var CustomElement = require('./CustomElement.js');
+
+/**
+ *  @constructor
+ *  @extends {CustomElement}
+ */
+function SARippleElement($) {
+    CustomElement.apply(this, arguments);
+}
+inherits(SARippleElement, CustomElement);
+
+/**
+ *  show ripple-start effect with center position is (x, y);
+ *  @param {number} [x=0] center position x.
+ *  @param {number} [y=0] center position y.
+ */
+SARippleElement.prototype.rippleStart = function(x, y) {
+    var self = this,
+        style = this.$.inner.style,
+        computed = getComputedStyle(this);
+
+    style.left = x + 'px';
+    style.top = y + 'px';
+    style.backgroundColor = computed.color;
+
+    this.removeAttribute('ripple-end');
+    this.removeAttribute('ripple-start');
+
+    requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+            self.setAttribute('ripple-start', '');
+        });
+    });
+};
+
+/**
+ *  show ripple-end effect
+ */
+SARippleElement.prototype.rippleEnd = function() {
+    this.setAttribute('ripple-end', '');
+};
+
+CustomElement.registerConstructor(SARippleElement);
+
+module.exports = SARippleElement;
+
+},{"./CustomElement.js":4}],12:[function(require,module,exports){
+var CustomElement = require('./CustomElement.js');
+
+/**
+ *  @constructor
+ *  @extends {CustomElement}
+ */
+function SASwitcherElement($) {
+    CustomElement.apply(this, arguments);
+}
+inherits(SASwitcherElement, CustomElement);
+
+/**
+ *  show ripple-start effect with center position is (x, y);
+ *  @param {number} [x=0] center position x.
+ *  @param {number} [y=0] center position y.
+ */
+SASwitcherElement.prototype.switch = function(index) {
+
+    var children = this.children,
+        nextPage = this.children[index],
+        i, max, currentPage;
+
+    for (i = 0, max = children.length; i < max; i++) {
+        if (children[i].hasAttribute('visible')) {
+            currentPage = children[i];
+            break;
+        }
+    }
+
+    if (currentPage) {
+        currentPage.removeAttribute('visible');
+    }
+
+    if (nextPage) {
+        nextPage.setAttribute('visible', '');
+    }
+};
+
+CustomElement.registerConstructor(SASwitcherElement);
+
+module.exports = SASwitcherElement;
+
+},{"./CustomElement.js":4}],13:[function(require,module,exports){
+var CustomElement = require('./CustomElement.js'),
+    ESUserInlineElement = require('./ESUserInlineElement.js');
+
+/**
+ *  @constructor
+ *  @extends {CustomElement}
+ */
+function SAToolBarElement($) {
+    CustomElement.apply(this, arguments);
+}
+inherits(SAToolBarElement, CustomElement);
+
+CustomElement.registerConstructor(SAToolBarElement);
+
+module.exports = SAToolBarElement;
+
+},{"./CustomElement.js":4,"./ESUserInlineElement.js":7}],14:[function(require,module,exports){
+var API = require('../Service/API/API.js'),
+    User = require('./User.js');
 
 /**
  *  Authentication methods.
@@ -63,10 +617,9 @@ Auth.signUp = function(userName, password, callback) {
 
 module.exports = Auth;
 
-},{"../service/api/api.js":8,"./user.js":5}],2:[function(require,module,exports){
-var Model = require('./model.js'),
-    util = require('../service/util.js'),
-    API = require('../service/api/api.js');
+},{"../Service/API/API.js":19,"./User.js":18}],15:[function(require,module,exports){
+var Model = require('./Model.js'),
+    API = require('../Service/API/API.js');
 
 /**
  *  Comment Model.
@@ -77,7 +630,7 @@ var Model = require('./model.js'),
 var Comment = function(data) {
     if (!(this instanceof Comment)) return new Comment(data);
 
-    if (util.isObject(data)) {
+    if (isObject(data)) {
         if (Comment.hasInstance(data.id)) {
             return Comment.getInstance(data.id).updateWithData(data);
         }
@@ -85,7 +638,7 @@ var Comment = function(data) {
 
     Model.call(this, data);
 };
-util.inherits(Comment, Model);
+inherits(Comment, Model);
 
 Comment.prototype.hoge = function(name, key) {};
 
@@ -216,9 +769,8 @@ Comment.prototype.delete = function(callback) {
 
 module.exports = Comment;
 
-},{"../service/api/api.js":8,"../service/util.js":18,"./model.js":3}],3:[function(require,module,exports){
-var EventDispatcher = require('../service/eventdispatcher.js'),
-    util = require('../service/util.js');
+},{"../Service/API/API.js":19,"./Model.js":16}],16:[function(require,module,exports){
+var EventDispatcher = require('../Service/EventDispatcher.js');
 
 /**
  *  Data model base class.
@@ -231,12 +783,12 @@ var Model = function(data) {
     EventDispatcher.call(this);
 
     this.initForSchema();
-    if (util.isObject(data)) {
+    if (isObject(data)) {
         this.updateWithData(data);
         this.constructor.addInstance(this);
     }
 };
-util.inherits(Model, EventDispatcher);
+inherits(Model, EventDispatcher);
 
 /**
  *  model instances map
@@ -302,7 +854,7 @@ Model.prototype.initForSchema = function() {
     Object.keys(schema).forEach(function(schemaKey) {
         var scheme = schema[schemaKey];
 
-        if (!util.isObject(scheme)) {
+        if (!isObject(scheme)) {
             /**
              *  syntax sugar
              */
@@ -346,11 +898,10 @@ Model.prototype.dispatchUpdate = function() {
 
 module.exports = Model;
 
-},{"../service/eventdispatcher.js":12,"../service/util.js":18}],4:[function(require,module,exports){
-var Model = require('./model.js'),
-    Comment = require('./comment.js'),
-    util = require('../service/util.js'),
-    API = require('../service/api/api.js');
+},{"../Service/EventDispatcher.js":25}],17:[function(require,module,exports){
+var Model = require('./Model.js'),
+    Comment = require('./Comment.js'),
+    API = require('../Service/API/API.js');
 
 /**
  *  Project Model.
@@ -361,7 +912,7 @@ var Model = require('./model.js'),
 var Project = function(data) {
     if (!(this instanceof Project)) return new Project(data);
 
-    if (util.isObject(data)) {
+    if (isObject(data)) {
         if (Project.hasInstance(data.id)) {
             return Project.getInstance(data.id).updateWithData(data);
         }
@@ -369,7 +920,7 @@ var Project = function(data) {
 
     Model.call(this, data);
 };
-util.inherits(Project, Model);
+inherits(Project, Model);
 
 /**
  *  model instances map
@@ -529,11 +1080,10 @@ Project.prototype.postComment = function(text, callback) {
 
 module.exports = Project;
 
-},{"../service/api/api.js":8,"../service/util.js":18,"./comment.js":2,"./model.js":3}],5:[function(require,module,exports){
-var Model = require('./model.js'),
-    Project = require('./project.js'),
-    util = require('../service/util.js'),
-    API = require('../service/api/api.js');
+},{"../Service/API/API.js":19,"./Comment.js":15,"./Model.js":16}],18:[function(require,module,exports){
+var Model = require('./Model.js'),
+    Project = require('./Project.js'),
+    API = require('../Service/API/API.js');
 
 /**
  *  User Model.
@@ -544,7 +1094,7 @@ var Model = require('./model.js'),
 var User = function(data) {
     if (!(this instanceof User)) return new User(data);
 
-    if (util.isObject(data)) {
+    if (isObject(data)) {
         if (User.hasInstance(data.name)) {
             return User.getInstance(data.name).updateWithData(data);
         }
@@ -552,7 +1102,7 @@ var User = function(data) {
 
     Model.call(this, data);
 };
-util.inherits(User, Model);
+inherits(User, Model);
 
 /**
  *  model instances map
@@ -808,133 +1358,8 @@ User.prototype.getComments = function(callback) {
 
 module.exports = User;
 
-},{"../service/api/api.js":8,"../service/util.js":18,"./model.js":3,"./project.js":4}],6:[function(require,module,exports){
-var AppView = require('./view/appview/appview.js');
-
-window.addEventListener('DOMContentLoaded', function() {
-    var appView = new AppView();
-    document.body.appendChild(appView.$.root);
-});
-
-},{"./view/appview/appview.js":19}],7:[function(require,module,exports){
-var util = require('./util.js');
-
-function Animation() {
-    if (!(this instanceof Animation)) {
-        var instance = new Animation();
-        instance.then.apply(instance, arguments);
-        return intstance;
-    }
-
-    /**
-     * The que of animation data objects.
-     * @type {[Object]}
-     * @private
-     */
-    this.que_ = [];
-
-    /**
-     * The flag if animation is running
-     * @type {Boolean}
-     * @private
-     */
-    this.flagRunning = false;
-
-    /**
-     * The flag if animation que is waiting for transitionend event.
-     * @type {Boolean}
-     * @private
-     */
-    this.flagWaiting = false;
-
-    /**
-     * The element of the transition waiting for transitionend event.
-     * @type {Element}
-     * @private
-     */
-    this.waitingElement = null;
-
-    // /**
-    //  * The property name of the transition waiting for transitionend event.
-    //  * @type {string|null}
-    //  * @private
-    //  */
-    // this.waitingPropertyName = null;
-}
-
-Animation.prototype.then = function(element, callback, flagWait) {
-    flagWait = flagWait || false;
-
-    this.que_.push({
-        element: element,
-        callback: callback,
-        flagWait: flagWait
-    });
-    if (!this.flagRunning) {
-        this.flagRunning = true;
-        this.doAnimation_();
-    }
-
-    return this;
-};
-
-Animation.prototype.wait = function(element, callback) {
-    return this.then(element, callback, true);
-};
-
-Animation.prototype.doAnimation_ = function() {
-    var que = this.que_,
-        self = this,
-        item;
-
-    // wait for transitionend event.
-    if (this.flagWaiting) return;
-
-    item = que.shift();
-
-    if (!item) {
-        // que is empty
-        this.flagRunning = false;
-        return;
-    }
-
-    if (item.flagWait) {
-        // wait for next transitionend event.
-        item.element.addEventListener('transitionend', this);
-        this.flagWaiting = true;
-        this.waitingElement = item.element;
-    }
-
-    requestAnimationFrame(function() {
-        item.callback.call(self, item.element);
-        self.doAnimation_();
-    });
-};
-
-Animation.prototype.handleEvent = function(ev) {
-    switch (ev.type) {
-        case 'transitionend':
-            this.onTransitionEnd(ev);
-            break;
-    }
-};
-
-Animation.prototype.onTransitionEnd = function(ev) {
-    if (!this.flagWaiting ||
-        this.waitingElement !== ev.target) return;
-
-    ev.target.removeEventListener('transitionend', this);
-
-    this.flagWaiting = false;
-    this.waitingElement = null;
-    this.doAnimation_();
-};
-
-module.exports = Animation;
-
-},{"./util.js":18}],8:[function(require,module,exports){
-var util = require('../../service/util.js'),
-    APIError = require('./apierror.js');
+},{"../Service/API/API.js":19,"./Model.js":16,"./Project.js":17}],19:[function(require,module,exports){
+var APIError = require('./APIError.js');
 
 /**
  *  namespace for request API
@@ -946,7 +1371,7 @@ var API = {};
  *  API Entry Point
  *  @const {string}
  */
-API.EntryPoint = 'http://localhost:3000/api/v1';
+API.EntryPoint = '/api/v1';
 
 //@TODO: DEBUG ONLY
 // API.EntryPoint = './testdata';
@@ -982,7 +1407,7 @@ API.get = function(url, params, callback) {
         params = undefined;
     }
 
-    if (util.isObject(params)) {
+    if (isObject(params)) {
         url += '?' + API.encodeURLParams(params);
     }
 
@@ -1002,7 +1427,7 @@ API.post = function(url, params, body, callback) {
         params = undefined;
     }
 
-    if (util.isObject(params)) {
+    if (isObject(params)) {
         url += '?' + API.encodeURLParams(params);
     }
 
@@ -1034,7 +1459,7 @@ API.put = function(url, params, body, callback) {
         params = undefined;
     }
 
-    if (util.isObject(params)) {
+    if (isObject(params)) {
         url += '?' + API.encodeURLParams(params);
     }
 
@@ -1066,7 +1491,7 @@ API.patch = function(url, params, body, callback) {
         params = undefined;
     }
 
-    if (util.isObject(params)) {
+    if (isObject(params)) {
         url += '?' + API.encodeURLParams(params);
     }
 
@@ -1097,7 +1522,7 @@ API.delete = function(url, params, callback) {
         params = undefined;
     }
 
-    if (util.isObject(params)) {
+    if (isObject(params)) {
         url += '?' + API.encodeURLParams(params);
     }
 
@@ -1192,9 +1617,7 @@ API.hasToken = function() {
 
 module.exports = API;
 
-},{"../../service/util.js":18,"./apierror.js":9}],9:[function(require,module,exports){
-var util = require('../../service/util.js');
-
+},{"./APIError.js":20}],20:[function(require,module,exports){
 /**
  *  namespace for definition of API Errors
  *  @namespace
@@ -1211,7 +1634,7 @@ APIError.Code = {
     UNKNOWN: 999
 };
 
-util.extend(APIError, {
+extend(APIError, {
     SUCCESS: {
         code: APIError.Code.SUCCESS,
         msg: 'success'
@@ -1248,7 +1671,7 @@ util.extend(APIError, {
  *  @return {Object} error object.
  */
 APIError.parseFailed = function(xhr) {
-    return util.extend(APIError.PARSE_FAILED, {
+    return extend(APIError.PARSE_FAILED, {
         xhr: xhr
     });
 };
@@ -1259,7 +1682,7 @@ APIError.parseFailed = function(xhr) {
  *  @return {Object} error object.
  */
 APIError.connectionFailed = function(xhr) {
-    return util.extend(APIError.CONNECTION_FAILED, {
+    return extend(APIError.CONNECTION_FAILED, {
         xhr: xhr
     });
 };
@@ -1270,7 +1693,7 @@ APIError.connectionFailed = function(xhr) {
  *  サーバーは頼むからエラーをコードで返してくれ！
  */
 APIError.detectError = function(err) {
-    if (util.isObject(err)) {
+    if (isObject(err)) {
         switch (err.code) {
             case APIError.Code.PERMISSION_DENIED:
                 return APIError.PERMISSION_DENIED;
@@ -1285,7 +1708,7 @@ APIError.detectError = function(err) {
                 break;
 
             default:
-                return util.extend(APIError.UNKNOWN, {
+                return extend(APIError.UNKNOWN, {
                     original: err
                 });
                 break;
@@ -1300,162 +1723,396 @@ APIError.detectError = function(err) {
         return APIError.INVALID_PARAMETER;
     }
 
-    return util.extend(APIError.UNKNOWN, {
+    return extend(APIError.UNKNOWN, {
         original: err
     });
 };
 
 module.exports = APIError;
 
-},{"../../service/util.js":18}],10:[function(require,module,exports){
-if (!('classList' in document.createElement('a'))) {
-    var DOMTokenList = require('./domtokenlist.js');
-
-    Element.prototype.__defineGetter__('classList', function() {
-        return new DOMTokenList(this, 'class');
-    });
-}
-
-},{"./domtokenlist.js":11}],11:[function(require,module,exports){
-var DOMTokenList = window.DOMTokenList;
+},{}],21:[function(require,module,exports){
+var Observing = require('./Observing.js'),
+    Map = require('../Map.js');
 
 /**
- *	DOMTokenList Polyfill
+ *  AttributeObserving
+ *
+ *  This class presents an observing state for node's attribute.
+ *
+ *  @constructor
+ *  @param {Element} target target element.
+ *  @param {string} key target attribute name.
+ *  @extends {Observing}
  */
-if (!DOMTokenList) {
+function AttributeObserving(target, key) {
+    Observing.apply(this, arguments);
+}
+inherits(AttributeObserving, Observing);
 
-    DOMTokenList = function DOMTokenList(element, attrName) {
-        /**
-         * @type {Element}
-         * @private
-         */
-        this.element_ = element;
+/**
+ *  callback for MutationObserver.
+ *  @param {Array<Object>} mutations mutations
+ */
+AttributeObserving.onChange = function(mutations) {
+    forEach(mutations, function(mutation) {
+        var listeners = this.listenersMap_.get(mutation.target);
+        forEach(listeners, function(listener) {
+            if (listener.key !== mutation.attributeName) return;
 
-        /**
-         * @type {string}
-         * @private
-         */
-        this.attrName_ = attrName;
+            listener.fire('change', listener, mutation.oldValue, listener.getValue());
+        });
+    }, AttributeObserving);
+};
+
+/**
+ *  @type {MutationObserver}
+ */
+AttributeObserving.centralObserver_ = new MutationObserver(AttributeObserving.onChange);
+
+/**
+ *  @type {Map}
+ */
+AttributeObserving.listenersMap_ = new Map();
+
+AttributeObserving.prototype.finalize = function() {
+    //@TODO
+
+    Observing.prototype.finalize.apply(this, arguments);
+};
+
+AttributeObserving.prototype.setup = function() {
+    var target = this.target,
+        key = this.key,
+        listeners = AttributeObserving.listenersMap_.get(target);
+
+    if (!listeners) {
+        listeners = [];
+        AttributeObserving.listenersMap_.set(target, listeners);
+
+        AttributeObserving.centralObserver_.observe(target, {
+            childList: false,
+            attributes: true,
+            characterData: false,
+            subtree: false,
+            attributeOldValue: true,
+            characterDataOldValue: false
+        });
+
+        //@TODO
+        // tune up with attributeFilter option.
+    }
+
+    listeners.push(this);
+};
+
+AttributeObserving.prototype.getValue = function() {
+    var value = this.target.getAttribute(this.key);
+
+    return value || '';
+};
+
+AttributeObserving.prototype.setValue = function(newValue) {
+    var key, listeners;
+
+    if (isObject(newValue)) {
+        key = this.key;
+        listeners = AttributeObserving.listenersMap_.get(this.target);
+        forEach(listeners, function(listener) {
+            if (listener === this ||
+                listener.key !== key) return;
+            listener.fire('change', listener, listener.getValue(), newValue);
+        }, this);
+    } else {
+        if (!newValue && newValue !== 0) {
+            this.target.removeAttribute(this.key);
+        } else {
+            this.target.setAttribute(this.key, newValue);
+        }
+    }
+};
+
+module.exports = AttributeObserving;
+
+},{"../Map.js":26,"./Observing.js":23}],22:[function(require,module,exports){
+var AttributeObserving = require('./AttributeObserving.js'),
+    PropertyObserving = require('./PropertyObserving.js');
+
+/**
+ *  @NOTE
+ *  <template name="Tag1" huga={{hoge}}>
+ *      {{hoge}}
+ *  <template>
+ *
+ *  --> Tag1.hoge === Tag1@huga === Tag1.textContent
+ *
+ *  <template name="Tag2" huga={{hoge}}>
+ *      {{hoge}}
+ *  <template>
+ *
+ *  --> Tag2.hoge === Tag2@huga === Tag2.textContent
+ *
+ */
+
+/**
+ *  @NOTE
+ *  <template name="Tag1" huga={{value1}}>
+ *      {{value1}}
+ *  <template>
+ *
+ *  --> Tag1.value1 === Tag1.textContent === Tag1@huga
+ *
+ *  <template name="Tag2" hoge={{value2}}>
+ *      {{value2}}
+ *  <template>
+ *
+ *  --> Tag2.value2 === Tag2.textContent === Tag2@hoge
+ *
+ *  <template name="Tag3" value="{{value3}}">
+ *      <Tag1 huga="{{value3}}"></Tag1>
+ *      <Tag2 huga="{{value3}}"></Tag2>
+ *  <template>
+ *
+ *  --> Tag3@value === Tag3.value3 === Tag1@huge === Tag2@huga
+ *
+ */
+
+function Binding() {
+    /**
+     *  observings
+     *  @type {Array<Observing>}
+     */
+    this.observings = [];
+
+    /**
+     *  @type {*}
+     *  @private
+     */
+    this.oldValue_;
+};
+
+/**
+ *  Add element attribute value into binding target
+ *  @param {Element} element element
+ *  @param {string} attributeName attribute name
+ */
+Binding.prototype.addAttributeTarget = function(element, attributeName) {
+    var observing = new AttributeObserving(element, attributeName);
+    observing.on('change', this.onChange, this);
+    this.observings.push(observing);
+};
+
+/**
+ *  Remove element attribute value from binding target
+ */
+Binding.prototype.removeAttributeTarget = function() {
+    throw new Error('Binding#removeAttributeTarget: Not Implemented Yet.');
+};
+
+/**
+ *  Add object property value into binding target
+ *  @param {Object} object object
+ *  @param {string} propertyPath property path
+ */
+Binding.prototype.addPropertyTarget = function(object, propertyPath) {
+    var observing = new PropertyObserving(object, propertyPath);
+    observing.on('change', this.onChange, this);
+    this.observings.push(observing);
+};
+
+/**
+ *  Remove object property value from binding target
+ */
+Binding.prototype.removePropertyTarget = function(object, property) {
+    throw new Error('Binding#removePropertyTarget: Not Implemented Yet.');
+};
+
+/**
+ *  callback of Observing#change.
+ *  @param {Observing} sourceObserving source observing.
+ *  @param {*} oldValue old value.
+ *  @param {*} newValue new value.
+ */
+Binding.prototype.onChange = function(sourceObserving, oldValue, newValue) {
+    oldValue = this.oldValue_;
+
+    if (oldValue === newValue) {
+        return;
+    }
+
+    forEach(this.observings, function(observing) {
+        if (observing === sourceObserving) return;
+        observing.setValue(newValue);
+    });
+    this.oldValue_ = newValue;
+};
+
+
+module.exports = Binding;
+
+},{"./AttributeObserving.js":21,"./PropertyObserving.js":24}],23:[function(require,module,exports){
+var EventDispatcher = require('../EventDispatcher.js');
+
+/**
+ *  Observing
+ *
+ *  This class presents an obsrving state for many situations like below.
+ *  - Object property.
+ *  - Node attribute.
+ *
+ *  This is abstract class, so please use extended class like below.
+ *  - PropertyObserving <--- for object property.
+ *  - AttributeObserving <--- for node attribute.
+ *
+ *  @constructor
+ *  @param {Object} target target object.
+ *  @param {string} key target key
+ *  @extends {EventDispatcher}
+ */
+function Observing(target, key) {
+    EventDispatcher.apply(this, arguments);
+
+    if (!isObject(target)) {
+        throw new Error('Observing target must be object.');
+    }
+
+    if (!isString(key) || key === '') {
+        throw new Error('\'' + key + '\' is invalid for Observing key.');
     }
 
     /**
-     * delimiter
-     * @const {String}
-     * @private
+     *  @type {Object}
      */
-    DOMTokenList.DELIMITER_ = ' ';
+    this.target = target;
 
     /**
-     * length
-     * @type {number}
+     *  @type {string}
      */
-    DOMTokenList.prototype.__defineGetter__('length', function() {
-        return this.getItems_().length;
-    });
+    this.key = key;
 
-    /**
-     * Returns original attribute value.
-     * @return {string} original attribute value.
-     * @private
-     */
-    DOMTokenList.prototype.getOriginal_ = function() {
-        return this.element_.getAttribute(this.attrName_);
-    };
+    this.setup();
+}
+inherits(Observing, EventDispatcher);
 
-    /**
-     * Sets original attribute value.
-     * @param {string} newValue attribute value.
-     * @private
-     */
-    DOMTokenList.prototype.setOriginal_ = function(newValue) {
-        this.element_.setAttribute(this.attrName_, newValue);
-    };
+Observing.prototype.finalize = function() {
+    EventDispatcher.prototype.finalize.apply(this, arguments);
+};
 
-    /**
-     * Returns original attribute value as array.
-     * @return {[string]} original attribute value.
-     * @private
-     */
-    DOMTokenList.prototype.getItems_ = function() {
-        return this.getOriginal_().split(DOMTokenList.DELIMITER_);
-    };
+Observing.prototype.setup = function() {
+    throw new Error('Observing#setup must be overrided.');
+};
 
-    /**
-     * Sets original attribute value with array.
-     * @param {[string]} items attribute value.
-     * @private
-     */
-    DOMTokenList.prototype.setItems_ = function(items) {
-        this.setOriginal_(items.join(DOMTokenList.DELIMITER_));
-    };
+Observing.prototype.setValue = function(newValue) {
+    throw new Error('Observing#setValue must be overrided.');
+};
 
-    /**
-     * Returns item for specified index.
-     * @param  {number} index specified index
-     * @return {string} the item for specified index.
-     */
-    DOMTokenList.prototype.item = function(index) {
-        return this.getItems_()[index];
-    };
+module.exports = Observing;
 
-    /**
-     * Checks if this list contains specified token.
-     * @param  {string} token token.
-     * @return {boolean} If contains, return true, otherwise false.
-     */
-    DOMTokenList.prototype.contains = function(token) {
-        return this.getItems_().indexOf(token) !== -1;
-    };
+},{"../EventDispatcher.js":25}],24:[function(require,module,exports){
+var Observing = require('./Observing.js'),
+    CustomObserver = require('../Observer/CustomObserver.js');
 
-    /**
-     * Adds token. If it's exist already, do nothing.
-     * @param {string} token token.
-     */
-    DOMTokenList.prototype.add = function(token) {
-        var items = this.getItems_(),
-            i, max;
+/**
+ *  PropertyObserving
+ *
+ *  This class presents an observing state for object's property.
+ *
+ *  @constructor
+ *  @param {Object} target target object.
+ *  @param {string} key target property path like 'deep.property.name'
+ *  @extends {Observing}
+ */
+function PropertyObserving(target, key) {
+    Observing.apply(this, arguments);
+}
+inherits(PropertyObserving, Observing);
 
-        for (i = 0, max = arguments.length; i < max; i++) {
-            token = arguments[i];
-            if (items.indexOf(token) !== -1) continue;
-            items.push(token);
-        }
+PropertyObserving.prototype.finalize = function() {
+    CustomObserver.unobserve(target, key, this.onChange, this);
 
-        this.setItems_(items);
-    };
+    Observing.prototype.finalize.apply(this, arguments);
+};
 
-    /**
-     * Removes token. If it's not exist, do nothing.
-     * @param {string} token token.
-     */
-    DOMTokenList.prototype.remove = function(token) {
-        var items = this.getItems_(),
-            i, max, index;
+PropertyObserving.prototype.setup = function() {
+    var target = this.target,
+        key = this.key;
 
-        for (i = 0, max = arguments.length; i < max; i++) {
-            token = arguments[i];
-            index = items.indexOf(token);
-            if (index === -1) continue;
-            items.splice(index, 1);
-        }
+    CustomObserver.observe(target, key, this.onChange, this);
+};
 
-        this.setItems_(items);
-    };
+PropertyObserving.prototype.getValue = function(newValue) {
+    var deep = getObjectForPath(this.target, this.key);
 
-    /**
-     * Toggles token.
-     * @param {string} token token.
-     */
-    DOMTokenList.prototype.toggle = function(token) {
-        return this.contains(token) ?
-            this.remove(token) :
-            this.add(token);
+    return deep ? deep.object[deep.key] : null;
+};
+
+PropertyObserving.prototype.setValue = function(newValue) {
+    var deep = getObjectForPath(this.target, this.key),
+        oldValue,
+        object,
+        key;
+
+    if (!isObject(deep)) return;
+
+    object = deep.object;
+    key = deep.key;
+    listenerName = 'on' + key.charAt(0).toUpperCase() + key.substr(1);
+    oldValue = object[key];
+
+    object[key] = newValue;
+
+    if (isFunction(object[listenerName])) {
+        object[listenerName](oldValue, newValue);
+    }
+};
+
+/**
+ *  オブジェクトのプロパティをたどって、最下層のオブジェクトを返す
+ *
+ *  @example
+ *      path='foo.bar.buz.piyo'の場合、
+ *      {
+ *          object: object.foo.bar.buz,
+ *          key: 'piyo'
+ *      }
+ *      を返す。
+ *
+ *  @param {Object} object object
+ *  @param {string} path path
+ *  @return {{
+ *      object: Object,
+ *      key: string
+ *  }} result object.
+ */
+function getObjectForPath(object, path) {
+    var parts = path.split('.'),
+        part;
+
+    if (!isObject(object)) return null;
+
+    while (parts.length > 1) {
+        part = parts.shift();
+        object = object[part];
+        if (!isObject(object)) return null;
+    }
+
+    return {
+        object: object,
+        key: parts[0]
     };
 }
 
-module.exports = DOMTokenList;
+PropertyObserving.prototype.onChange = function(changes) {
+    forEach(changes, function(change) {
+        var newVal = change.newValue,
+            oldVal = change.oldValue;
 
-},{}],12:[function(require,module,exports){
+        this.fire('change', this, oldVal, newVal);
+    }, this);
+};
+
+module.exports = PropertyObserving;
+
+},{"../Observer/CustomObserver.js":27,"./Observing.js":23}],25:[function(require,module,exports){
 /**
  *  Event dispatchable object.
  *
@@ -1564,11 +2221,21 @@ EventDispatcher.prototype.fire = function(type, optArgs) {
 
 module.exports = EventDispatcher;
 
-},{}],13:[function(require,module,exports){
-var Map = window.Map;
+},{}],26:[function(require,module,exports){
+(function (global){
+var Map = global.Map;
 
 if (typeof Map !== 'function') {
-    Map = function Map() {
+
+    /**
+     * Map
+     *
+     * @constructor
+     * @param {Array<Array<*>>} [iterable] iterable object.
+     */
+    Map = function(iterable) {
+        var i, max, iterable;
+
         /**
          * It's 0, constant.
          * https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Map
@@ -1578,23 +2245,32 @@ if (typeof Map !== 'function') {
 
         /**
          * keys
-         * @type {Number}
+         * @type {Array}
          * @private
          */
         this.keys_ = [];
 
         /**
          * number
-         * @type {Number}
+         * @type {Array}
          * @private
          */
         this.values_ = [];
+
+        if (iterable) {
+            for (i = 0, max = iterable.length; i < max; i++) {
+                item = iterable[i];
+                this.keys_.push(item[0]);
+                this.values_.push(item[0]);
+            }
+        }
     }
 
     /**
      *  Returns the number of key/value pairs in the Map object.
      *  @type {number}
      */
+    Map.prototype.size;
     Map.prototype.__defineGetter__('size', function() {
         return this.keys_.length;
     });
@@ -1690,10 +2366,11 @@ if (typeof Map !== 'function') {
 
 module.exports = Map;
 
-},{}],14:[function(require,module,exports){
-var util = require('../util.js'),
-    Map = require('../map.js'),
-    ObjectObserver = require('./objectobserver.js');
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],27:[function(require,module,exports){
+(function (global){
+var Map = require('../Map.js'),
+    ObjectObserver = require('./ObjectObserver.js');
 
 /**
  *  @constructor
@@ -1810,14 +2487,14 @@ CustomObserver.removeInstance_ = function(instance) {
  * @param  {string}   propName string
  * @param  {Function} callback callback
  */
-CustomObserver.observe = function(object, propName, callback) {
+CustomObserver.observe = function(object, propName, callback, context) {
     var instance = this.getInstance_(object, propName);
 
     if (!instance) {
         instance = this.addInstance_(object, propName);
     }
 
-    instance.addCallback_(callback);
+    instance.addCallback_(callback, context);
 };
 
 /**
@@ -1826,32 +2503,49 @@ CustomObserver.observe = function(object, propName, callback) {
  * @param  {string}   propName string
  * @param  {Function} callback callback
  */
-CustomObserver.unobserve = function(object, propName, callback) {
+CustomObserver.unobserve = function(object, propName, callback, context) {
     var instance = this.getInstance(object, propName);
 
     if (!instance) return;
 
-    instance.removeCallback_(callback);
+    instance.removeCallback_(callback, context);
 };
 
-CustomObserver.prototype.addCallback_ = function(callback) {
+CustomObserver.prototype.addCallback_ = function(callback, context) {
     var callbacks = this.callbacks_,
-        index = callbacks.indexOf(callback);
+        i, max;
 
-    if (index !== -1) return;
+    context = context || global;
 
-    callbacks.push(callback);
+    for (i = 0, max = callbacks.length; i < max; i++) {
+        if (callbacks[i].callback === callback &&
+            callbacks[i].context === context) {
+            return;
+        }
+    }
+
+    callbacks.push({
+        callback: callback,
+        context: context
+    });
 };
 
-CustomObserver.prototype.removeCallback_ = function(callback) {
+CustomObserver.prototype.removeCallback_ = function(callback, context) {
     var callbacks = this.callbacks_,
-        index = callbacks.indexOf(callback);
+        i, max;
 
-    if (index === -1) return;
+    context = context || global;
 
-    callbacks.splice(index, 1);
+    for (i = 0, max = callbacks.length; i < max; i++) {
+        if (callbacks[i].callback === callback &&
+            callbacks[i].context === context) {
+            callbacks.splice(i, 1);
+            i--;
+            max--;
+        }
+    }
 
-    if (callbacks.length === 0) {
+    if (max === 0) {
         CustomObserver.removeInstance_(this);
     }
 };
@@ -1862,7 +2556,7 @@ CustomObserver.prototype.removeCallback_ = function(callback) {
 CustomObserver.prototype.getValue = function() {
     var length = this.propNameTokens_.length;
 
-    return util.isObject(this.targets_[length - 1]) ?
+    return isObject(this.targets_[length - 1]) ?
         this.targets_[length - 1][this.propNameTokens_[length - 1]] :
         null;
 };
@@ -1881,7 +2575,7 @@ CustomObserver.prototype.resetObserve_ = function(index) {
         newTarget;
 
     //unobserve
-    if (util.isObject(oldTarget)) {
+    if (isObject(oldTarget) && index !== 0) {
         Object.unobserve(oldTarget, this.onChangeHandler_);
     }
 
@@ -1892,8 +2586,8 @@ CustomObserver.prototype.resetObserve_ = function(index) {
     //observe
     if (index === 0) {
         newTarget = targets[0];
-    } else if (util.isObject(targets[index - 1]) &&
-        util.isObject(targets[index - 1][this.propNameTokens_[index - 1]])) {
+    } else if (isObject(targets[index - 1]) &&
+        isObject(targets[index - 1][this.propNameTokens_[index - 1]])) {
 
         newTarget = targets[index - 1][this.propNameTokens_[index - 1]];
     } else {
@@ -1914,9 +2608,19 @@ CustomObserver.prototype.resetObserve_ = function(index) {
  * @private
  */
 CustomObserver.prototype.onChangeHandler_ = function(changes) {
-    var newValue = this.getValue(),
+    var newValue,
         oldValue = this.oldValue_,
         targets = this.targets_;
+
+    changes.forEach(function(change) {
+        var index = targets.indexOf(change.object);
+
+        if (index !== -1) {
+            this.resetObserve_(index);
+        }
+    }, this);
+
+    newValue = this.getValue();
 
     if (newValue !== oldValue) {
         changes = [{
@@ -1928,29 +2632,18 @@ CustomObserver.prototype.onChangeHandler_ = function(changes) {
         }];
 
         this.callbacks_.forEach(function(callback) {
-            if (util.isFunction(callback)) {
-                callback(changes);
-            } else if (util.isObject(callback) && util.isFunction(callback.handleEvent)) {
-                callback.handleEvent(changes);
-            }
+            callback.callback.call(callback.context, changes);
         }, this);
 
         this.oldValue_ = newValue;
     }
-
-    changes.forEach(function(change) {
-        var index = targets.indexOf(change.object);
-
-        if (index !== -1) {
-            this.resetObserve_(index);
-        }
-    }, this);
 };
 
 module.exports = CustomObserver;
 
-},{"../map.js":13,"../util.js":18,"./objectobserver.js":15}],15:[function(require,module,exports){
-var Map = require('../map.js');
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"../Map.js":26,"./ObjectObserver.js":28}],28:[function(require,module,exports){
+var Map = require('../Map.js');
 
 if (typeof Object.observe !== 'function') {
 
@@ -2190,43 +2883,38 @@ if (typeof Object.observe !== 'function') {
     module.exports = ObjectObserver;
 }
 
-},{"../map.js":13}],16:[function(require,module,exports){
-function Binding() {
-
-};
-
-module.exports = Binding;
-
-},{}],17:[function(require,module,exports){
-var util = require('../util.js'),
-    Map = require('../map.js'),
-    CustomObserver = require('../observer/customobserver.js'),
-    Binding = require('./binding.js');
+},{"../Map.js":26}],29:[function(require,module,exports){
+var Map = require('./Map.js'),
+    Binding = require('./Binding/Binding.js');
 
 /**
  * @constructor
  */
 function Template() {
     /**
-     * element
-     * @type {Element}
+     * custom element's name
+     * @type {string}
      */
-    this.dom;
+    this.tagName;
 
     /**
-     * binding data
-     * @type {[Binding]}
+     * DOM Map
+     * @type {object}
      */
-    this.bindings = [];
-};
+    this.$;
 
-/**
- * The type of the result of 'Template.create()'
- * @typedef {{
- *
- * }}
- */
-Template.CreateResult;
+    /**
+     * Regular expression object for matching className
+     * @type {RegExp}
+     */
+    this.regClassName;
+
+    /**
+     *  custom element's constructor
+     *  @type {Function}
+     */
+    this.elementConstructor;
+};
 
 /**
  * Template map
@@ -2236,1638 +2924,468 @@ Template.CreateResult;
 Template.templates_ = new Map();
 
 /**
- * View constructor map
+ * Custom Element constructors
  * @type {Map}
  * @private
  */
-Template.viewConstructors_ = new Map();
-
-/**
- * HTML instantiate container
- * @type {HTMLDivElement}
- * @private
- */
-Template.container_ = document.createElement('div');
-
-/**
- * Registers view constructor with name.
- * @param {string} tagName tag name.
- * @param {Function} constructor constructor.
- */
-Template.setViewConstructor = function(tagName, constructor) {
-    Template.viewConstructors_.set(tagName.toUpperCase(), constructor);
-};
-
-/**
- * Returns view constructor of specified name.
- * @param {string} tagName tag name.
- * @return {Function} constructor.
- */
-Template.getViewConstructor = function(tagName) {
-    return Template.viewConstructors_.get(tagName.toUpperCase());
-};
+Template.constructors_ = new Map();
 
 /**
  * Create DOM from template for specified name.
- * @param {string} tmplName template name.
- * @param {Object} context binded context.
- * @return {Template.CreateResult} result.
+ * @param {string} templateName template name.
+ * @param {NamedNodeMap} [attributes] attribute map
+ * @return {Object} result.
  */
-Template.create = function(tmplName, context) {
-    var template = Template.getTemplate_(tmplName);
+Template.createElement = function(templateName, attributes) {
+    var template = Template.getTemplate_(templateName);
 
     if (!template) {
-        throw new Error('Template "' + tmplName + '" is not found.');
+        throw new Error('Template "' + templateName + '" is not found.');
     }
 
-    return template.create(context);
+    return template.createElement(attributes);
+};
+
+/**
+ * Returns the custom element constructor for specified name.
+ * @param {string} constructorName constructor name.
+ * @return {Function} constructor.
+ * @private
+ */
+Template.getConstructor_ = function(constructorName) {
+    return Template.constructors_.get(constructorName.toUpperCase());
+};
+
+/**
+ * Registers the custom element constructor.
+ * @param {Function} constructor.
+ * @param {string} [name] constructor name.
+ *  If this parameter isn't passed, constructor's function's name is used.
+ */
+Template.registerConstructor = function(constructor, name) {
+    name = name || constructor.name;
+    Template.constructors_.set(name.toUpperCase(), constructor);
+};
+
+/**
+ * Checks if  the custom element constructor for specified name is exist.
+ * @param {string} constructorName constructor name.
+ * @return {boolean} If true, the constructor with specified name is exist, otherwise false.
+ * @private
+ */
+Template.hasConstructor_ = function(constructorName) {
+    return Template.constructors_.has(constructorName.toUpperCase());
 };
 
 /**
  * Returns the template for specified name.
- * @param {string} tmplName template name.
+ * @param {string} templateName template name.
  * @return {Template} template.
+ * @private
  */
-Template.getTemplate_ = function(tmplName) {
-    var template = Template.templates_.get(tmplName),
-        tmplDOM;
-    if (template) return template;
-
-    tmplDOM = document.querySelector('template[name="' + tmplName + '"]');
-    if (!tmplDOM) return null;
-
-    template = new Template();
-    Template.container_.innerHTML = tmplDOM.innerHTML;
-    template.dom = Template.container_.firstElementChild;
-    tmplDOM.parentNode.removeChild(tmplDOM);
-
-    Template.templates_.set(tmplName, template);
-    return template;
+Template.getTemplate_ = function(templateName) {
+    return Template.templates_.get(templateName.toUpperCase());
 };
 
 /**
- * Replaces from HTMLUnknownElement to custom view element if need.
+ * Registers the template from specified template DOM.
+ * If templateDOM doesn't have the 'name' attribute, it's skipped.
+ * @param {Element} templateDOM template DOM.
+ * @private
+ */
+Template.registerTemplate_ = function(templateDOM) {
+    var name = templateDOM.getAttribute('name'),
+        template, $, constructorName,
+        extendTagName;
+
+    if (!name) return;
+
+    template = new Template();
+
+    /**
+     * 1. set tagName
+     */
+    template.tagName = name;
+
+    /**
+     * 2. set className regular expression template
+     *
+     * @NOTE
+     * If we scan dom mapping on this time(not on template#create),
+     * It may be not need to save RegExp instance for cache.
+     *
+     * ->
+     * we should scan dom mapping on template#create, because
+     * we should scane CLONED dom tree.
+     *
+     */
+    template.regClassName = new RegExp(name + '-(\\w+)');
+
+    /**
+     *  3.create root DOM instance, and clone dom tree
+     */
+    template.$ = $ = {};
+    extendTagName = templateDOM.getAttribute('extend') || template.tagName;
+    if (Template.hasTemplate_(extendTagName)) {
+        $.root = Template.createElement(extendTagName);
+    } else {
+        $.root = document.createElement(extendTagName);
+    }
+    $.root.innerHTML = templateDOM.innerHTML;
+
+    /**
+     *  4. copy template attribute to cloned root DOM
+     */
+    Template.copyAttribute($.root, templateDOM);
+    ['extend', 'name', 'constructor'].forEach(function(directiveAttributeName) {
+        $.root.removeAttribute(directiveAttributeName);
+    });
+
+    /**
+     * 5. attach element constructor
+     */
+    constructorName = templateDOM.getAttribute('constructor') || template.tagName;
+    if (Template.hasConstructor_(constructorName)) {
+        template.elementConstructor = Template.getConstructor_(constructorName);
+    } else {
+        template.elementConstructor = noop;
+    }
+
+    Template.templates_.set(name.toUpperCase(), template);
+};
+
+/**
+ * Checks if the template with specified name is exist.
+ * @param {string} templateName template name.
+ * @return {boolean} If true, the template with specified name is exist, otherwise false.
+ * @private
+ */
+Template.hasTemplate_ = function(templateName) {
+    return Template.templates_.has(templateName.toUpperCase());
+};
+
+/**
+ * Replaces from HTMLUnknownElement to CustomElement if need.
  * @param {Element} element elemnt.
- * @param {Template.CreateResult} result create result object. If need, DOM map (result.$) is changed.
+ * @param {Object} $ DOM map. If need, DOM map is updated.
  * @param {boolean} [flagRecursive=false] If true, this method applied for child elements recursivly.
  */
-Template.replaceHTMLUnknownElement = function(element, result, flagRecursive) {
-    var children = util.slice(element.children, 0),
-        childNodes = util.slice(element.childNodes, 0),
-        viewConstructor, view, viewRoot, parent, name;
+Template.prototype.replaceHTMLUnknownElement = function(element, $, flagRecursive) {
+    var children = slice(element.children, 0),
+        childNodes = slice(element.childNodes, 0),
+        customElement, parent, ma, attributes;
 
     flagRecursive = flagRecursive || false;
 
-    if (element instanceof HTMLUnknownElement) {
-        //1. create custom view.
-        viewConstructor = Template.getViewConstructor(element.tagName);
-        if (viewConstructor) {
-            view = new viewConstructor();
-            viewRoot = view.$.root;
+    if (Template.hasTemplate_(element.tagName)) {
 
-            //2. move children.
-            childNodes.forEach(function(childNode) {
-                view.appendChild(childNode);
-            });
+        //1. create CustomElement.
+        customElement = Template.createElement(element.tagName, element.attributes);
 
-            //3. copy attributes
-            util.forEach(element.attributes, function(attr) {
-                switch (attr.name) {
-                    case 'class':
-                        viewRoot.classList.add.apply(viewRoot.classList, attr.value.split(' '));
-                        break;
+        //2. move chilNodes.
+        childNodes.forEach(function(childNode) {
+            customElement.appendChild(childNode);
+        });
 
-                    default:
-                        viewRoot.setAttribute(attr.name, attr.value);
-                        break;
-                }
-            });
+        //3. replace from HTMLUnknownElement to custom element.
+        parent = element.parentNode;
+        parent.insertBefore(customElement, element);
+        parent.removeChild(element);
 
-            //4. replace from HTMLUnknownElement to custom view.
-            parent = element.parentNode;
-            parent.insertBefore(view.$.root, element);
-            parent.removeChild(element);
-
-            //5. If element has [name] attribute, replace DOM map.
-            if (element.hasAttribute('name')) {
-                name = element.getAttribute('name');
-                result.$[name] = viewRoot;
-                result.childViews[name] = view;
-            }
+        //4. If need, replace DOM map.
+        if (ma = element.className.match(this.regClassName)) {
+            $[ma[1]] = customElement;
         }
     }
 
     if (flagRecursive) {
-        children.map(function(child) {
-            Template.replaceHTMLUnknownElement(child, result, true);
-        });
+        forEach(children, function(child) {
+            this.replaceHTMLUnknownElement(child, $, true);
+        }, this);
     }
 };
 
 /**
  * Create DOM from this template.
- * @param {Object} context binded context.
- * @return {Template.CreateResult} result.
+ * @param {NamedNodeMap} [attributes] attribute map
+ * @return {Object} DOM map.
  */
-Template.prototype.create = function(context) {
+Template.prototype.createElement = function(attributes) {
     /**
      * 1. Clone node
      */
     var $ = {},
-        root = this.dom.cloneNode(true),
-        childViews = {},
-        result = {
-            $: $,
-            childViews: childViews
-        };
+        root = this.$.root.cloneNode(true),
+        ma,
+        regClassName = this.regClassName;
 
     $.root = root;
-    util.forEach(root.querySelectorAll('[name]'), function(node) {
-        $[node.getAttribute('name')] = node;
+    root.$ = $;
+    forEach(root.querySelectorAll('[class]'), function(node) {
+        if (ma = node.className.match(regClassName)) {
+            $[ma[1]] = node;
+        }
     });
     $.content = root.querySelector('content, [content]') || root;
 
     /**
-     * 2. Convert HTMLUnknownElement -> CustomView
+     * 2. Convert HTMLUnknownElement -> CustomElement
      *
      * @TODO
      * On current version, if root element is the instance of HTMLUnknownElement,
      * it won't work.
      *
      * example:
-     * ExampleView's root element is <CustomView> (HTMLUnknownElement), and
+     * ExampleView's root element is <CustomElement> (HTMLUnknownElement), and
      * this view can't work.
      *
      * <template name="ExampleView">
-     *   <CustomView>
+     *   <CustomElement>
      *     <span>ExampleView won't work.</span>
-     *   </CustomView>
+     *   </CustomElement>
      * </template>
      */
-    Template.replaceHTMLUnknownElement(root, result, true);
+    forEach(root.children, function(child) {
+        this.replaceHTMLUnknownElement(child, $, true);
+    }, this);
 
     /**
-     * 3. Configuration of bindings
+     * 3. setup data binding
      */
-    this.bindings.forEach(function(binding) {
-        //3-1. copy binding
-        //3-2. change binding target null -> context
-        //3-3. change binding node templateNode -> realNode
-    });
+    this.parseBindingQuery_(root);
 
-    return result;
+    /**
+     * 4. Copy attributes
+     */
+    if (attributes) {
+        Template.copyAttribute(root, attributes);
+    }
+
+    /**
+     * 5. mixin custom class properties and run constructor.
+     */
+    this.injectCustomClassPrototype($);
+    this.elementConstructor.call(root, $);
+
+    return root;
 };
+
+Template.prototype.injectCustomClassPrototype = function($) {
+    var root = $.root,
+        source = this.elementConstructor.prototype,
+        key, descriptor;
+
+    while (source) {
+        Object.keys(source).forEach(function(key) {
+            descriptor = Object.getOwnPropertyDescriptor(source, key);
+            Object.defineProperty(root, key, descriptor);
+        });
+
+        source = Object.getPrototypeOf(source);
+    }
+};
+
+/**
+ * copy element attributes
+ * @param {Element} target copy target element.
+ * @param {Element|NamedNodeMap} source copy source element, or attribute map.
+ */
+Template.copyAttribute = function(target, source) {
+    if (source instanceof Element) {
+        source = source.attributes;
+    }
+
+    forEach(source, function(attr) {
+        switch (attr.name) {
+            case 'class':
+                target.classList.add.apply(target.classList, attr.value.split(' '));
+                break;
+
+            default:
+                target.setAttribute(attr.name, attr.value);
+                break;
+        }
+    });
+};
+
+/**
+ *  parse template binding query
+ *  @private
+ */
+Template.prototype.parseBindingQuery_ = function(root) {
+    Template.parseBindingQuery_(root, root);
+};
+
+/**
+ *  parse template bindin query
+ *  @param {Node} node node
+ */
+Template.parseBindingQuery_ = function(node, context) {
+    var regBinding = /\{\{([^\}]+)\}\}/,
+        map = context.__bindingMap__ || (context.__bindingMap__ = new Map());
+
+    if (node instanceof Element) {
+        forEach(slice(node.attributes, 0), function(attr) {
+            var ma = attr.value.match(regBinding),
+                key, binding;
+
+            if (!ma) return;
+
+            key = ma[1].trim();
+            binding = map.get(key);
+
+            if (!binding) {
+                binding = new Binding();
+                map.set(key, binding);
+                binding.addPropertyTarget(context, key);
+                context.key = '';
+            }
+
+            binding.addAttributeTarget(node, attr.name);
+
+            //@TODO ただ消すだけではダメ！
+            node.removeAttribute(attr.name);
+        });
+    } else if (node instanceof Text) {
+        var ma = node.textContent.match(regBinding),
+            key, binding;
+        if (!ma) return;
+
+        key = ma[1].trim();
+        binding = map.get(key);
+
+        if (!binding) {
+            binding = new Binding();
+            map.set(key, binding);
+            binding.addPropertyTarget(context, key);
+            context.key = '';
+        }
+
+        binding.addPropertyTarget(node, 'textContent');
+
+        //@TODO ただ消すだけではダメ！
+        node.textContent = '';
+    }
+
+    forEach(node.childNodes, function(child) {
+        Template.parseBindingQuery_(child, context);
+    });
+};
+
+/**
+ *  bootstrap
+ */
+window.addEventListener('DOMContentLoaded', function() {
+    forEach(document.querySelectorAll('template[name]'), function(templateDOM) {
+        Template.registerTemplate_(templateDOM);
+        templateDOM.parentNode.removeChild(templateDOM);
+    }, Template);
+});
 
 module.exports = Template;
 
-},{"../map.js":13,"../observer/customobserver.js":14,"../util.js":18,"./binding.js":16}],18:[function(require,module,exports){
-var util = {};
+},{"./Binding/Binding.js":22,"./Map.js":26}],30:[function(require,module,exports){
+var Template = require('./Service/Template.js'),
+    ESAppController = require('./Controller/ESAppController.js');
 
-util.inherits = function(child, parent) {
-    child.prototype = Object.create(parent.prototype);
+window.onload = function() {
+    var app = new ESAppController();
+
+    document.body.appendChild(app.element);
+    document.body.removeAttribute('unresolved');
+};
+
+module.exports = noop;
+
+},{"./Controller/ESAppController.js":2,"./Service/Template.js":29}],31:[function(require,module,exports){
+require('./util.js');
+
+require('./Element/js/ESAppElement.js');
+
+require('./bootstrap.js');
+
+},{"./Element/js/ESAppElement.js":5,"./bootstrap.js":30,"./util.js":32}],32:[function(require,module,exports){
+(function (global){
+/**
+ * extended from Array.slice
+ * @type {Function<Array, number>:Array}
+ */
+global.slice = Array.prototype.slice.call.bind(Array.prototype.slice);
+
+/**
+ * extended from Array.forEach
+ * @type {Function<Array, Function, Object|null>}
+ */
+global.forEach = Array.prototype.forEach.call.bind(Array.prototype.forEach);
+
+/**
+ * If an expression is string, return true, otherwise false.
+ * @param {*} exp expression
+ * @return {boolean} If true, the expression is a string.
+ */
+global.isString = function(exp) {
+    return typeof exp === 'string';
+};
+
+/**
+ * If an expression is object, return true, otherwise false.
+ * When expression is undefined, 'typeof undeifned' returns 'object',
+ * but this method return false.
+ *
+ * @param {*} exp expression
+ * @return {boolean} If true, the expression is a object.
+ */
+global.isObject = function(exp) {
+    return exp && typeof exp === 'object';
+};
+
+/**
+ * If an expression is function, return true, otherwise false.
+ * @param {*} exp expression
+ * @return {boolean} If true, the expression is a function.
+ */
+global.isFunction = function(exp) {
+    return typeof exp === 'function';
+};
+
+/**
+ * no-operation
+ */
+global.noop = function() {};
+
+/**
+ * inherit class
+ * @param {Function} child child class
+ * @param {Function} parent parent class.
+ */
+global.inherits = function(child, parent) {
+    /**
+     * dummy constructor
+     *	@constructor
+     */
+    var __ = function() {};
+    __.prototype = parent.prototype;
+    child.prototype = new __();
     child.prototype.constructor = child;
-    child.prototype.super = parent.prototype;
-    util.extend(child, parent);
 };
 
-util.mixin = function(target, src) {
-    util.extend(target.prototype, src.prototype, {
-        construcotr: target.prototype.constructor,
-        super: target.prototype.super,
-    });
-    util.extend(child, parent);
-};
-
-util.extend = function(target, srces) {
-    util.slice(arguments, 1)
-        .forEach(function(src) {
-            Object.keys(src).forEach(function(keyName) {
-                target[keyName] = src[keyName];
+/**
+ * extend object
+ * @param {Object} target target will be extended.
+ * @param {...Object} [sources] source object.
+ * @return {Object} extended target.
+ */
+global.extend = function(target, sources) {
+    slice(arguments, 1)
+        .forEach(function(source) {
+            if (!isObject(source)) return target;
+            Object.keys(source).forEach(function(key) {
+                target[key] = source[key];
             });
         });
 
     return target;
 };
 
-util.isObject = function(exp) {
-    return !!exp && typeof exp === 'object';
-};
-
-util.isString = function(exp) {
-    return typeof exp === 'string';
-};
-
-util.isFunction = function(exp) {
-    return typeof exp === 'function';
-};
-
-util.runAsync = function(fn) {
-    return util.isFunction(window.requestAnimationFrame) ?
-        requestAnimationFrame(fn) :
-        setTimeout(fn);
-};
-
-util.once = function(node, type, callback) {
-    var proxy = function() {
-        node.removeEventListener(type, proxy);
-
-        if (util.isFunction(callback)) {
-            callback.apply(this, arguments);
-        } else if (util.isFunction(callback.handleEvent)) {
-            callback.handleEvent.apply(callback, arguments);
-        }
-    };
-
-    node.addEventListener(type, proxy);
-};
-
-var ap = Array.prototype
-
-util.forEach = ap.forEach.call.bind(ap.forEach);
-util.map = ap.forEach.call.bind(ap.map);
-util.slice = ap.forEach.call.bind(ap.slice);
-
-module.exports = util;
-
-},{}],19:[function(require,module,exports){
-var View = require('../view/view.js'),
-    ToolBarView = require('../toolbarview/toolbarview.js'),
-    SwitchView = require('../switchview/switchview.js'),
-    AuthPageView = require('../authpageview/authpageview.js'),
-    ProjectPageView = require('../projectpageview/projectpageview.js'),
-    ProjectCreatePageView = require('../projectcreatepageview/projectcreatepageview.js'),
-    UserPageView = require('../userpageview/userpageview.js'),
-    ConfigPageVIew = require('../configpageview/configpageview.js'),
-    util = require('../../service/util.js'),
-    Auth = require('../../model/auth.js'),
-    User = require('../../model/user.js');
-
-function AppView() {
-    var self = this;
-
-    View.apply(this, arguments);
-
-    /**
-     *  The result of url routing.
-     *  @type {Object}
-     */
-    this.rout;
-
-    /**
-     *  Authentication state.
-     *  @type {boolean}
-     */
-    this.isAuthed = false;
-
-    /**
-     *  Authenticated user.
-     *  @type {User}
-     */
-    this.authedUser = null;
-
-    this.updateAuthState();
-
-    window.addEventListener('hashchange', this.onHashChange);
-    window.addEventListener('rout.change', this);
-    window.app = this;
-
-    this.routing();
-}
-util.inherits(AppView, View);
-
-AppView.prototype.setHash = function(hashURI) {
-    document.location.hash = '#!' + hashURI;
-};
-
-/**
- *  check authentication state
- */
-AppView.prototype.updateAuthState = function(callback) {
-    var self = this;
-
-    /**
-     *  @TODO LocalStorageからtoken取り出す
-     */
-
-    User.getMe(function(err, me) {
-        if (err) {
-            self.setAuthedUser(null);
-            util.isFunction(callback) && callback(err, null);
-            return;
-        }
-
-        self.setAuthedUser(new User(me));
-        util.isFunction(callback) && callback(null, me);
-    });
-};
-
-AppView.prototype.setAuthedUser = function(user) {
-    if (this.authedUser === user) return;
-
-    if (user) {
-        this.isAuthed = true;
-        this.authedUser = user;
-    } else {
-        this.isAuthed = false;
-        this.authedUser = null;
-    }
-
-    window.dispatchEvent(new CustomEvent('auth.change'));
-};
-
-/**
- *  Sign up.
- */
-AppView.prototype.signUp = function(userName, password, callback) {
-    var self = this;
-
-    Auth.signUp(userName, password, function(err, user) {
-
-        if (err) {
-            self.setAuthedUser(null);
-            util.isFunction(callback) && callback(err, null);
-            return;
-        }
-
-        self.setAuthedUser(user);
-        util.isFunction(callback) && callback(null, user);
-    });
-};
-
-/**
- *  Sign in.
- */
-AppView.prototype.signIn = function(userName, password, callback) {
-    var self = this;
-
-    Auth.signIn(userName, password, function(err, user) {
-
-        if (err) {
-            self.setAuthedUser(null);
-            util.isFunction(callback) && callback(err, null);
-            return;
-        }
-
-        self.setAuthedUser(user);
-        util.isFunction(callback) && callback(null, user);
-    });
-};
-
-/**
- *  Sign out.
- */
-AppView.prototype.signOut = function(callback) {
-    var self = this;
-
-    Auth.signOut(function() {
-        self.setAuthedUser(null);
-        util.isFunction(callback) && callback(null);
-    });
-};
-
-
-/**
- *  check rout
- *  @param {string} [url] URL if elipsis, it is 'document.localtion.href'.
- *  @return {Object} parameters of rout
- */
-AppView.prototype.routing = function(url) {
-    var controller,
-        rout = null,
-        ma;
-
-    url = url || window.location.hash.substr(2);
-
-    if (url === '' || url === '/') {
-        if (this.isAuthed) {
-            rout = {
-                mode: 'user',
-                userName: this.authedUser.name
-            };
-        } else {
-            rout = {
-                mode: 'signin'
-            };
-        }
-
-    } else if (url === '/signup') {
-        rout = {
-            mode: 'signup'
-        };
-
-    } else if (url === '/signin') {
-        // /signin
-        rout = {
-            mode: 'signin'
-        };
-
-    } else if (ma = url.match(/^\/user\/([^\/]+)\/config$/)) {
-        // /user/:userName/config
-        rout = {
-            mode: 'config',
-            userName: ma[1]
-        };
-
-    } else if (ma = url.match(/^\/user\/([^\/]+)\/project_create$/)) {
-        // /user/:userName/project_create
-        rout = {
-            mode: 'project_create',
-            userName: ma[1]
-        };
-
-    } else if (ma = url.match(/^\/user\/([^\/]+)\/project\/([^\/]+)$/)) {
-        // /user/:userName/project/:projectName
-        rout = {
-            mode: 'project',
-            userName: ma[1],
-            projectName: ma[2]
-        };
-
-    } else if (ma = url.match(/^\/user\/([^\/]+)$/)) {
-        // /user/:userName
-        rout = {
-            mode: 'user',
-            userName: ma[1]
-        };
-
-    } else {
-        //  no match.
-        rout = {
-            mode: 'error404'
-        }
-    }
-
-    this.rout = rout;
-
-    window.dispatchEvent(new Event('rout.change'));
-};
-
-AppView.prototype.handleEvent = function(ev) {
-    switch (ev.type) {
-        case 'rout.change':
-            this.onRoutChange(ev);
-            break;
-    }
-};
-
-AppView.prototype.onRoutChange = function(ev) {
-    var rout = this.rout,
-        self = this;
-
-    switch (rout.mode) {
-        case 'user':
-            this.childViews.switchView
-                .fadeTo(this.$.userPageView);
-            this.childViews.userPageView.setUserName(rout.userName);
-            break;
-
-        case 'config':
-            this.childViews.switchView
-                .fadeTo(this.$.configPageView);
-            this.childViews.configPageView.setUserName(rout.userName);
-            break;
-
-        case 'project_create':
-            this.childViews.switchView
-                .fadeTo(this.$.projectCreatePageView);
-            break;
-
-        case 'project':
-            this.childViews.switchView
-                .fadeTo(this.$.projectPageView);
-            this.childViews.projectPageView.setProjectName(rout.userName, rout.projectName);
-            break;
-
-        case 'signin':
-            this.childViews.switchView
-                .fadeTo(this.$.authPageView, function() {
-                    self.childViews.authPageView.focus();
-                });
-            break;
-
-        case 'signup':
-            this.childViews.switchView
-                .fadeTo(this.$.authPageView);
-            break;
-
-        case 'error404':
-            this.childViews.switchView
-                .fadeTo(this.$.authPageView);
-            break;
-    }
-};
-
-AppView.prototype.onUserInineViewClick = function(ev) {
-    this.authedUser = null;
-    this.isAuthed = false;
-    window.dispatchEvent(new CustomEvent('auth.change'));
-
-    this.childViews.switchView
-        .hideDown()
-        .fadeIn(this.$.authPageView);
-};
-
-AppView.prototype.onHashChange = function(ev) {
-    app.rout = app.routing();
-};
-
-AppView.setViewConstructor('AppView');
-
-module.exports = AppView;
-
-},{"../../model/auth.js":1,"../../model/user.js":5,"../../service/util.js":18,"../authpageview/authpageview.js":20,"../configpageview/configpageview.js":24,"../projectcreatepageview/projectcreatepageview.js":27,"../projectpageview/projectpageview.js":29,"../switchview/switchview.js":31,"../toolbarview/toolbarview.js":32,"../userpageview/userpageview.js":34,"../view/view.js":35}],20:[function(require,module,exports){
-var View = require('../view/view.js'),
-    CardView = require('../cardview/cardview.js'),
-    AuthView = require('../authview/authview.js'),
-    util = require('../../service/util.js');
-
-function AuthPageView() {
-    View.apply(this, arguments);
-}
-util.inherits(AuthPageView, View);
-
-AuthPageView.prototype.focus = function() {
-    this.childViews.authView.focus();
-}
-
-AuthPageView.prototype.handleEvent = function(ev) {
-    switch (ev.type) {
-
-    }
-}
-AuthPageView.setViewConstructor('AuthPageView');
-
-module.exports = AuthPageView;
-
-},{"../../service/util.js":18,"../authview/authview.js":21,"../cardview/cardview.js":23,"../view/view.js":35}],21:[function(require,module,exports){
-var View = require('../view/view.js'),
-    ButtonView = require('../buttonview/buttonview.js'),
-    util = require('../../service/util.js'),
-    Auth = require('../../model/auth.js');
-
-function AuthView() {
-    View.apply(this, arguments);
-
-    this.$.submit.addEventListener('click', this);
-}
-util.inherits(AuthView, View);
-
-AuthView.prototype.focus = function() {
-    var userName = this.$.userName,
-        value = userName.value;
-
-    userName.focus();
-
-    if (value.length > 0) {
-        userName.selectionStart = 0;
-        userName.selectionEnd = value.length;
-    }
-};
-
-AuthView.prototype.signIn = function() {
-    var userName = this.$.userName.value,
-        password = this.$.password.value,
-        self = this;
-
-    if (!this.validate()) return;
-
-    this.disabled = true;
-
-    app.signIn(userName, password, function(err, user) {
-        self.disabled = false;
-
-        if (err) {
-            self.$.root.classList.add('is-error-invalid');
-            self.focus();
-        } else {
-            self.$.userName.value = '';
-            self.$.password.value = '';
-            app.setHash(user.uri);
-        }
-    });
-};
-
-AuthView.prototype.validate = function() {
-    var userName = this.$.userName.value,
-        password = this.$.password.value,
-        isValid = true,
-        classList = this.$.root.classList;
-
-    classList.remove('is-error-invalid');
-
-    if (!password) {
-        isValid = false;
-        classList.add('is-error-password');
-        this.$.password.focus();
-    } else {
-        classList.remove('is-error-password');
-    }
-
-    if (!userName) {
-        isValid = false;
-        classList.add('is-error-userName');
-        this.$.userName.focus();
-    } else {
-        classList.remove('is-error-userName');
-    }
-
-    return isValid;
-};
-
-AuthView.prototype.setDisabled = function(disabled) {
-    this.$.userName.disabled =
-        this.$.password.disabled =
-        this.$.submit.disabled = disabled;
-};
-AuthView.prototype.__defineSetter__('disabled', AuthView.prototype.setDisabled);
-
-AuthView.prototype.getDisabled = function() {
-    return this.$.userName.disabled;
-};
-AuthView.prototype.__defineGetter__('disabled', AuthView.prototype.getDisabled);
-
-AuthView.prototype.handleEvent = function(ev) {
-    switch (ev.type) {
-        case 'click':
-            this.onSubmitClick(ev);
-            break;
-    }
-};
-
-AuthView.prototype.onSubmitClick = function(ev) {
-    if (this.disabled) return;
-
-    ev.stopPropagation();
-    ev.preventDefault();
-
-    this.signIn();
-};
-
-AuthView.setViewConstructor('AuthView');
-
-module.exports = AuthView;
-
-},{"../../model/auth.js":1,"../../service/util.js":18,"../buttonview/buttonview.js":22,"../view/view.js":35}],22:[function(require,module,exports){
-var View = require('../view/view.js'),
-    RippleView = require('../rippleview/rippleview.js');
-util = require('../../service/util.js');
-
-function ButtonView() {
-    View.apply(this, arguments);
-
-    this.$.root.addEventListener('click', this);
-    this.$.root.addEventListener('mousedown', this);
-    this.$.root.addEventListener('mouseup', this);
-    this.$.root.addEventListener('keydown', this);
-
-    this.$.root.setAttribute('tabindex', 0);
-}
-util.inherits(ButtonView, View);
-
-ButtonView.prototype.setDisabled = function(disabled) {
-    if (disabled === this.disabled) return;
-
-    if (disabled) {
-        this.$.root.setAttribute('disabled', 'disabled');
-    } else {
-        this.$.root.removeAttribute('disabled');
-    }
-};
-ButtonView.prototype.__defineSetter__('disabled', ButtonView.prototype.setDisabled);
-
-ButtonView.prototype.getDisabled = function() {
-    return this.$.root.hasAttribute('disabled');
-};
-ButtonView.prototype.__defineGetter__('disabled', ButtonView.prototype.getDisabled);
-
-ButtonView.prototype.handleEvent = function(ev) {
-    var KEYCODE_ENTER = 13;
-
-    switch (ev.type) {
-        case 'click':
-            if (this.disabled) {
-                ev.stopPropagation();
-                ev.preventDefault();
-            }
-            break;
-
-        case 'mousedown':
-            if (this.disabled) {
-                return;
-            }
-            this.onMouseDown(ev);
-            break;
-
-        case 'mouseup':
-            if (this.disabled) {
-                return;
-            }
-            this.onMouseUp(ev);
-            break;
-
-        case 'keydown':
-            if (ev.keyCode !== KEYCODE_ENTER || this.disabled) {
-                return;
-            }
-            this.onPressEnter(ev);
-            break;
-    }
-};
-
-ButtonView.prototype.onMouseDown = function(ev) {
-    var gcr = this.$.root.getBoundingClientRect(),
-        x = ev.clientX - gcr.left,
-        y = ev.clientY - gcr.top;
-
-    this.childViews.ripple.rippleIn(x, y);
-};
-
-ButtonView.prototype.onMouseUp = function(ev) {
-    this.childViews.ripple.rippleOut();
-};
-
-ButtonView.prototype.onPressEnter = function(ev) {
-    var gcr = this.$.root.getBoundingClientRect();
-
-    this.childViews.ripple.rippleIn(gcr.width / 2, gcr.height / 2);
-    this.childViews.ripple.rippleOut();
-    this.$.root.click();
-};
-
-ButtonView.setViewConstructor('ButtonView');
-
-module.exports = ButtonView;
-
-},{"../../service/util.js":18,"../rippleview/rippleview.js":30,"../view/view.js":35}],23:[function(require,module,exports){
-var View = require('../view/view.js'),
-    util = require('../../service/util.js');
-
-function CardView() {
-    View.apply(this, arguments);
-}
-util.inherits(CardView, View);
-
-CardView.setViewConstructor('CardView');
-
-module.exports = CardView;
-
-},{"../../service/util.js":18,"../view/view.js":35}],24:[function(require,module,exports){
-var View = require('../view/view.js'),
-    UserInlineView = require('../userinlineview/userinlineview.js'),
-    CardView = require('../cardview/cardview.js'),
-    util = require('../../service/util.js'),
-    User = require('../../model/user.js');
-
-function ConfigPageView() {
-    View.apply(this, arguments);
-
-    this.user;
-    this.setUser(null);
-
-    window.addEventListener('auth.change', this);
-}
-util.inherits(ConfigPageView, View);
-
-ConfigPageView.prototype.setUser = function(user) {
-    this.user = user;
-    this.childViews.userInlineView.setUser(user);
-};
-
-ConfigPageView.prototype.setUserName = function(userName) {
-    var self = this;
-    User.getByName(userName, function(err, user) {
-        if (err) {
-            return;
-        }
-
-        self.setUser(user);
-    });
-};
-
-ConfigPageView.prototype.handleEvent = function(ev) {
-    switch (ev.type) {
-        case 'auth.change':
-            this.onAuthChange(ev);
-            break;
-
-        case 'click':
-            app.signOut(function() {
-                app.setHash('/signin');
-            });
-    }
-};
-
-ConfigPageView.prototype.onAuthChange = function() {
-    this.childViews.userInlineView.setUser(app.authedUser);
-};
-
-ConfigPageView.setViewConstructor('ConfigPageView');
-
-module.exports = ConfigPageView;
-
-},{"../../model/user.js":5,"../../service/util.js":18,"../cardview/cardview.js":23,"../userinlineview/userinlineview.js":33,"../view/view.js":35}],25:[function(require,module,exports){
-var util = require('../../service/util.js'),
-    View = require('../view/view.js'),
-    Animation = require('../../service/animation.js');
-
-function ContextMenuView() {
-    View.apply(this, arguments);
-
-    this.$.root.addEventListener('blur', this);
-}
-util.inherits(ContextMenuView, View);
-
-ContextMenuView.setViewConstructor('ContextMenuView');
-
-ContextMenuView.prototype.getIsVisible = function() {
-    return this.$.root.hasAttribute('visible');
-};
-ContextMenuView.prototype.__defineGetter__('isVisible', ContextMenuView.prototype.getIsVisible);
-
-ContextMenuView.prototype.setIsVisible = function(value) {
-    if (value) {
-        this.$.root.setAttribute('visible', '');
-    } else {
-        this.$.root.removeAttribute('visible');
-    }
-};
-ContextMenuView.prototype.__defineSetter__('isVisible', ContextMenuView.prototype.setIsVisible);
-
-ContextMenuView.prototype.fadeIn = function(callback) {
-    var animation = new Animation(),
-        root = this.$.root,
-        self = this;
-
-    if (this.isVisible) {
-        util.isFunction(callback) && calback();
-        return;
-    }
-
-    animation.then(root, function(node) {
-            self.isVisible = true;
-            node.style.transition = '0.3s ease';
-            node.style.transform = 'translateY(-10px)';
-            node.style.opacity = 0;
-        })
-        .wait(root, function(node) {
-            node.style.transform = 'translateY(0px)'
-            node.style.opacity = 1;
-        })
-        .then(root, function(node) {
-            node.style.transition = '';
-            node.style.transform = ''
-            node.style.opacity = '';
-        })
-        .then(root, function(node) {
-            node.focus();
-            util.isFunction(callback) && calback();
-        });
-};
-
-ContextMenuView.prototype.fadeOut = function(callback) {
-    var animation = new Animation(),
-        root = this.$.root,
-        self = this;
-
-    if (!this.isVisible) {
-        util.isFunction(callback) && calback();
-        return;
-    }
-
-    animation.then(root, function(node) {
-            node.style.transition = '0.3s ease';
-            node.style.opacity = 1;
-        })
-        .wait(root, function(node) {
-            node.style.opacity = 0;
-        })
-        .then(root, function(node) {
-            node.style.transition = '';
-            node.style.opacity = '';
-            self.isVisible = false;
-        })
-        .then(root, function(node) {
-            util.isFunction(callback) && calback();
-        });
-};
-
-ContextMenuView.prototype.handleEvent = function(ev) {
-    switch (ev.type) {
-        case 'blur':
-            this.onBlur(ev);
-            break;
-    }
-};
-
-ContextMenuView.prototype.onBlur = function(ev) {
-    this.fadeOut();
-};
-
-module.exports = ContextMenuView;
-
-},{"../../service/animation.js":7,"../../service/util.js":18,"../view/view.js":35}],26:[function(require,module,exports){
-var View = require('../view/view.js'),
-    util = require('../../service/util.js');
-
-function LazyImageView() {
-    View.apply(this, arguments);
-
-    this.$.image.addEventListener('load', this);
-    this.$.image.addEventListener('error', this);
-
-    this.state = this.state || LazyImageView.State.NOTHING;
-
-    this.src = this.src || '';
-}
-util.inherits(LazyImageView, View);
-
-LazyImageView.State = {
-    NOTHING: 'nothing',
-    LOADING: 'loading',
-    LOAD: 'load',
-    ERROR: 'error'
-};
-
-LazyImageView.prototype.getState = function() {
-    return this.$.root.getAttribute('state');
-};
-LazyImageView.prototype.__defineGetter__('state', LazyImageView.prototype.getState);
-
-LazyImageView.prototype.setState = function(newVal) {
-    if (this.state === newVal) return;
-    this.$.root.setAttribute('state', newVal);
-};
-LazyImageView.prototype.__defineSetter__('state', LazyImageView.prototype.setState);
-
-LazyImageView.prototype.getSrc = function() {
-    return this.$.image.src;
-};
-LazyImageView.prototype.__defineGetter__('src', LazyImageView.prototype.getSrc);
-
-LazyImageView.prototype.setSrc = function(newVal) {
-    if (this.src === newVal) return;
-    this.$.image.src = newVal;
-    this.load();
-};
-LazyImageView.prototype.__defineSetter__('src', LazyImageView.prototype.setSrc);
-
-LazyImageView.prototype.load = function() {
-    var src = this.src;
-
-    if (!src) {
-        this.state = LazyImageView.State.NOTHING;
-        this.$.image.src = '';
-        return;
-    }
-
-    this.state = LazyImageView.State.LOADING;
-    this.$.image.src = this.src;
-};
-
-LazyImageView.prototype.handleEvent = function(ev) {
-    switch (ev.type) {
-        case 'load':
-            this.onImageLoad(ev);
-            break;
-
-        case 'error':
-            this.onImageError(ev);
-            break;
-    }
-};
-
-LazyImageView.prototype.onImageLoad = function(ev) {
-    if (this.state !== LazyImageView.State.LOADING) return;
-    this.state = LazyImageView.State.LOAD;
-
-    this.$.root.dispatchEvent(new Event('load'))
-};
-
-LazyImageView.prototype.onImageError = function(ev) {
-    if (this.state !== LazyImageView.State.LOADING) return;
-    this.state = LazyImageView.State.ERROR;
-
-    this.$.root.dispatchEvent(new Event('error'))
-};
-
-LazyImageView.setViewConstructor('LazyImageView');
-
-module.exports = LazyImageView;
-
-},{"../../service/util.js":18,"../view/view.js":35}],27:[function(require,module,exports){
-var View = require('../view/view.js'),
-    UserInlineView = require('../userinlineview/userinlineview.js'),
-    CardView = require('../cardview/cardview.js'),
-    util = require('../../service/util.js'),
-    User = require('../../model/user.js'),
-    Project = require('../../model/project.js');
-
-function ProjectCreatePageView() {
-    View.apply(this, arguments);
-
-    this.user;
-    this.setUser(null);
-
-    window.addEventListener('auth.change', this);
-}
-util.inherits(ProjectCreatePageView, View);
-
-ProjectCreatePageView.prototype.setUser = function(user) {
-    this.user = user;
-    this.childViews.userInlineView.setUser(user);
-};
-
-ProjectCreatePageView.prototype.setUserName = function(userName) {
-    var self = this;
-    User.getByName(userName, function(err, user) {
-        if (err) {
-            return;
-        }
-
-        self.setUser(user);
-    });
-};
-
-ProjectCreatePageView.prototype.handleEvent = function(ev) {
-    switch (ev.type) {
-        case 'auth.change':
-            this.onAuthChange(ev);
-            break;
-
-        case 'click':
-            app.signOut(function() {
-                app.setHash('/signin');
-            });
-    }
-};
-
-ProjectCreatePageView.prototype.onAuthChange = function() {
-    this.childViews.userInlineView.setUser(app.authedUser);
-};
-
-ProjectCreatePageView.setViewConstructor('ProjectCreatePageView');
-
-module.exports = ProjectCreatePageView;
-
-},{"../../model/project.js":4,"../../model/user.js":5,"../../service/util.js":18,"../cardview/cardview.js":23,"../userinlineview/userinlineview.js":33,"../view/view.js":35}],28:[function(require,module,exports){
-var View = require('../view/view.js'),
-    util = require('../../service/util.js'),
-    LazyImageView = require('../lazyimageview/lazyimageview.js'),
-    Project = require('../../model/project.js');
-
-function ProjectInlineView() {
-    View.apply(this, arguments);
-
-    this.project = null;
-    this.update();
-
-    this.$.link.addEventListener('click', this);
-}
-util.inherits(ProjectInlineView, View);
-
-ProjectInlineView.prototype.setProject = function(project) {
-    this.project = project;
-    this.update();
-};
-
-ProjectInlineView.prototype.update = function() {
-    var project = this.project,
-        self = this;
-
-    if (project) {
-        this.$.projectName.textContent = project.name;
-        this.$.link.href = '#!' + project.uri;
-
-        this.$.root.classList.remove('is-project-nothing');
-    } else {
-        this.$.root.classList.add('is-project-nothing');
-    }
-};
-
-ProjectInlineView.prototype.handleEvent = function(ev) {
-    switch (ev.type) {
-        case 'click':
-            this.onClick(ev);
-            break;
-    }
-};
-
-ProjectInlineView.prototype.onClick = function(ev) {
-    ev.stopPropagation();
-
-    var event = new Event('click');
-    this.$.root.dispatchEvent(event);
-
-    if (event.defaultPrevented || !this.project) {
-        ev.preventDefault();
-    }
-};
-
-ProjectInlineView.setViewConstructor('ProjectInlineView');
-
-module.exports = ProjectInlineView;
-
-},{"../../model/project.js":4,"../../service/util.js":18,"../lazyimageview/lazyimageview.js":26,"../view/view.js":35}],29:[function(require,module,exports){
-var View = require('../view/view.js'),
-    UserInlineView = require('../userinlineview/userinlineview.js'),
-    ProjectInlineView = require('../projectinlineview/projectinlineview.js'),
-    CardView = require('../cardview/cardview.js'),
-    util = require('../../service/util.js'),
-    User = require('../../model/user.js'),
-    Project = require('../../model/project.js');
-
-function ProjectPageView() {
-    View.apply(this, arguments);
-
-    this.user;
-    this.setUser(null);
-
-    this.project;
-    this.setProject(null);
-
-    window.addEventListener('auth.change', this);
-}
-util.inherits(ProjectPageView, View);
-
-ProjectPageView.prototype.setProject = function(project) {
-    this.project = project;
-    this.childViews.projectInlineView.setProject(project);
-
-    if (project) {
-        this.setUserName(project.owner);
-    } else {
-        this.setUser(null);
-    }
-};
-
-ProjectPageView.prototype.setProjectName = function(userName, projectName) {
-    var self = this;
-    Project.getByName(userName, projectName, function(err, project) {
-        if (err) {
-            return;
-        }
-
-        self.setProject(project);
-    });
-};
-
-
-ProjectPageView.prototype.setUser = function(user) {
-    this.user = user;
-    this.childViews.userInlineView.setUser(user);
-};
-
-ProjectPageView.prototype.setUserName = function(userName) {
-    var self = this;
-    User.getByName(userName, function(err, user) {
-        if (err) {
-            return;
-        }
-
-        self.setUser(user);
-    });
-};
-
-ProjectPageView.prototype.handleEvent = function(ev) {
-    switch (ev.type) {
-        case 'auth.change':
-            this.onAuthChange(ev);
-            break;
-
-        case 'click':
-            app.signOut(function() {
-                app.setHash('/signin');
-            });
-    }
-};
-
-ProjectPageView.prototype.onAuthChange = function() {
-    this.childViews.userInlineView.setUser(app.authedUser);
-};
-
-ProjectPageView.setViewConstructor('ProjectPageView');
-
-module.exports = ProjectPageView;
-
-},{"../../model/project.js":4,"../../model/user.js":5,"../../service/util.js":18,"../cardview/cardview.js":23,"../projectinlineview/projectinlineview.js":28,"../userinlineview/userinlineview.js":33,"../view/view.js":35}],30:[function(require,module,exports){
-var View = require('../view/view.js'),
-    util = require('../../service/util.js');
-
-function RippleView() {
-    View.apply(this, arguments);
-}
-util.inherits(RippleView, View);
-
-RippleView.prototype.rippleIn = function(x, y) {
-    var main = this.$.main;
-
-    main.style.left = x - 15 + 'px';
-    main.style.top = y - 15 + 'px';
-
-    main.classList.remove('is-rippleIn');
-    this.$.root.classList.remove('is-rippleOut');
-    util.runAsync(function() {
-        main.classList.add('is-rippleIn');
-    });
-};
-
-RippleView.prototype.rippleOut = function() {
-    var self = this;
-
-    this.$.root.classList.remove('is-rippleOut');
-    util.runAsync(function() {
-        self.$.root.classList.add('is-rippleOut');
-    });
-};
-
-RippleView.setViewConstructor('RippleView');
-
-module.exports = RippleView;
-
-},{"../../service/util.js":18,"../view/view.js":35}],31:[function(require,module,exports){
-var View = require('../view/view.js'),
-    util = require('../../service/util.js'),
-    Animation = require('../../service/animation.js')
-
-function SwitchView() {
-    View.apply(this, arguments);
-}
-util.inherits(SwitchView, View);
-
-SwitchView.prototype.getCurrentPageNode = function() {
-    var children = this.$.content.children,
-        i, max;
-    for (i = 0, max = children.length; i < max; i++) {
-        if (children[i].hasAttribute('visible')) {
-            return children[i];
-        }
-    }
-
-    return null;
-};
-SwitchView.prototype.__defineGetter__('currentPageNode', SwitchView.prototype.getCurrentPageNode);
-
-SwitchView.prototype.fadeTo = function(nextNode, callback) {
-    var currentNode = this.currentPageNode,
-        animation;
-
-    if (currentNode === nextNode) return;
-
-    animation = new Animation();
-
-    if (currentNode) {
-        animation
-            .then(currentNode, function(node) {
-                node.style.transition = '0.3s ease-out';
-                node.style.transform = 'translateY(0px)';
-                node.style.opacity = 1;
-            })
-            .wait(currentNode, function(node) {
-                node.style.transform = 'translateY(50px)';
-                node.style.opacity = 0;
-            })
-            .then(currentNode, function(node) {
-                node.removeAttribute('visible');
-                node.style.transition = '';
-                node.style.transform = '';
-                node.style.opacity = '';
-            });
-    }
-
-    animation
-        .then(nextNode, function(node) {
-            node.setAttribute('visible', '');
-            node.style.transition = '0.3s ease-in';
-            node.style.transform = 'translateY(50px)';
-            node.style.opacity = 0;
-        })
-        .wait(nextNode, function(node) {
-            node.style.transform = 'translateY(0px)';
-            node.style.opacity = 1;
-        })
-        .then(nextNode, function(node) {
-            node.style.transition = '';
-            node.style.transform = '';
-            node.style.opacity = '';
-        })
-        .then(nextNode, function(node) {
-            util.isFunction(callback) && callback();
-        });
-
-    return this;
-};
-
-SwitchView.setViewConstructor('SwitchView');
-
-module.exports = SwitchView;
-
-},{"../../service/animation.js":7,"../../service/util.js":18,"../view/view.js":35}],32:[function(require,module,exports){
-var View = require('../view/view.js'),
-    UserInlineView = require('../userinlineview/userinlineview.js'),
-    ContextMenuView = require('../contextmenuview/contextmenuview.js'),
-    util = require('../../service/util.js'),
-    User = require('../../model/user.js');
-
-/**
- *	ToolBarView
- *	@constructor
- *	@extend {View}
- */
-var ToolBarView = function() {
-    View.apply(this, arguments);
-
-    this.$.userInlineView.addEventListener('click', this);
-    this.$.linkConfig.addEventListener('click', this);
-    this.$.linkCreateProject.addEventListener('click', this);
-    this.$.linkSignOut.addEventListener('click', this);
-
-    window.addEventListener('auth.change', this);
-};
-util.inherits(ToolBarView, View);
-
-ToolBarView.prototype.handleEvent = function(ev) {
-    switch (ev.type) {
-        case 'auth.change':
-            this.onAuthChange(ev);
-            break;
-
-        case 'click':
-            if (ev.target === this.$.userInlineView) {
-                this.onUserInlineViewClick(ev);
-
-            } else if (ev.target === this.$.linkCreateProject) {
-                if (app.isAuthed) {
-                    this.childViews.contextMenuView.fadeOut();
-                    app.setHash(app.authedUser.uri + '/project_create');
-                }
-
-            } else if (ev.target === this.$.linkConfig) {
-                if (app.isAuthed) {
-                    this.childViews.contextMenuView.fadeOut();
-                    app.setHash(app.authedUser.uri + '/config');
-                }
-
-            } else if (ev.target === this.$.linkSignOut) {
-                this.childViews.contextMenuView.fadeOut();
-                app.signOut(function() {
-                    app.setHash('/signin');
-                });
-            }
-            break;
-    }
-}
-
-ToolBarView.prototype.onAuthChange = function() {
-    this.childViews.userInlineView.setUser(app.authedUser);
-};
-
-ToolBarView.prototype.onUserInlineViewClick = function(ev) {
-    this.childViews.contextMenuView.fadeIn();
-
-    ev.preventDefault();
-    ev.stopPropagation();
-};
-
-ToolBarView.setViewConstructor('ToolBarView');
-
-module.exports = ToolBarView;
-
-},{"../../model/user.js":5,"../../service/util.js":18,"../contextmenuview/contextmenuview.js":25,"../userinlineview/userinlineview.js":33,"../view/view.js":35}],33:[function(require,module,exports){
-var View = require('../view/view.js'),
-    util = require('../../service/util.js'),
-    LazyImageView = require('../lazyimageview/lazyimageview.js'),
-    User = require('../../model/user.js');
-
-function UserInlineView() {
-    View.apply(this, arguments);
-
-    this.user = null;
-    this.update();
-
-    this.$.link.addEventListener('click', this);
-}
-util.inherits(UserInlineView, View);
-
-UserInlineView.prototype.setUser = function(user) {
-    this.user = user;
-    this.update();
-};
-
-UserInlineView.prototype.update = function() {
-    var user = this.user,
-        self = this;
-
-    if (user) {
-        this.childViews.icon.src = user.icon;
-        this.$.userName.textContent = user.name;
-        this.$.link.href = '#!' + user.uri;
-
-        this.$.root.classList.remove('is-user-nothing');
-    } else {
-        this.$.root.classList.add('is-user-nothing');
-    }
-};
-
-UserInlineView.prototype.handleEvent = function(ev) {
-    switch (ev.type) {
-        case 'click':
-            this.onClick(ev);
-            break;
-    }
-};
-
-UserInlineView.prototype.onClick = function(ev) {
-    ev.stopPropagation();
-
-    var event = new CustomEvent('click', {
-        cancelable: true
-    });
-    this.$.root.dispatchEvent(event);
-
-    if (event.defaultPrevented || !this.user) {
-        ev.preventDefault();
-    }
-};
-
-UserInlineView.setViewConstructor('UserInlineView');
-
-module.exports = UserInlineView;
-
-},{"../../model/user.js":5,"../../service/util.js":18,"../lazyimageview/lazyimageview.js":26,"../view/view.js":35}],34:[function(require,module,exports){
-var View = require('../view/view.js'),
-    UserInlineView = require('../userinlineview/userinlineview.js'),
-    ProjectInlineView = require('../projectinlineview/projectinlineview.js'),
-    CardView = require('../cardview/cardview.js'),
-    util = require('../../service/util.js'),
-    User = require('../../model/user.js');
-
-function UserPageView() {
-    View.apply(this, arguments);
-
-    this.user;
-    this.setUser(null);
-
-    window.addEventListener('auth.change', this);
-}
-util.inherits(UserPageView, View);
-
-UserPageView.prototype.setUser = function(user) {
-    this.user = user;
-    this.childViews.userInlineView.setUser(user);
-    this.loadUserProjects();
-};
-
-UserPageView.prototype.setUserName = function(userName) {
-    var self = this;
-    User.getByName(userName, function(err, user) {
-        if (err) {
-            return;
-        }
-
-        self.setUser(user);
-    });
-};
-
-UserPageView.prototype.loadUserProjects = function() {
-    var user = this.user,
-        self = this;
-    if (!user) return;
-
-    user.getAllProjects(function(err, projects) {
-        if (err) {
-            return;
-        }
-
-        self.setProjects(projects);
-    });
-};
-
-UserPageView.prototype.setProjects = function(projects) {
-    var container = this.childViews.projectContainer;
-
-    container.$.content.innerHTML = '';
-
-    projects.forEach(function(project) {
-        var view = new ProjectInlineView();
-        view.setProject(project);
-        container.appendChild(view);
-    });
-}
-
-UserPageView.prototype.handleEvent = function(ev) {
-    switch (ev.type) {
-        case 'auth.change':
-            this.onAuthChange(ev);
-            break;
-
-        case 'click':
-            app.signOut(function() {
-                app.setHash('/signin');
-            });
-    }
-};
-
-UserPageView.prototype.onAuthChange = function() {
-    this.childViews.userInlineView.setUser(app.authedUser);
-};
-
-UserPageView.setViewConstructor('UserPageView');
-
-module.exports = UserPageView;
-
-},{"../../model/user.js":5,"../../service/util.js":18,"../cardview/cardview.js":23,"../projectinlineview/projectinlineview.js":28,"../userinlineview/userinlineview.js":33,"../view/view.js":35}],35:[function(require,module,exports){
-require('../../service/classlist.js');
-
-var util = require('../../service/util.js'),
-    map = require('../../service/map.js'),
-    Template = require('../../service/template/template.js');
-
-function View() {
-    /**
-     * DOM map
-     * @type {{
-     *       root: Element,
-     *       content: Element
-     * }}
-     */
-    this.$;
-
-    /**
-     * parent view.
-     * @param {View}
-     */
-    this.parentView = null;
-
-    /**
-     * child views.
-     * @param {Object}
-     */
-    this.childViews = [];
-
-    this.loadTemplate(this.constructor.tagName);
-}
-
-View.prototype.finalize = function() {};
-
-View.prototype.loadTemplate = function(tagName) {
-    var result = Template.create(tagName, this);
-    this.$ = result.$;
-    this.childViews = result.childViews;
-};
-
-/**
- * Registers this view constructor to template engine.
- * @param {string} tagName tag name.
- */
-View.setViewConstructor = function(tagName) {
-    Template.setViewConstructor(tagName, this);
-    this.tagName = tagName;
-};
-
-/**
- * append child view/node
- * @param {Node|View} child child.
- */
-View.prototype.appendChild = function(child) {
-    var name;
-
-    if (child instanceof View) {
-        if (child.parentView) {
-            child.parentView.removeChild(child);
-        }
-
-        child.parentView = this;
-        if (name = child.$.root.getAttribute('name')) {
-            this.childViews[name] = child;
-        }
-
-        child = child.$.root;
-    }
-
-    this.$.content.appendChild(child);
-};
-
-/**
- * remove child view/node
- * @param {Node|View} child child.
- */
-View.prototype.removeChild = function(child) {
-    var name;
-
-    if (child instanceof View) {
-        child.parentView = null;
-        if (name = child.$.root.getAttribute('name')) {
-            delete this.childViews[name];
-        }
-
-        child = child.$.root;
-    }
-
-    this.$.content.removeChild(child);
-};
-
-View.setViewConstructor('View');
-
-module.exports = View;
-
-},{"../../service/classlist.js":10,"../../service/map.js":13,"../../service/template/template.js":17,"../../service/util.js":18}]},{},[6]);
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}]},{},[31]);

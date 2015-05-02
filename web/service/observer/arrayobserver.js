@@ -1,5 +1,5 @@
-var ObjectObserver = require('./objectobserver.js'),
-    Map = require('../map.js');
+var ObjectObserver = require('./ObjectObserver.js'),
+    Map = require('../Map.js');
 
 if (typeof Array.observe !== 'function') {
 

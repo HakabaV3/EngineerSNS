@@ -1,0 +1,14 @@
+@import "./ESUserInlineElement.scss";
+
+.sa-toolbar {
+    display: block;
+    position: relative;
+    background: #00bcd4;
+    padding: 10px;
+    color: #fff;
+    box-shadow: 0 4px 8px rgba(#000,0.3);
+    z-index: 1;
+    >.sa-toolbar-inner {
+        min-height: 40px;
+    }
+}

@@ -1,20 +1,134 @@
 <html>
 
 <head>
-    <title></title>
+    <title>sample</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
     <link rel="stylesheet" href="./style.css">
-    <link rel="import" href="./view/appview/appview.html">
+    <style>
+        .es-app {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
 </head>
 
-<body unresolved layout vertical>
+<body unresolved>
+    <template name="sa-input" constructor="SAInputElement" extend="label" class="sa-input" error="{{isError}}" placeholder="{{placeholder}}" value="{{value}}" disabled="{{disabled}}" type="{{type}}">
+        <span class="sa-input-placeholder">{{placeholder}}</span>
+        <input class="sa-input-input" type="{{type}}" value="{{value}}" disabled="{{disabled}}">
+    </template>
+
+    <template name="sa-card" class="sa-card" extend="div" content>
+    </template>
+
+    <template name="sa-toolbar" constructor="SAToolBarElement" extend="div" class="sa-toolbar" layout horizontal center-center>
+        <div class="sa-toolbar-inner" flex layout horizontal center content>
+        </div>
+    </template>
+
+    <template name="sa-lazyimage" constructor="SALazyImageElement" extend="img" class="sa-lazyimage" state="sleep">
+    </template>
+
+    <template name="sa-ripple" constructor="SARippleElement" extend="i" class="sa-ripple">
+        <div class="sa-ripple-inner" content>
+
+        </div>
+    </template>
+
+    <template name="sa-button" constructor="SAButtonElement" extend="button" class="sa-button" disabled="{{disabled}}">
+        <sa-ripple class="sa-button-ripple"></sa-ripple>
+        <content></content>
+    </template>
+
+    <template name="sa-switcher" constructor="SASwitcherElement" extend="div" class="sa-switcher" content>
+    </template>
+
+    <template name="es-userInline" constructor="ESUserInlineElement" extend="a" class="es-userInline" user="{{user}}" href="{{user.uri}}">
+        <sa-lazyimage class="es-userInline-icon" src="{{user.icon}}"></sa-lazyimage>
+        <span class="es-userInline-userName">{{user.name}}</span>
+    </template>
+
+    <template name="es-app" class="es-app" extend="div" fit layout vertical>
+        <sa-toolbar class="es-app-toolbar">
+            <span>Engineer-SNS</span>
+            <div class="es-app-spacer" flex></div>
+            <es-userInline user="{{authedUser}}"></es-userInline>
+        </sa-toolbar>
+        <sa-switcher class="es-app-switcher" flex>
+            <div visible>
+                <div layout vertical center-center>
+                    <es-signInCard class="es-app-signInCard"></es-signInCard>
+                </div>
+            </div>
+            <es-userPage class="es-app-userPage"></es-userPage>
+        </sa-switcher>
+    </template>
+
+    <template name="es-userPage" constructor="ESUserInlineElement" extend="div" class="es-userPage" user="{{user}}" flex layout vertical>
+        <header>
+            ユーザーページ >>
+            <es-userInline user="{{user}}"></es-userInline>
+        </header>
+        <div flex layout horizontal>
+            <div layout vertical>
+                <sa-card flex>
+                    <header class="sa-card-header">メニュー</header>
+                </sa-card>
+            </div>
+            <sa-card flex>
+                <header class="sa-card-header">プロジェクト一覧</header>
+                <div layout horizontal center-center>
+                    <span>プロジェクトがありません</span>
+                </div>
+            </sa-card>
+        </div>
+    </template>
+
+    <template name="es-signInCard" constructor="ESSignInCardElement" extend="div" class="es-signInCard sa-card" layout vertical error="{{isError}}" disabled="{{disabled}}" userName="{{userName}}" password="{{password}}">
+        <header class="sa-card-header">
+            <span>サインイン</span>
+            <p class="es-signInCard-errMsg">
+                ユーザー名またはパスワードが違います
+            </p>
+        </header>
+        <form class="es-signInCard-form">
+            <p>
+                <sa-input placeholder="ユーザー名" class="es-signInCard-userName" value="{{userName}}" disabled="{{disabled}}" type="text" />
+            </p>
+            <p>
+                <sa-input placeholder="パスワード" class="es-signInCard-password" value="{{password}}" disabled="{{disabled}}" type="password" />
+            </p>
+            <p>
+                <sa-button class="es-signInCard-submit sa-button-block sa-button-primary" disabled="{{disabled}}" type="submit">サインイン</sa-button>
+            </p>
+        </form>
+    </template>
+
+    <template name="es-signUpCard" constructor="ESSignUpCardElement" extend="div" class="es-ESSignUpCardElement sa-card" layout vertical error="{{isError}}" disabled="{{disabled}}" userName="{{userName}}" password="{{password}}">
+        <header class="sa-card-header">
+            <span>サインアップ</span>
+        </header>
+        <form class="es-ESSignUpCardElement-form">
+            <p>
+                <sa-input placeholder="ユーザー名" class="es-ESSignUpCardElement-userName" value="{{userName}}" disabled="{{disabled}}" type="text" />
+            </p>
+            <p>
+                <sa-input placeholder="パスワード" class="es-ESSignUpCardElement-password" value="{{password}}" disabled="{{disabled}}" type="password" />
+            </p>
+            <p>
+                <sa-input placeholder="パスワード(確認)" class="es-ESSignUpCardElement-password2" value="{{password2}}" disabled="{{disabled}}" type="password" />
+            </p>
+            <p>
+                <sa-button class="es-ESSignUpCardElement-submit sa-button-block sa-button-primary" disabled="{{disabled}}" type="submit">サインアップ</sa-button>
+            </p>
+        </form>
+    </template>
+
     <script src="./script.js"></script>
-    <script type="application/javascript">
-        window.onload = function() {
-            document.body.removeAttribute('unresolved');
-        }
-    </script>
 </body>
 
 </html>

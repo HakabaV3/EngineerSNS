@@ -1,4 +1,4 @@
-var Map = require('../map.js');
+var Map = require('../Map.js');
 
 if (typeof Object.observe !== 'function') {
 

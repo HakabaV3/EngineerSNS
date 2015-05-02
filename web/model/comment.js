@@ -1,6 +1,5 @@
-var Model = require('./model.js'),
-    util = require('../service/util.js'),
-    API = require('../service/api/api.js');
+var Model = require('./Model.js'),
+    API = require('../Service/API/API.js');
 
 /**
  *  Comment Model.
@@ -11,7 +10,7 @@ var Model = require('./model.js'),
 var Comment = function(data) {
     if (!(this instanceof Comment)) return new Comment(data);
 
-    if (util.isObject(data)) {
+    if (isObject(data)) {
         if (Comment.hasInstance(data.id)) {
             return Comment.getInstance(data.id).updateWithData(data);
         }
@@ -19,7 +18,7 @@ var Comment = function(data) {
 
     Model.call(this, data);
 };
-util.inherits(Comment, Model);
+inherits(Comment, Model);
 
 Comment.prototype.hoge = function(name, key) {};
 

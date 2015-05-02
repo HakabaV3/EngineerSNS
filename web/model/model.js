@@ -1,5 +1,4 @@
-var EventDispatcher = require('../service/eventdispatcher.js'),
-    util = require('../service/util.js');
+var EventDispatcher = require('../Service/EventDispatcher.js');
 
 /**
  *  Data model base class.
@@ -12,12 +11,12 @@ var Model = function(data) {
     EventDispatcher.call(this);
 
     this.initForSchema();
-    if (util.isObject(data)) {
+    if (isObject(data)) {
         this.updateWithData(data);
         this.constructor.addInstance(this);
     }
 };
-util.inherits(Model, EventDispatcher);
+inherits(Model, EventDispatcher);
 
 /**
  *  model instances map
@@ -83,7 +82,7 @@ Model.prototype.initForSchema = function() {
     Object.keys(schema).forEach(function(schemaKey) {
         var scheme = schema[schemaKey];
 
-        if (!util.isObject(scheme)) {
+        if (!isObject(scheme)) {
             /**
              *  syntax sugar
              */

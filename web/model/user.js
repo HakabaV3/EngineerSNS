@@ -1,7 +1,6 @@
-var Model = require('./model.js'),
-    Project = require('./project.js'),
-    util = require('../service/util.js'),
-    API = require('../service/api/api.js');
+var Model = require('./Model.js'),
+    Project = require('./Project.js'),
+    API = require('../Service/API/API.js');
 
 /**
  *  User Model.
@@ -12,7 +11,7 @@ var Model = require('./model.js'),
 var User = function(data) {
     if (!(this instanceof User)) return new User(data);
 
-    if (util.isObject(data)) {
+    if (isObject(data)) {
         if (User.hasInstance(data.name)) {
             return User.getInstance(data.name).updateWithData(data);
         }
@@ -20,7 +19,7 @@ var User = function(data) {
 
     Model.call(this, data);
 };
-util.inherits(User, Model);
+inherits(User, Model);
 
 /**
  *  model instances map

@@ -1,27 +1,4 @@
-@media (max-width:640px) {
-    .util-largeOnly {
-        display: none !important;
-    }
-}
-@media (min-width: 640px) {
-    .util-smallOnly {
-        display: none !important;
-    }
-}
-@import "./view/appview/appview.scss";
-@import "./view/authpageview/authpageview.scss";
-@import "./view/authview/authview.scss";
-@import "./view/buttonview/buttonview.scss";
-@import "./view/cardview/cardview.scss";
-@import "./view/configpageview/configpageview.scss";
-@import "./view/contextmenuview/contextmenuview.scss";
-@import "./view/lazyimageview/lazyimageview.scss";
-@import "./view/projectcreatepageview/projectcreatepageview.scss";
-@import "./view/projectinlineview/projectinlineview.scss";
-@import "./view/projectpageview/projectpageview.scss";
-@import "./view/rippleview/rippleview.scss";
-@import "./view/switchview/switchview.scss";
-@import "./view/toolbarview/toolbarview.scss";
-@import "./view/userinlineview/userinlineview.scss";
-@import "./view/userpageview/userpageview.scss";
-@import "./view/view/view.scss";
+//base
+@import "./Style/base.scss";
+//Elements
+@import "./Element/scss/ESAppElement.scss";

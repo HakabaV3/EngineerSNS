@@ -1,0 +1,35 @@
+body {
+    font-family: Verdana, Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    opacity: 1;
+    transition: 0.7s 0.1s ease;
+    background: #efefef;
+}
+body[unresolved] {
+    opacity: 0;
+}
+[layout][horizontal] {
+    display: flex;
+    flex-direction: row;
+}
+[layout][vertical] {
+    display: flex;
+    flex-direction: column;
+}
+[layout][center] {
+    display: flex;
+    align-items: center;
+}
+[layout][center-center] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+[layout] > [flex] {
+    flex-grow: 1;
+}
+[fit] {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}

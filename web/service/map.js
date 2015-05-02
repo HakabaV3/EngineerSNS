@@ -1,7 +1,16 @@
-var Map = window.Map;
+var Map = global.Map;
 
 if (typeof Map !== 'function') {
-    Map = function Map() {
+
+    /**
+     * Map
+     *
+     * @constructor
+     * @param {Array<Array<*>>} [iterable] iterable object.
+     */
+    Map = function(iterable) {
+        var i, max, iterable;
+
         /**
          * It's 0, constant.
          * https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Map
@@ -11,23 +20,32 @@ if (typeof Map !== 'function') {
 
         /**
          * keys
-         * @type {Number}
+         * @type {Array}
          * @private
          */
         this.keys_ = [];
 
         /**
          * number
-         * @type {Number}
+         * @type {Array}
          * @private
          */
         this.values_ = [];
+
+        if (iterable) {
+            for (i = 0, max = iterable.length; i < max; i++) {
+                item = iterable[i];
+                this.keys_.push(item[0]);
+                this.values_.push(item[0]);
+            }
+        }
     }
 
     /**
      *  Returns the number of key/value pairs in the Map object.
      *  @type {number}
      */
+    Map.prototype.size;
     Map.prototype.__defineGetter__('size', function() {
         return this.keys_.length;
     });
